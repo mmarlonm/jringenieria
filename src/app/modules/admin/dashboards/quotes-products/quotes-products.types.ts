@@ -17,6 +17,11 @@ export interface CatalogosSgc {
     puntosRevision?: CatalogoItem[];
     puntosRequeridosPorRol?: { [rol: string]: string[] };
     clasesCambio?: string[];
+    tiposSeguimiento?: CatalogoItem[];
+    motivosCierre?: CatalogoItem[];
+    tiposEvidencia?: CatalogoItem[];
+    resultadosCierre?: CatalogoItem[];
+    plazosEmisionHoras?: { [tipo: string]: number };
 }
 
 export interface CotizacionSgcCabecera {
@@ -24,6 +29,26 @@ export interface CotizacionSgcCabecera {
     clienteId?: number | null;
     unidadDeNegocioId?: number | null;
     requisitosEspeciales: boolean;
+    nombreCliente?: string | null;
+    nombreEmpresa?: string | null;
+    correo?: string | null;
+    telefono?: string | null;
+    rfc?: string | null;
+    direccionCompleta?: string | null;
+    estado?: string | null;
+    estatus?: number | null;
+    observaciones?: string | null;
+}
+
+// Contrato de lectura del encabezado: CotizacionSgcEncabezadoVistaDto del API
+export interface EncabezadoCotizacionSgc {
+    cotizacionProductosId: number;
+    clienteId?: number | null;
+    unidadDeNegocioId?: number | null;
+    usuarioId?: number | null;
+    requisitosEspeciales: boolean;
+    createdDate?: string | Date | null;
+    updatedDate?: string | Date | null;
     nombreCliente?: string | null;
     nombreEmpresa?: string | null;
     correo?: string | null;
@@ -84,6 +109,13 @@ export interface CotizacionSgcVista extends CotizacionSgcDatos {
     correoReceptor?: string | null;
     claseCambioVersion?: string | null;
     cambioResumen?: string | null;
+    probabilidadPorcentaje?: number | null;
+    fechaCierre?: string | Date | null;
+    motivoCierre?: string | null;
+    comentarioCierre?: string | null;
+    tipoEvidencia?: string | null;
+    referenciaEvidencia?: string | null;
+    montoVendido?: number | null;
 }
 
 export interface PartidaSgc {
@@ -141,6 +173,8 @@ export interface AccionesSgc {
     revisar: string[];
     emitir: boolean;
     nuevaVersion: boolean;
+    seguimiento?: boolean;
+    cerrar?: string[];
 }
 
 export interface RequerimientoResumen {
@@ -227,6 +261,7 @@ export interface VersionSgcDetalle extends VersionSgcItem {
 
 export interface RespuestaObtenerSgc {
     cotizacionProductosId: number;
+    cotizacion?: EncabezadoCotizacionSgc | null;
     sgc: CotizacionSgcVista | null;
     partidas: PartidaSgc[];
     partidasHeredadas: boolean;
@@ -236,6 +271,7 @@ export interface RespuestaObtenerSgc {
     revisionesRequeridas?: string[];
     revisiones?: RevisionSgc[];
     acciones?: AccionesSgc;
+    seguimiento?: ResumenSeguimiento | null;
 }
 
 export interface ResumenSgc {
@@ -250,6 +286,110 @@ export interface ResumenSgc {
     fechaVencimiento?: string | Date | null;
     creadoPorNombre?: string | null;
     requerimientoFolio?: string | null;
+    seguimientoAtrasado?: boolean;
+    vencida?: boolean;
+    probabilidadPorcentaje?: number | null;
+    proximaAccionFecha?: string | Date | null;
 }
 
 export type ExistenciaMaterial = ProductoBuscadorDto;
+
+export interface SeguimientoItemSgc {
+    id: number;
+    version: number;
+    fecha: string | Date;
+    usuarioId: number;
+    usuarioNombre?: string | null;
+    tipo: string;
+    notas?: string | null;
+    proximaAccion?: string | null;
+    fechaProximaAccion?: string | null;
+}
+export type SeguimientoSgc = SeguimientoItemSgc;
+
+export interface ResumenSeguimiento {
+    total: number;
+    ultimaFecha?: string | Date | null;
+    proximaAccion?: string | null;
+    fechaProximaAccion?: string | null;
+    atrasado: boolean;
+    vencida: boolean;
+    diasParaVencer?: number | null;
+}
+
+export interface RegistrarSeguimientoDto {
+    tipo: string;
+    notas?: string | null;
+    proximaAccion?: string | null;
+    fechaProximaAccion?: string | null;
+    probabilidadPorcentaje?: number | null;
+}
+
+export interface CierreSgcDto {
+    resultado: string;
+    motivo?: string | null;
+    comentario?: string | null;
+    tipoEvidencia?: string | null;
+    referenciaEvidencia?: string | null;
+    montoVendido?: number | null;
+}
+
+export interface CierreResultado {
+    etapa: string;
+    fechaCierre: string | Date;
+}
+export type CierreSgc = CierreResultado;
+
+export interface FiltroIndicadoresSgc {
+    desde: string; // yyyy-MM-dd
+    hasta: string; // yyyy-MM-dd
+    tipo?: string | null;
+    unidadDeNegocioId?: number | null;
+}
+
+export interface TiempoPromedioEmisionDto {
+    cs?: number | null;
+    ct?: number | null;
+    ce?: number | null;
+    general?: number | null;
+}
+
+export interface EnTiempoDetalleDto {
+    emitidas: number;
+    enPlazo: number;
+    porcentaje?: number | null;
+    plazoHoras: number;
+}
+
+export interface EnTiempoTipoDto {
+    cs?: EnTiempoDetalleDto | null;
+    ct?: EnTiempoDetalleDto | null;
+    ce?: EnTiempoDetalleDto | null;
+}
+
+export interface MontoMonedaDto {
+    moneda: string;
+    cotizado: number;
+    vendido: number;
+    captacionPorcentaje?: number | null;
+}
+
+export interface MotivoPerdidaDto {
+    motivo: string;
+    cantidad: number;
+}
+
+export interface IndicadoresSgc {
+    emitidas: number;
+    ganadas: number;
+    perdidas: number;
+    canceladas: number;
+    vencidas: number;
+    cerradasSinRespuesta: number;
+    abiertas: number;
+    tasaConversionPorcentaje?: number | null;
+    tiempoPromedioEmisionHoras: TiempoPromedioEmisionDto;
+    enTiempo: EnTiempoTipoDto;
+    montos: MontoMonedaDto[];
+    motivosPerdida: MotivoPerdidaDto[];
+}

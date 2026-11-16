@@ -1,0 +1,160 @@
+<div class="p-6 max-w-lg">
+  <h2 mat-dialog-title class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+    <mat-icon class="text-warn">lock</mat-icon>
+    Cerrar cotización
+  </h2>
+
+  <mat-dialog-content class="dialogo-alto" style="max-height: 70vh; overflow-y: auto;">
+    <!-- Error del API si falla -->
+    <div *ngIf="errorMensaje" class="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm mensaje-error">
+      {{ errorMensaje }}
+    </div>
+
+    <!-- Panel de confirmación previa al envío -->
+    <div *ngIf="confirmando" class="confirmacion-cierre p-4 mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 space-y-3">
+      <div class="flex items-start gap-2">
+        <mat-icon class="text-amber-700 dark:text-amber-400">warning</mat-icon>
+        <div class="text-sm font-semibold text-amber-900 dark:text-amber-200 texto-confirmacion">
+          {{ textoConfirmacion }}
+        </div>
+      </div>
+      <div class="text-xs text-amber-800 dark:text-amber-300">
+        Resultado seleccionado: <strong>{{ nombreResultado(resultadoSeleccionado) }}</strong>
+      </div>
+    </div>
+
+    <form [formGroup]="form" class="space-y-4 pt-2" *ngIf="!confirmando">
+      <!-- Selector de resultado permitido -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Resultado del cierre</mat-label>
+        <mat-select formControlName="resultado" required class="selector-resultado">
+          <mat-option *ngFor="let r of resultadosDisponibles" [value]="r.codigo">
+            {{ r.nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Campos para GANADA -->
+      <div *ngIf="resultadoSeleccionado === 'Ganada'" class="space-y-4 campos-ganada">
+        <div class="p-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-lg text-xs text-green-900 dark:text-green-200">
+          Capture el tipo y referencia de evidencia que avala la aceptación del cliente.
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Tipo de evidencia</mat-label>
+          <mat-select formControlName="tipoEvidencia" required>
+            <mat-option *ngFor="let ev of tiposEvidencia" [value]="ev.codigo">
+              {{ ev.nombre }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Referencia de evidencia</mat-label>
+          <input matInput formControlName="referenciaEvidencia" maxlength="300" required placeholder="Ej. OC-12345 o Correo de confirmación de fecha 15/11" />
+          <mat-error *ngIf="form.get('referenciaEvidencia')?.hasError('required')">La referencia de evidencia es obligatoria</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Monto vendido ({{ data.moneda || 'MXN' }})</mat-label>
+          <input matInput type="number" formControlName="montoVendido" min="0.01" step="0.01" required placeholder="Monto vendido final" />
+          <mat-error *ngIf="form.get('montoVendido')?.hasError('required')">El monto vendido es obligatorio</mat-error>
+          <mat-error *ngIf="form.get('montoVendido')?.hasError('min')">El monto vendido debe ser mayor a cero</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Campos para PERDIDA o CANCELADA -->
+      <div *ngIf="resultadoSeleccionado === 'Perdida' || resultadoSeleccionado === 'Cancelada'" class="space-y-4 campos-perdida">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Motivo</mat-label>
+          <mat-select formControlName="motivo" required>
+            <mat-option *ngFor="let m of motivosCierre" [value]="m.codigo">
+              {{ m.nombre }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('motivo')?.hasError('required')">El motivo es obligatorio</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Comentario</mat-label>
+          <textarea
+            matInput
+            formControlName="comentario"
+            rows="3"
+            maxlength="1000"
+            [placeholder]="form.get('motivo')?.value === 'Otro' ? 'Describa el motivo con al menos 5 caracteres...' : 'Comentarios adicionales (opcional)...'"
+          ></textarea>
+          <mat-error *ngIf="form.get('comentario')?.hasError('required')">El comentario es obligatorio cuando el motivo es Otro</mat-error>
+          <mat-error *ngIf="form.get('comentario')?.hasError('minlength')">Debe contener al menos 5 caracteres</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Campos para VENCIDA -->
+      <div *ngIf="resultadoSeleccionado === 'Vencida'" class="space-y-4 campos-vencida">
+        <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-lg text-xs text-amber-900 dark:text-amber-200">
+          La cotización ha superado su vigencia y se procederá al cierre como vencida.
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Motivo (opcional)</mat-label>
+          <mat-select formControlName="motivo">
+            <mat-option [value]="null">— Sin motivo específico —</mat-option>
+            <mat-option *ngFor="let m of motivosCierre" [value]="m.codigo">
+              {{ m.nombre }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Comentario (opcional)</mat-label>
+          <textarea matInput formControlName="comentario" rows="3" maxlength="1000" placeholder="Comentarios adicionales..."></textarea>
+        </mat-form-field>
+      </div>
+
+      <!-- Campos para CERRADA SIN RESPUESTA -->
+      <div *ngIf="resultadoSeleccionado === 'CerradaSinRespuesta'" class="space-y-4 campos-sin-respuesta">
+        <div class="p-4 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-800 dark:text-gray-200 texto-fijo-sin-respuesta">
+          Se cierra por no tener respuesta después de los seguimientos registrados.
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="gap-2 pt-4 botones-accion">
+    <!-- Modo formulario normal -->
+    <ng-container *ngIf="!confirmando">
+      <button mat-button type="button" (click)="cancelar()" [disabled]="guardando">
+        Cancelar
+      </button>
+      <button
+        mat-raised-button
+        color="warn"
+        type="button"
+        (click)="solicitarConfirmacion()"
+        [disabled]="form.invalid || guardando"
+        class="btn-solicitar-cierre"
+      >
+        <mat-icon class="mr-1">lock</mat-icon>
+        Cerrar cotización
+      </button>
+    </ng-container>
+
+    <!-- Modo confirmación -->
+    <ng-container *ngIf="confirmando">
+      <button mat-button type="button" (click)="cancelarConfirmacion()" [disabled]="guardando">
+        Volver
+      </button>
+      <button
+        mat-raised-button
+        color="warn"
+        type="button"
+        (click)="ejecutarCierre()"
+        [disabled]="guardando"
+        class="btn-confirmar-cierre"
+      >
+        <mat-icon class="mr-1">done</mat-icon>
+        {{ guardando ? 'Cerrando...' : 'Sí, confirmar cierre' }}
+      </button>
+    </ng-container>
+  </mat-dialog-actions>
+</div>

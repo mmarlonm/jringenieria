@@ -246,6 +246,50 @@
             <li *ngFor="let f of faltantes">{{ f }}</li>
           </ul>
         </div>
+
+        <!-- Bloque fijo de resultado si la cotización está cerrada -->
+        <div *ngIf="etapaEsCerrada" class="bloque-resultado-cierre max-w-xl bg-gray-50 dark:bg-gray-800 rounded-lg p-5 border border-gray-200 dark:border-gray-700 space-y-3">
+          <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <mat-icon class="text-primary">check_circle</mat-icon>
+            Resultado del cierre
+          </h3>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <span class="text-xs text-gray-500 block">Etapa de cierre</span>
+              <app-etapa-chip [etapa]="etapa"></app-etapa-chip>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 block">Fecha de cierre</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200 fecha-cierre-texto">
+                {{ sgcVista?.fechaCierre ? (sgcVista?.fechaCierre | date:'dd/MM/yyyy HH:mm') : '—' }}
+              </span>
+            </div>
+            <div *ngIf="sgcVista?.tipoEvidencia || sgcVista?.referenciaEvidencia">
+              <span class="text-xs text-gray-500 block">Evidencia de aceptación</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200 evidencia-texto">
+                {{ nombreTipoEvidencia(sgcVista?.tipoEvidencia) }} — {{ sgcVista?.referenciaEvidencia }}
+              </span>
+            </div>
+            <div *ngIf="sgcVista?.montoVendido !== null && sgcVista?.montoVendido !== undefined">
+              <span class="text-xs text-gray-500 block">Monto vendido</span>
+              <span class="font-semibold text-green-700 dark:text-green-400 monto-vendido-texto">
+                {{ sgcVista?.montoVendido | currency:(sgcForm.get('moneda')?.value || 'MXN'):'symbol':'1.2-2' }}
+              </span>
+            </div>
+            <div *ngIf="sgcVista?.motivoCierre" class="col-span-2">
+              <span class="text-xs text-gray-500 block">Motivo de cierre</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200 motivo-cierre-texto">
+                {{ nombreMotivoCierre(sgcVista?.motivoCierre) }}
+              </span>
+            </div>
+            <div *ngIf="sgcVista?.comentarioCierre" class="col-span-2">
+              <span class="text-xs text-gray-500 block">Comentarios de cierre</span>
+              <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line mt-0.5 comentario-cierre-texto">
+                {{ sgcVista?.comentarioCierre }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </mat-tab>
 
@@ -286,8 +330,27 @@
       </div>
     </mat-tab>
 
+    <!-- Pestaña Seguimiento -->
+    <mat-tab label="Seguimiento" *ngIf="etapaEsEmitidaOCerrada">
+      <div class="p-6">
+        <app-seguimiento-sgc
+          [cotizacionId]="quotesId"
+          [etapa]="etapa"
+          [probabilidadPorcentaje]="sgcVista?.probabilidadPorcentaje"
+          [seguimiento]="seguimiento"
+          [acciones]="acciones"
+          [catalogos]="catalogos"
+          (recargar)="loadQuotes(quotesId)"
+        ></app-seguimiento-sgc>
+      </div>
+    </mat-tab>
+
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
+    <button *ngIf="acciones.cerrar && acciones.cerrar.length > 0" mat-raised-button color="warn" type="button" class="btn-cerrar-cotizacion" (click)="abrirCierreDialog()">
+      <mat-icon class="mr-1">lock</mat-icon>
+      Cerrar cotización
+    </button>
     <button *ngIf="acciones.emitir" mat-raised-button color="accent" type="button" class="btn-registrar-envio" (click)="abrirEmisionDialog()">
       <mat-icon class="mr-1">send</mat-icon>
       Registrar envío
