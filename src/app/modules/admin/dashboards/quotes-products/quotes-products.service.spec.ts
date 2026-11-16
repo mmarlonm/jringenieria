@@ -4,7 +4,10 @@ import { QuotesService } from './quotes-products.service';
 import { environment } from 'environments/environment';
 import {
     CatalogosSgc,
+    CierreSgcDto,
+    FiltroIndicadoresSgc,
     GuardarCotizacionSgc,
+    RegistrarSeguimientoDto,
     RespuestaObtenerSgc,
     ResumenSgc
 } from './quotes-products.types';
@@ -295,5 +298,67 @@ describe('QuotesService SGC', () => {
         const req = httpMock.expectOne(`${apiUrl}/42/sgc/versiones/2`);
         expect(req.request.method).toBe('GET');
         req.flush({ version: 2 });
+    });
+
+    it('seguimientos_hace_GET', () => {
+        service.seguimientos(42).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/seguimientos`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
+    it('registrarSeguimiento_hace_POST', () => {
+        const dto: RegistrarSeguimientoDto = {
+            tipo: 'PrimerSeguimiento',
+            notas: 'Llamada con cliente',
+            proximaAccion: 'Enviar propuesta ajustada',
+            fechaProximaAccion: '2026-11-20',
+            probabilidadPorcentaje: 70
+        };
+        service.registrarSeguimiento(42, dto).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/seguimientos`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ id: 1, etapa: 'EnSeguimiento' });
+    });
+
+    it('cerrar_hace_POST', () => {
+        const dto: CierreSgcDto = {
+            resultado: 'Ganada',
+            tipoEvidencia: 'OrdenCompra',
+            referenciaEvidencia: 'OC-1234',
+            montoVendido: 15000
+        };
+        service.cerrar(42, dto).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/42/sgc/cierre`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
+        req.flush({ etapa: 'Ganada', fechaCierre: '2026-11-16T18:00:00Z' });
+    });
+
+    it('indicadores_manda_el_rango_y_omite_filtros_vacios', () => {
+        const filtroConVacios: FiltroIndicadoresSgc = {
+            desde: '2026-11-01',
+            hasta: '2026-11-30',
+            tipo: '',
+            unidadDeNegocioId: null
+        };
+        service.indicadores(filtroConVacios).subscribe();
+        const req = httpMock.expectOne(`${apiUrl}/indicadores?desde=2026-11-01&hasta=2026-11-30`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.has('tipo')).toBeFalse();
+        expect(req.request.params.has('unidadDeNegocioId')).toBeFalse();
+        req.flush({ emitidas: 0 });
+
+        const filtroLleno: FiltroIndicadoresSgc = {
+            desde: '2026-11-01',
+            hasta: '2026-11-30',
+            tipo: 'CS',
+            unidadDeNegocioId: 3
+        };
+        service.indicadores(filtroLleno).subscribe();
+        const req2 = httpMock.expectOne(`${apiUrl}/indicadores?desde=2026-11-01&hasta=2026-11-30&tipo=CS&unidadDeNegocioId=3`);
+        expect(req2.request.method).toBe('GET');
+        req2.flush({ emitidas: 5 });
     });
 });

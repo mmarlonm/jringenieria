@@ -1360,5 +1360,36 @@ describe('QuoteDetailsComponent SGC', () => {
         5000
       );
     });
+
+    it('La_pestana_solo_aparece_si_la_cotizacion_esta_emitida_o_cerrada', () => {
+      // En etapas de borrador o revisión -> NO debe aparecer
+      component.etapa = 'Borrador';
+      fixture.detectChanges();
+      expect(component.etapaEsEmitidaOCerrada).toBeFalse();
+
+      component.etapa = 'EnRevision';
+      fixture.detectChanges();
+      expect(component.etapaEsEmitidaOCerrada).toBeFalse();
+
+      component.etapa = 'Revisada';
+      fixture.detectChanges();
+      expect(component.etapaEsEmitidaOCerrada).toBeFalse();
+
+      // En etapas emitidas o de seguimiento -> SI debe aparecer
+      component.etapa = 'Emitida';
+      fixture.detectChanges();
+      expect(component.etapaEsEmitidaOCerrada).toBeTrue();
+
+      component.etapa = 'EnSeguimiento';
+      fixture.detectChanges();
+      expect(component.etapaEsEmitidaOCerrada).toBeTrue();
+
+      // En etapas cerradas -> SI debe aparecer
+      const etapasCerradas = ['Ganada', 'Perdida', 'Cancelada', 'Vencida', 'CerradaSinRespuesta'];
+      for (const e of etapasCerradas) {
+        component.etapa = e;
+        expect(component.etapaEsEmitidaOCerrada).toBeTrue();
+      }
+    });
   });
 });

@@ -286,6 +286,21 @@
       </div>
     </mat-tab>
 
+    <!-- Pestaña Seguimiento -->
+    <mat-tab label="Seguimiento" *ngIf="etapaEsEmitidaOCerrada">
+      <div class="p-6">
+        <app-seguimiento-sgc
+          [cotizacionId]="quotesId"
+          [etapa]="etapa"
+          [probabilidadPorcentaje]="sgcVista?.probabilidadPorcentaje"
+          [seguimiento]="seguimiento"
+          [acciones]="acciones"
+          [catalogos]="catalogos"
+          (recargar)="loadQuotes(quotesId)"
+        ></app-seguimiento-sgc>
+      </div>
+    </mat-tab>
+
   </mat-tab-group>
   <div class="sticky bottom-0 py-2 flex justify-end gap-2 btn-float z-99">
     <button *ngIf="acciones.emitir" mat-raised-button color="accent" type="button" class="btn-registrar-envio" (click)="abrirEmisionDialog()">

@@ -44,6 +44,7 @@ import { EtapaChipComponent, nombreEtapa } from "../sgc/etapa-chip/etapa-chip.co
 import { RequerimientoSgcComponent } from "../sgc/requerimiento-sgc/requerimiento-sgc.component";
 import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component";
 import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.component";
+import { SeguimientoSgcComponent } from "../sgc/seguimiento-sgc/seguimiento-sgc.component";
 import { EmisionDialogComponent } from "../sgc/emision-dialog/emision-dialog.component";
 import Swal from 'sweetalert2';
 import {
@@ -51,9 +52,11 @@ import {
   CatalogosSgc,
   CotizacionSgcCabecera,
   CotizacionSgcDatos,
+  CotizacionSgcVista,
   GuardarCotizacionSgc,
   PartidaSgc,
   RequerimientoResumen,
+  ResumenSeguimiento,
   RevisionSgc,
   TotalesSgc
 } from "../quotes-products.types";
@@ -87,6 +90,7 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     RequerimientoSgcComponent,
     RevisionSgcComponent,
     VersionesSgcComponent,
+    SeguimientoSgcComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -155,6 +159,13 @@ export class QuoteDetailsComponent implements OnInit {
     margenBajo: false,
     partidasSinCosto: 0,
   };
+
+  sgcVista: CotizacionSgcVista | null = null;
+  seguimiento: ResumenSeguimiento | null = null;
+
+  get etapaEsEmitidaOCerrada(): boolean {
+    return ['Emitida', 'EnSeguimiento', 'Ganada', 'Perdida', 'Cancelada', 'Vencida', 'CerradaSinRespuesta'].includes(this.etapa);
+  }
 
   get mensajeFranjaSoloLectura(): string {
     return `Esta cotización está «${nombreEtapa(this.etapa)}» (v${this.version || 1}) y no se puede editar.`;
@@ -360,6 +371,8 @@ export class QuoteDetailsComponent implements OnInit {
         this.vinculoRequerimientoRemovido = false;
         this.revisionesVigentes = sgcRes.revisiones || [];
         this.revisionesRequeridas = sgcRes.revisionesRequeridas || [];
+        this.sgcVista = sgcRes.sgc || null;
+        this.seguimiento = sgcRes.seguimiento || null;
 
         this.acciones = sgcRes.acciones || {
           editar: true,

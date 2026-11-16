@@ -17,7 +17,13 @@ import {
   NuevaVersionDto,
   NuevaVersionResultado,
   VersionSgcItem,
-  VersionSgcDetalle
+  VersionSgcDetalle,
+  SeguimientoItemSgc,
+  RegistrarSeguimientoDto,
+  CierreSgcDto,
+  CierreResultado,
+  FiltroIndicadoresSgc,
+  IndicadoresSgc
 } from './quotes-products.types';
 import { ContpaqiMaterialDto } from 'app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types';
 import { agruparExistencias } from 'app/shared/materiales/existencias.utils';
@@ -153,5 +159,30 @@ export class QuotesService {
 
   version(id: number, n: number): Observable<VersionSgcDetalle> {
     return this.http.get<VersionSgcDetalle>(`${this.apiUrl}/${id}/sgc/versiones/${n}`);
+  }
+
+  seguimientos(id: number): Observable<SeguimientoItemSgc[]> {
+    return this.http.get<SeguimientoItemSgc[]>(`${this.apiUrl}/${id}/sgc/seguimientos`);
+  }
+
+  registrarSeguimiento(id: number, dto: RegistrarSeguimientoDto): Observable<{ id: number; etapa: string }> {
+    return this.http.post<{ id: number; etapa: string }>(`${this.apiUrl}/${id}/sgc/seguimientos`, dto);
+  }
+
+  cerrar(id: number, dto: CierreSgcDto): Observable<CierreResultado> {
+    return this.http.post<CierreResultado>(`${this.apiUrl}/${id}/sgc/cierre`, dto);
+  }
+
+  indicadores(filtro: FiltroIndicadoresSgc): Observable<IndicadoresSgc> {
+    let params = new HttpParams()
+      .set('desde', filtro.desde)
+      .set('hasta', filtro.hasta);
+    if (filtro.tipo) {
+      params = params.set('tipo', filtro.tipo);
+    }
+    if (filtro.unidadDeNegocioId !== undefined && filtro.unidadDeNegocioId !== null && filtro.unidadDeNegocioId !== 0) {
+      params = params.set('unidadDeNegocioId', filtro.unidadDeNegocioId.toString());
+    }
+    return this.http.get<IndicadoresSgc>(`${this.apiUrl}/indicadores`, { params });
   }
 }
