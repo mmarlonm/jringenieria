@@ -55,6 +55,8 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     'requisitosEspeciales',
     'total',
     'etapa',
+    'probabilidad',
+    'proximaAccion',
     'vigencia',
     'envio',
     'responsable',
@@ -71,6 +73,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
 
   todasLasQuotesDePagina: any[] = [];
   filtroEtapa: string = 'todas';
+  filtroMarcas: string = 'todas';
   etapasFiltro: { codigo: string; nombre: string }[] = [
     { codigo: 'Borrador', nombre: 'Borrador' },
     { codigo: 'EnRevision', nombre: 'En revisión' },
@@ -164,6 +167,10 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
                     q.fechaVencimiento = r.fechaVencimiento;
                     q.creadoPorNombre = r.creadoPorNombre;
                     q.requerimientoFolio = r.requerimientoFolio;
+                    q.seguimientoAtrasado = r.seguimientoAtrasado;
+                    q.vencida = r.vencida;
+                    q.probabilidadPorcentaje = r.probabilidadPorcentaje;
+                    q.proximaAccionFecha = r.proximaAccionFecha;
                   }
                 });
                 this.todasLasQuotesDePagina = [...quotes];
@@ -310,14 +317,45 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     this._changeDetectorRef.markForCheck();
   }
 
-  private aplicarFiltroEtapaInterno(): void {
-    if (!this.filtroEtapa || this.filtroEtapa === 'todas') {
-      this.dataSource.data = [...this.todasLasQuotesDePagina];
-    } else {
-      this.dataSource.data = this.todasLasQuotesDePagina.filter(
-        (q) => q.etapa === this.filtroEtapa
-      );
+  filtrarPorMarcas(marcas: string): void {
+    this.filtroMarcas = marcas;
+    if (!this.todasLasQuotesDePagina || this.todasLasQuotesDePagina.length === 0) {
+      this.todasLasQuotesDePagina = [...this.dataSource.data];
     }
+    this.aplicarFiltroEtapaInterno();
+    this._changeDetectorRef.markForCheck();
+  }
+
+  irAIndicadores(): void {
+    this.router.navigate(['/dashboards/quote-products/indicadores']);
+  }
+
+  formatearFechaSoloDia(fechaStr?: string | Date | null): string {
+    if (!fechaStr) {
+      return '—';
+    }
+    const parte = String(fechaStr).substring(0, 10);
+    const pedazos = parte.split('-');
+    if (pedazos.length === 3) {
+      return `${pedazos[2]}/${pedazos[1]}/${pedazos[0]}`;
+    }
+    return parte;
+  }
+
+  private aplicarFiltroEtapaInterno(): void {
+    let filtradas = [...this.todasLasQuotesDePagina];
+
+    if (this.filtroEtapa && this.filtroEtapa !== 'todas') {
+      filtradas = filtradas.filter((q) => q.etapa === this.filtroEtapa);
+    }
+
+    if (this.filtroMarcas === 'vencidas') {
+      filtradas = filtradas.filter((q) => !!q.vencida);
+    } else if (this.filtroMarcas === 'atrasadas') {
+      filtradas = filtradas.filter((q) => !!q.seguimientoAtrasado);
+    }
+
+    this.dataSource.data = filtradas;
   }
 
   async deleteQuote(projectId: number) {

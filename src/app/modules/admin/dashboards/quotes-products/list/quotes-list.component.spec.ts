@@ -238,4 +238,80 @@ describe('QuoteListComponent', () => {
       5000
     );
   });
+
+  it('La_lista_muestra_probabilidad_y_proxima_accion', () => {
+    expect(component.displayedColumns).toContain('probabilidad');
+    expect(component.displayedColumns).toContain('proximaAccion');
+
+    // Asignar datos con probabilidad y próxima acción
+    const quote = {
+      cotizacionProductosId: 101,
+      nombreCliente: 'Cliente Alpha',
+      probabilidadPorcentaje: 85,
+      proximaAccionFecha: '2026-11-20T00:00:00',
+      total: 1000,
+    };
+    component.dataSource.data = [quote];
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('85%');
+    expect(compiled.textContent).toContain('20/11/2026');
+  });
+
+  it('Las_marcas_de_vencida_y_atraso_aparecen_donde_corresponden', () => {
+    component.dataSource.data = [
+      {
+        cotizacionProductosId: 101,
+        etapa: 'Emitida',
+        vencida: true,
+        seguimientoAtrasado: false,
+      },
+      {
+        cotizacionProductosId: 102,
+        etapa: 'EnSeguimiento',
+        vencida: false,
+        seguimientoAtrasado: true,
+      },
+    ];
+    fixture.detectChanges();
+
+    const marcaVencida = fixture.nativeElement.querySelector('.marca-vencida');
+    expect(marcaVencida).not.toBeNull();
+    expect(marcaVencida.textContent).toContain('Vencida por cerrar');
+
+    const marcaAtraso = fixture.nativeElement.querySelector('.marca-atraso');
+    expect(marcaAtraso).not.toBeNull();
+    expect(marcaAtraso.textContent).toContain('Seguimiento atrasado');
+  });
+
+  it('El_filtro_de_marcas_filtra_las_filas_cargadas', () => {
+    component.todasLasQuotesDePagina = [
+      { cotizacionProductosId: 1, etapa: 'Emitida', vencida: true, seguimientoAtrasado: false },
+      { cotizacionProductosId: 2, etapa: 'EnSeguimiento', vencida: false, seguimientoAtrasado: true },
+      { cotizacionProductosId: 3, etapa: 'Emitida', vencida: false, seguimientoAtrasado: false },
+    ];
+    component.dataSource.data = [...component.todasLasQuotesDePagina];
+
+    component.filtrarPorMarcas('vencidas');
+    expect(component.dataSource.data.length).toBe(1);
+    expect(component.dataSource.data[0].cotizacionProductosId).toBe(1);
+
+    component.filtrarPorMarcas('atrasadas');
+    expect(component.dataSource.data.length).toBe(1);
+    expect(component.dataSource.data[0].cotizacionProductosId).toBe(2);
+
+    component.filtrarPorMarcas('todas');
+    expect(component.dataSource.data.length).toBe(3);
+  });
+
+  it('El_boton_Indicadores_navega_a_la_ruta_de_indicadores', () => {
+    component.irAIndicadores();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboards/quote-products/indicadores']);
+
+    const btnIndicadores = fixture.nativeElement.querySelector('.btn-indicadores');
+    expect(btnIndicadores).not.toBeNull();
+    btnIndicadores.click();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboards/quote-products/indicadores']);
+  });
 });
