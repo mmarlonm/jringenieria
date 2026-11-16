@@ -1,0 +1,356 @@
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Cabecera -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <button mat-icon-button (click)="router.navigate(['/dashboards/quote-products'])" title="Volver a la lista">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Indicadores de Cotizaciones SGC
+        </h1>
+      </div>
+      <p class="text-sm text-gray-500 ml-10">
+        Procedimiento SGC-PRO-COM-03 (Sección 10): tiempos, plazos, conversión, montos y motivos.
+      </p>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+      <!-- Desde -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Desde</mat-label>
+        <input matInput type="date" [(ngModel)]="desde" required class="input-desde" />
+      </mat-form-field>
+
+      <!-- Hasta -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Hasta</mat-label>
+        <input matInput type="date" [(ngModel)]="hasta" required class="input-hasta" />
+      </mat-form-field>
+
+      <!-- Tipo -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Tipo</mat-label>
+        <mat-select [(ngModel)]="tipo" class="select-tipo">
+          <mat-option *ngFor="let t of tiposDisponibles" [value]="t.codigo">
+            {{ t.nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Sucursal / Unidad de Negocio -->
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Sucursal</mat-label>
+        <mat-select [(ngModel)]="unidadDeNegocioId" class="select-sucursal">
+          <mat-option [value]="null">Todas las sucursales</mat-option>
+          <mat-option *ngFor="let u of unidadesDeNegocio" [value]="u.id">
+            {{ u.nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Botón Consultar -->
+      <div class="flex items-center">
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          (click)="consultar()"
+          [disabled]="cargando || !desde || !hasta"
+          class="w-full h-12 btn-consultar"
+        >
+          <mat-icon class="mr-1">search</mat-icon>
+          {{ cargando ? 'Consultando...' : 'Consultar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error del API (400) -->
+  <div *ngIf="errorMensaje && !errorRed" class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm mensaje-error-api">
+    <div class="flex items-center gap-2">
+      <mat-icon>error_outline</mat-icon>
+      <span class="font-medium">{{ errorMensaje }}</span>
+    </div>
+  </div>
+
+  <!-- Error de Red con Reintentar -->
+  <div *ngIf="errorRed" class="p-6 bg-red-50 border border-red-200 rounded-xl text-center space-y-3 mensaje-error-red">
+    <mat-icon class="text-red-500 text-4xl">cloud_off</mat-icon>
+    <div class="text-sm font-semibold text-red-800">
+      {{ errorMensaje }}
+    </div>
+    <div>
+      <button mat-stroked-button color="warn" type="button" (click)="consultar()" class="btn-reintentar">
+        <mat-icon class="mr-1">refresh</mat-icon>
+        Reintentar
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de Carga -->
+  <div *ngIf="cargando" class="text-center py-12 text-gray-500">
+    <mat-icon class="animate-spin text-3xl mb-2">autorenew</mat-icon>
+    <div>Cargando indicadores...</div>
+  </div>
+
+  <!-- Contenido Principal cuando hay datos -->
+  <div *ngIf="!cargando && indicadores" class="space-y-6 contenedor-indicadores">
+
+    <!-- Tarjetas de Conteo Principal (10.2) -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <!-- Emitidas -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm tarjeta-emitidas">
+        <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Emitidas</div>
+        <div class="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100 valor-tarjeta">
+          {{ indicadores.emitidas }}
+        </div>
+      </div>
+
+      <!-- Ganadas -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-green-200 dark:border-green-900/50 bg-green-50/20 shadow-sm tarjeta-ganadas">
+        <div class="text-xs font-medium text-green-700 dark:text-green-400 uppercase tracking-wider">Ganadas</div>
+        <div class="mt-2 text-2xl font-bold text-green-700 dark:text-green-400 valor-tarjeta">
+          {{ indicadores.ganadas }}
+        </div>
+      </div>
+
+      <!-- No ganadas (Perdidas, Canceladas, Vencidas, Sin respuesta) -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm tarjeta-no-ganadas">
+        <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Cerradas no ganadas</div>
+        <div class="mt-2 text-2xl font-bold text-gray-800 dark:text-gray-200 valor-tarjeta">
+          {{ totalCerradasNoGanadas() }}
+        </div>
+        <div class="text-[11px] text-gray-500 mt-1">
+          Per: {{ indicadores.perdidas }} · Canc: {{ indicadores.canceladas }} · Venc: {{ indicadores.vencidas }} · SinResp: {{ indicadores.cerradasSinRespuesta }}
+        </div>
+      </div>
+
+      <!-- Abiertas -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/20 shadow-sm tarjeta-abiertas">
+        <div class="text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider">Abiertas</div>
+        <div class="mt-2 text-2xl font-bold text-blue-700 dark:text-blue-400 valor-tarjeta">
+          {{ indicadores.abiertas }}
+        </div>
+      </div>
+
+      <!-- Tasa de Conversión -->
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-50/20 shadow-sm tarjeta-conversion">
+        <div class="text-xs font-medium text-purple-700 dark:text-purple-400 uppercase tracking-wider">Conversión</div>
+        <div class="mt-2 text-2xl font-bold text-purple-700 dark:text-purple-400 valor-tarjeta">
+          {{ formatearNumero(indicadores.tasaConversionPorcentaje, '%') }}
+        </div>
+        <div class="text-[11px] text-gray-500 mt-1">
+          Ganadas / Emitidas
+        </div>
+      </div>
+    </div>
+
+    <!-- Tablas Sección 1: Tiempos y Plazos de Emisión -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Tiempo Promedio de Emisión (10.1) -->
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm tabla-tiempos">
+        <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <mat-icon class="text-blue-600">schedule</mat-icon>
+          Tiempo promedio de emisión (horas)
+        </h3>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-xs text-gray-500 text-left">
+              <th class="py-2">Tipo de cotización</th>
+              <th class="py-2 text-right">Promedio</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <tr>
+              <td class="py-2.5 font-medium">Comercial simple (CS)</td>
+              <td class="py-2.5 text-right font-semibold">
+                {{ formatearNumero(indicadores.tiempoPromedioEmisionHoras.cs, ' h') }}
+              </td>
+            </tr>
+            <tr>
+              <td class="py-2.5 font-medium">Comercial técnica (CT)</td>
+              <td class="py-2.5 text-right font-semibold">
+                {{ formatearNumero(indicadores.tiempoPromedioEmisionHoras.ct, ' h') }}
+              </td>
+            </tr>
+            <tr>
+              <td class="py-2.5 font-medium">Comercial especial (CE)</td>
+              <td class="py-2.5 text-right font-semibold">
+                {{ formatearNumero(indicadores.tiempoPromedioEmisionHoras.ce, ' h') }}
+              </td>
+            </tr>
+            <tr class="font-bold bg-gray-50 dark:bg-gray-900/50">
+              <td class="py-2.5">Promedio general</td>
+              <td class="py-2.5 text-right">
+                {{ formatearNumero(indicadores.tiempoPromedioEmisionHoras.general, ' h') }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- % en Plazo por Tipo (10.3 - 10.5) -->
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm tabla-plazos">
+        <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <mat-icon class="text-green-600">timelapse</mat-icon>
+          Emisión en plazo por tipo (Meta &ge; 90%)
+        </h3>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-xs text-gray-500 text-left">
+              <th class="py-2">Tipo</th>
+              <th class="py-2 text-center">Plazo</th>
+              <th class="py-2 text-center">En plazo / Total</th>
+              <th class="py-2 text-right">Cumplimiento</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <!-- CS -->
+            <tr>
+              <td class="py-2.5 font-medium">CS</td>
+              <td class="py-2.5 text-center text-xs text-gray-500">24 h</td>
+              <td class="py-2.5 text-center text-xs">
+                {{ indicadores.enTiempo.cs?.enPlazo ?? 0 }} / {{ indicadores.enTiempo.cs?.emitidas ?? 0 }}
+              </td>
+              <td class="py-2.5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <span class="font-semibold">{{ formatearNumero(indicadores.enTiempo.cs?.porcentaje, '%') }}</span>
+                  <div *ngIf="indicadores.enTiempo.cs?.porcentaje !== null && indicadores.enTiempo.cs?.porcentaje !== undefined" class="w-16 bg-gray-200 rounded-full h-2">
+                    <div
+                      class="h-2 rounded-full barra-plazo"
+                      [style.width.%]="indicadores.enTiempo.cs?.porcentaje"
+                      [ngClass]="indicadores.enTiempo.cs!.porcentaje! >= 90 ? 'bg-green-600' : 'bg-amber-500'"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- CT -->
+            <tr>
+              <td class="py-2.5 font-medium">CT</td>
+              <td class="py-2.5 text-center text-xs text-gray-500">120 h</td>
+              <td class="py-2.5 text-center text-xs">
+                {{ indicadores.enTiempo.ct?.enPlazo ?? 0 }} / {{ indicadores.enTiempo.ct?.emitidas ?? 0 }}
+              </td>
+              <td class="py-2.5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <span class="font-semibold">{{ formatearNumero(indicadores.enTiempo.ct?.porcentaje, '%') }}</span>
+                  <div *ngIf="indicadores.enTiempo.ct?.porcentaje !== null && indicadores.enTiempo.ct?.porcentaje !== undefined" class="w-16 bg-gray-200 rounded-full h-2">
+                    <div
+                      class="h-2 rounded-full barra-plazo"
+                      [style.width.%]="indicadores.enTiempo.ct?.porcentaje"
+                      [ngClass]="indicadores.enTiempo.ct!.porcentaje! >= 90 ? 'bg-green-600' : 'bg-amber-500'"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <!-- CE -->
+            <tr>
+              <td class="py-2.5 font-medium">CE</td>
+              <td class="py-2.5 text-center text-xs text-gray-500">336 h</td>
+              <td class="py-2.5 text-center text-xs">
+                {{ indicadores.enTiempo.ce?.enPlazo ?? 0 }} / {{ indicadores.enTiempo.ce?.emitidas ?? 0 }}
+              </td>
+              <td class="py-2.5 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <span class="font-semibold">{{ formatearNumero(indicadores.enTiempo.ce?.porcentaje, '%') }}</span>
+                  <div *ngIf="indicadores.enTiempo.ce?.porcentaje !== null && indicadores.enTiempo.ce?.porcentaje !== undefined" class="w-16 bg-gray-200 rounded-full h-2">
+                    <div
+                      class="h-2 rounded-full barra-plazo"
+                      [style.width.%]="indicadores.enTiempo.ce?.porcentaje"
+                      [ngClass]="indicadores.enTiempo.ce!.porcentaje! >= 90 ? 'bg-green-600' : 'bg-amber-500'"
+                    ></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tablas Sección 2: Montos y Motivos de Pérdida -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Montos Cotizados vs Vendidos por Moneda (10.6) -->
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm tabla-montos">
+        <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <mat-icon class="text-amber-600">monetization_on</mat-icon>
+          Monto cotizado vs vendido por moneda
+        </h3>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-xs text-gray-500 text-left">
+              <th class="py-2">Moneda</th>
+              <th class="py-2 text-right">Cotizado</th>
+              <th class="py-2 text-right">Vendido</th>
+              <th class="py-2 text-right">Captación</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <tr *ngIf="!indicadores.montos || indicadores.montos.length === 0">
+              <td colspan="4" class="py-3 text-center text-gray-400 italic">
+                Sin montos registrados en el periodo
+              </td>
+            </tr>
+            <tr *ngFor="let m of indicadores.montos" class="fila-monto">
+              <td class="py-2.5 font-bold">{{ m.moneda }}</td>
+              <td class="py-2.5 text-right text-gray-600 dark:text-gray-400">
+                {{ m.cotizado | currency:m.moneda:'symbol':'1.2-2' }}
+              </td>
+              <td class="py-2.5 text-right font-semibold text-green-700 dark:text-green-400">
+                {{ m.vendido | currency:m.moneda:'symbol':'1.2-2' }}
+              </td>
+              <td class="py-2.5 text-right font-bold text-gray-900 dark:text-gray-100">
+                {{ formatearNumero(m.captacionPorcentaje, '%') }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Motivos de Pérdida (10.7) -->
+      <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm tabla-motivos">
+        <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <mat-icon class="text-red-600">pie_chart</mat-icon>
+          Motivos de no aceptación / pérdida
+        </h3>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-xs text-gray-500 text-left">
+              <th class="py-2">Motivo</th>
+              <th class="py-2 text-right">Cantidad</th>
+              <th class="py-2 w-1/3">Proporción</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <tr *ngIf="!indicadores.motivosPerdida || indicadores.motivosPerdida.length === 0">
+              <td colspan="3" class="py-3 text-center text-gray-400 italic">
+                Sin cotizaciones no ganadas en el periodo
+              </td>
+            </tr>
+            <tr *ngFor="let mp of indicadores.motivosPerdida" class="fila-motivo">
+              <td class="py-2.5 font-medium">{{ nombreMotivo(mp.motivo) }}</td>
+              <td class="py-2.5 text-right font-bold">{{ mp.cantidad }}</td>
+              <td class="py-2.5">
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                  <div
+                    class="bg-blue-600 h-2.5 rounded-full barra-motivo"
+                    [style.width.%]="porcentajeBarraMotivo(mp.cantidad)"
+                  ></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
