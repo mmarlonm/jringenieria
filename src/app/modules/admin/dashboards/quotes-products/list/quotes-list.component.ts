@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { QuotesService } from '../quotes-products.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -15,8 +15,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatMenuTrigger, MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
@@ -40,12 +38,10 @@ import moment from 'moment';
     FormsModule,
     MatMenuModule,
     MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     EtapaChipComponent
   ]
 })
-export class QuoteListComponent implements OnInit, AfterViewInit {
+export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   displayedColumns: string[] = [
     'cotizacionProductosId',
     'tipo',
@@ -91,7 +87,13 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
   pageSize: number = 10;
   pageIndex: number = 0;
   totalItems: number = 0;
-  filtroFecha: Date = new Date();
+  // Rango de fechas de creación (inclusivas): del primer día del mes en curso a hoy. Texto yyyy-MM-dd, como lo maneja
+  // <input type="date">; guardado en propiedades (no en getters que creen fechas en cada lectura).
+  fechaDesde: string = moment().startOf('month').format('YYYY-MM-DD');
+  fechaHasta: string = moment().format('YYYY-MM-DD');
+  errorFechas: string | null = null;
+  private temporizadorFechas: any = null;
+  private solicitudListado = 0;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatMenuTrigger) menuTrigger: MatMenuTrigger;  // Añadir la referencia a MatMenuTrigger
@@ -128,70 +130,126 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     // No asignamos paginator/sort aquí para evitar que Material sobrescriba la paginación del servidor
   }
 
+  ngOnDestroy(): void {
+    clearTimeout(this.temporizadorFechas);
+  }
+
   getQuotes(): void {
-    const fechaString = moment(this.filtroFecha).format('YYYY-MM-DD');
-    this.quotesService.getQuotes(this.pageIndex + 1, this.pageSize, fechaString).subscribe((res: any) => {
-      if (res && res.code == 200) {
-        const quotes = res.data;
-        this.totalItems = res.totalCount || res.count || quotes.length;
-        this.todasLasQuotesDePagina = [...quotes];
-        this.aplicarFiltroEtapaInterno();
-        this.quotesCount = this.totalItems;
+    this.errorFechas = this.validarFechas();
+    if (this.errorFechas) {
+      return;
+    }
 
-        this.filterOptions.unidadDeNegocioNombre = [...new Set(
-          quotes
-            .map((quote: any) => quote.unidadDeNegocio?.nombre)
-            .filter((nombre: any) => nombre !== null && nombre !== undefined)
-        )];
+    // Si llegan respuestas fuera de orden (se cambió la fecha mientras la anterior aún cargaba), solo vale la última
+    const solicitud = ++this.solicitudListado;
+    this.quotesService
+      .getQuotesPorRango(this.pageIndex + 1, this.pageSize, this.fechaDesde || null, this.fechaHasta || null)
+      .subscribe({
+        next: (res: any) => {
+          if (solicitud !== this.solicitudListado) {
+            return;
+          }
+          if (res && res.code == 200) {
+            const quotes = res.data;
+            this.totalItems = res.totalCount || res.count || quotes.length;
+            this.todasLasQuotesDePagina = [...quotes];
+            this.aplicarFiltroEtapaInterno();
+            this.quotesCount = this.totalItems;
 
-        const ids = quotes
-          .map((quote: any) => quote.cotizacionProductosId)
-          .filter((id: any) => id != null && id > 0);
+            this.filterOptions.unidadDeNegocioNombre = [...new Set(
+              quotes
+                .map((quote: any) => quote.unidadDeNegocio?.nombre)
+                .filter((nombre: any) => nombre !== null && nombre !== undefined)
+            )];
 
-        if (ids.length > 0) {
-          this.quotesService.resumenSgc(ids).subscribe({
-            next: (resumenes) => {
-              if (resumenes && resumenes.length > 0) {
-                const mapResumen = new Map(resumenes.map((r) => [r.cotizacionProductosId, r]));
-                quotes.forEach((q: any) => {
-                  const r = mapResumen.get(q.cotizacionProductosId);
-                  if (r) {
-                    q.tieneSgc = true;
-                    q.folio = r.folio;
-                    q.tipo = r.tipo;
-                    q.version = r.version;
-                    q.totalSgc = r.total;
-                    q.moneda = r.moneda;
-                    q.etapa = r.etapa;
-                    q.fechaEmision = r.fechaEmision;
-                    q.fechaVencimiento = r.fechaVencimiento;
-                    q.creadoPorNombre = r.creadoPorNombre;
-                    q.requerimientoFolio = r.requerimientoFolio;
-                    q.seguimientoAtrasado = r.seguimientoAtrasado;
-                    q.vencida = r.vencida;
-                    q.probabilidadPorcentaje = r.probabilidadPorcentaje;
-                    q.proximaAccionFecha = r.proximaAccionFecha;
+            const ids = quotes
+              .map((quote: any) => quote.cotizacionProductosId)
+              .filter((id: any) => id != null && id > 0);
+
+            if (ids.length > 0) {
+              this.quotesService.resumenSgc(ids).subscribe({
+                next: (resumenes) => {
+                  if (solicitud !== this.solicitudListado) {
+                    return;
                   }
-                });
-                this.todasLasQuotesDePagina = [...quotes];
-                this.aplicarFiltroEtapaInterno();
-                this._changeDetectorRef.markForCheck();
-              }
-            },
-            error: () => {
-              this.errorResumenSgc = true;
-              this._chatNotificationService.showWarning(
-                'Aviso',
-                'No se pudo cargar el resumen del SGC. Mostrando datos locales.'
-              );
-              this._changeDetectorRef.markForCheck();
-            },
-          });
-        }
+                  if (resumenes && resumenes.length > 0) {
+                    const mapResumen = new Map(resumenes.map((r) => [r.cotizacionProductosId, r]));
+                    quotes.forEach((q: any) => {
+                      const r = mapResumen.get(q.cotizacionProductosId);
+                      if (r) {
+                        q.tieneSgc = true;
+                        q.folio = r.folio;
+                        q.tipo = r.tipo;
+                        q.version = r.version;
+                        q.totalSgc = r.total;
+                        q.moneda = r.moneda;
+                        q.etapa = r.etapa;
+                        q.fechaEmision = r.fechaEmision;
+                        q.fechaVencimiento = r.fechaVencimiento;
+                        q.creadoPorNombre = r.creadoPorNombre;
+                        q.requerimientoFolio = r.requerimientoFolio;
+                        q.seguimientoAtrasado = r.seguimientoAtrasado;
+                        q.vencida = r.vencida;
+                        q.probabilidadPorcentaje = r.probabilidadPorcentaje;
+                        q.proximaAccionFecha = r.proximaAccionFecha;
+                      }
+                    });
+                    this.todasLasQuotesDePagina = [...quotes];
+                    this.aplicarFiltroEtapaInterno();
+                    this._changeDetectorRef.markForCheck();
+                  }
+                },
+                error: () => {
+                  if (solicitud !== this.solicitudListado) {
+                    return;
+                  }
+                  this.errorResumenSgc = true;
+                  this._chatNotificationService.showWarning(
+                    'Aviso',
+                    'No se pudo cargar el resumen del SGC. Mostrando datos locales.'
+                  );
+                  this._changeDetectorRef.markForCheck();
+                },
+              });
+            }
 
-        this._changeDetectorRef.markForCheck();
+            this._changeDetectorRef.markForCheck();
+          } else {
+            this.mostrarErrorListado(res?.message);
+          }
+        },
+        error: () => {
+          if (solicitud === this.solicitudListado) {
+            this.mostrarErrorListado(null);
+          }
+        },
+      });
+  }
+
+  // Nunca en silencio: un listado que no cargó se avisa y deja la lista vacía (no la de otro rango)
+  private mostrarErrorListado(mensaje?: string | null): void {
+    this._chatNotificationService.showError('Error', mensaje || 'No se pudo cargar la lista de cotizaciones.', 5000);
+    this.todasLasQuotesDePagina = [];
+    this.dataSource.data = [];
+    this.totalItems = 0;
+    this.quotesCount = 0;
+    this._changeDetectorRef.markForCheck();
+  }
+
+  private validarFechas(): string | null {
+    for (const f of [this.fechaDesde, this.fechaHasta]) {
+      if (!f) {
+        continue;
       }
-    });
+      const m = moment(f, 'YYYY-MM-DD', true);
+      if (!m.isValid() || m.year() < 2000 || m.year() > 2100) {
+        return 'Escribe fechas válidas (año entre 2000 y 2100).';
+      }
+    }
+    if (this.fechaDesde && this.fechaHasta && this.fechaDesde > this.fechaHasta) {
+      return 'La fecha inicial no puede ser posterior a la fecha final.';
+    }
+    return null;
   }
 
   onPageChange(event: any): void {
@@ -200,9 +258,13 @@ export class QuoteListComponent implements OnInit, AfterViewInit {
     this.getQuotes();
   }
 
+  // Un <input type="date"> avisa en cada dígito que se teclea: se espera a que la persona termine antes de pedir
   onDateChange(): void {
-    this.pageIndex = 0;
-    this.getQuotes();
+    clearTimeout(this.temporizadorFechas);
+    this.temporizadorFechas = setTimeout(() => {
+      this.pageIndex = 0;
+      this.getQuotes();
+    }, 400);
   }
 
   getEstatus(): void {

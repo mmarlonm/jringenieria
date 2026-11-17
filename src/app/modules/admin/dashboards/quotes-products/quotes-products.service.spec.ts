@@ -361,4 +361,25 @@ describe('QuotesService SGC', () => {
         expect(req2.request.method).toBe('GET');
         req2.flush({ emitidas: 5 });
     });
+
+    it('getQuotesPorRango_hace_GET_a_listado_con_page_size_desde_y_hasta', () => {
+        service.getQuotesPorRango(2, 10, '2026-11-01', '2026-11-17').subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${apiUrl}/listado`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('page')).toBe('2');
+        expect(req.request.params.get('size')).toBe('10');
+        expect(req.request.params.get('desde')).toBe('2026-11-01');
+        expect(req.request.params.get('hasta')).toBe('2026-11-17');
+        req.flush({ code: 200, data: [], totalCount: 0 });
+    });
+
+    it('getQuotesPorRango_omite_las_fechas_vacias', () => {
+        service.getQuotesPorRango(1, 10, null, '').subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${apiUrl}/listado`);
+        expect(req.request.params.has('desde')).toBeFalse();
+        expect(req.request.params.has('hasta')).toBeFalse();
+        req.flush({ code: 200, data: [], totalCount: 0 });
+    });
 });

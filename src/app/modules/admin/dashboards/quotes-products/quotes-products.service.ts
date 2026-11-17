@@ -51,6 +51,19 @@ export class QuotesService {
     return this.http.get<any>(this.apiUrl, { params });
   }
 
+  // Listado por rango de fechas de creación (inclusivas): GET listado. El API devuelve { code, message, data, totalCount }.
+  // Una fecha vacía deja ese extremo abierto.
+  getQuotesPorRango(page: number, size: number, desde?: string | null, hasta?: string | null): Observable<any> {
+    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    if (desde) {
+      params = params.set('desde', desde);
+    }
+    if (hasta) {
+      params = params.set('hasta', hasta);
+    }
+    return this.http.get<any>(`${this.apiUrl}/listado`, { params });
+  }
+
   // Obtener una cotización por ID
   getQuoteById(id: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${id}`);

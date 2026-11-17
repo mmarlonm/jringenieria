@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { QuoteListComponent } from './quotes-list.component';
 import { QuotesService } from '../quotes-products.service';
@@ -58,7 +58,8 @@ describe('QuoteListComponent', () => {
 
   beforeEach(async () => {
     mockQuotesService = {
-      getQuotes: jasmine.createSpy('getQuotes').and.returnValue(
+      getQuotes: jasmine.createSpy('getQuotes'),
+      getQuotesPorRango: jasmine.createSpy('getQuotesPorRango').and.returnValue(
         of({
           code: 200,
           data: JSON.parse(JSON.stringify(mockQuotesData)),
@@ -313,5 +314,199 @@ describe('QuoteListComponent', () => {
     expect(btnIndicadores).not.toBeNull();
     btnIndicadores.click();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboards/quote-products/indicadores']);
+  });
+
+  describe('Filtro de fechas inicio y fin', () => {
+    const una = (id: number) => ({
+      cotizacionProductosId: id, nombreCliente: 'Cliente ' + id, unidadDeNegocio: { nombre: 'Baja Tensión' },
+      createdDate: '2026-11-14T10:00:00', requisitosEspeciales: false, total: 100, estatus: 1,
+    });
+
+    it('Las_fechas_empiezan_el_primero_del_mes_y_terminan_hoy', () => {
+      jasmine.clock().install();
+      try {
+        jasmine.clock().mockDate(new Date(2026, 10, 17, 12, 0, 0));
+        const a = TestBed.createComponent(QuoteListComponent).componentInstance;
+        expect(a.fechaDesde).toBe('2026-11-01');
+        expect(a.fechaHasta).toBe('2026-11-17');
+
+        // El primer dia del mes el rango es de un solo dia
+        jasmine.clock().mockDate(new Date(2026, 2, 1, 9, 0, 0));
+        const b = TestBed.createComponent(QuoteListComponent).componentInstance;
+        expect(b.fechaDesde).toBe('2026-03-01');
+        expect(b.fechaHasta).toBe('2026-03-01');
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    });
+
+    it('La_primera_carga_pide_el_rango_del_mes_con_la_pagina_uno', () => {
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledTimes(1);
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledWith(1, 10, component.fechaDesde, component.fechaHasta);
+      expect(mockQuotesService.getQuotes).not.toHaveBeenCalled();
+    });
+
+    it('Hay_dos_campos_de_fecha_separados_con_sus_valores', async () => {
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const desde = fixture.nativeElement.querySelector('.input-fecha-desde') as HTMLInputElement;
+      const hasta = fixture.nativeElement.querySelector('.input-fecha-hasta') as HTMLInputElement;
+
+      expect(desde.type).toBe('date');
+      expect(hasta.type).toBe('date');
+      expect(desde.value).toBe(component.fechaDesde);
+      expect(hasta.value).toBe(component.fechaHasta);
+      // Cada uno limita al otro: no se puede elegir una inicial posterior a la final desde el calendario
+      expect(desde.max).toBe(component.fechaHasta);
+      expect(hasta.min).toBe(component.fechaDesde);
+    });
+
+    it('Cambiar_una_fecha_en_pantalla_vuelve_a_pedir_con_el_rango_y_la_pagina_cero', fakeAsync(() => {
+      flushMicrotasks();
+      component.pageIndex = 3;
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      const desde = fixture.nativeElement.querySelector('.input-fecha-desde') as HTMLInputElement;
+
+      desde.value = '2026-10-01';
+      desde.dispatchEvent(new Event('input'));
+      desde.dispatchEvent(new Event('change'));
+      tick(400);
+
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledTimes(1);
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledWith(1, 10, '2026-10-01', component.fechaHasta);
+      expect(component.pageIndex).toBe(0);
+    }));
+
+    it('Cambiar_de_pagina_conserva_el_rango', () => {
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      component.fechaDesde = '2026-09-01';
+      component.fechaHasta = '2026-09-30';
+
+      component.onPageChange({ pageIndex: 2, pageSize: 20 });
+
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledWith(3, 20, '2026-09-01', '2026-09-30');
+    });
+
+    it('Teclear_varias_veces_seguidas_hace_una_sola_peticion', fakeAsync(() => {
+      mockQuotesService.getQuotesPorRango.calls.reset();
+
+      for (const f of ['2026-10-01', '2026-10-02', '2026-10-03']) {
+        component.fechaDesde = f;
+        component.onDateChange();
+        tick(100);
+      }
+      expect(mockQuotesService.getQuotesPorRango).not.toHaveBeenCalled();
+
+      tick(400);
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledTimes(1);
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledWith(1, 10, '2026-10-03', component.fechaHasta);
+    }));
+
+    it('Una_fecha_inicio_posterior_a_la_final_avisa_y_no_pide', fakeAsync(() => {
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      component.fechaDesde = '2026-11-20';
+      component.fechaHasta = '2026-11-10';
+
+      component.onDateChange();
+      tick(400);
+      fixture.detectChanges();
+
+      expect(mockQuotesService.getQuotesPorRango).not.toHaveBeenCalled();
+      expect(component.errorFechas).toBe('La fecha inicial no puede ser posterior a la fecha final.');
+      expect(fixture.nativeElement.querySelector('.error-fechas').textContent)
+        .toContain('La fecha inicial no puede ser posterior a la fecha final.');
+
+      // Al corregirla, el aviso desaparece y se pide el rango
+      component.fechaHasta = '2026-11-30';
+      component.onDateChange();
+      tick(400);
+      fixture.detectChanges();
+
+      expect(component.errorFechas).toBeNull();
+      expect(fixture.nativeElement.querySelector('.error-fechas')).toBeNull();
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledTimes(1);
+    }));
+
+    it('Un_ano_absurdo_no_se_manda_y_avisa', fakeAsync(() => {
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      component.fechaDesde = '0002-11-01';
+
+      component.onDateChange();
+      tick(400);
+
+      expect(mockQuotesService.getQuotesPorRango).not.toHaveBeenCalled();
+      expect(component.errorFechas).toBe('Escribe fechas válidas (año entre 2000 y 2100).');
+    }));
+
+    it('Vaciar_una_fecha_deja_ese_extremo_abierto', fakeAsync(() => {
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      component.fechaHasta = '';
+
+      component.onDateChange();
+      tick(400);
+
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledWith(1, 10, component.fechaDesde, null);
+      expect(component.errorFechas).toBeNull();
+    }));
+
+    it('El_total_y_el_contador_salen_del_totalCount_del_API', () => {
+      mockQuotesService.getQuotesPorRango.and.returnValue(
+        of({ code: 200, message: 'ok', data: JSON.parse(JSON.stringify(mockQuotesData)), totalCount: 37 })
+      );
+
+      component.getQuotes();
+      fixture.detectChanges();
+
+      expect(component.totalItems).toBe(37);
+      expect(component.quotesCount).toBe(37);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('37');
+    });
+
+    it('Un_error_del_API_al_listar_se_ve_en_pantalla_y_vacia_la_lista', () => {
+      mockChatService.showError.calls.reset();
+      mockQuotesService.getQuotesPorRango.and.returnValue(
+        of({ code: 500, message: 'Error al obtener cotizaciones: tiempo agotado', data: [] })
+      );
+
+      component.getQuotes();
+
+      expect(mockChatService.showError).toHaveBeenCalledWith('Error', 'Error al obtener cotizaciones: tiempo agotado', 5000);
+      expect(component.dataSource.data.length).toBe(0);
+
+      mockChatService.showError.calls.reset();
+      mockQuotesService.getQuotesPorRango.and.returnValue(throwError(() => ({ status: 0 })));
+      component.getQuotes();
+
+      expect(mockChatService.showError).toHaveBeenCalledWith('Error', 'No se pudo cargar la lista de cotizaciones.', 5000);
+    });
+
+    it('Una_respuesta_vieja_no_pisa_a_la_nueva', () => {
+      const a = new Subject<any>();
+      const b = new Subject<any>();
+      mockQuotesService.getQuotesPorRango.and.returnValues(a.asObservable(), b.asObservable());
+      mockQuotesService.resumenSgc.and.returnValue(of([]));
+
+      component.getQuotes();
+      component.getQuotes();
+      b.next({ code: 200, data: [una(900)], totalCount: 1 });
+      a.next({ code: 200, data: [una(800)], totalCount: 1 });
+
+      expect(component.dataSource.data.map((q) => q.cotizacionProductosId)).toEqual([900]);
+    });
+
+    it('Un_resumen_viejo_no_pisa_la_lista_nueva', () => {
+      const resumenViejo = new Subject<ResumenSgc[]>();
+      mockQuotesService.resumenSgc.and.returnValues(resumenViejo.asObservable(), of([]));
+      mockQuotesService.getQuotesPorRango.and.returnValues(
+        of({ code: 200, data: [una(800)], totalCount: 1 }),
+        of({ code: 200, data: [una(900)], totalCount: 1 })
+      );
+
+      component.getQuotes();
+      component.getQuotes();
+      resumenViejo.next([{ cotizacionProductosId: 800, folio: 'COT-VIEJO', tipo: 'CS', version: 1, total: 1, moneda: 'MXN', etapa: 'Borrador' } as ResumenSgc]);
+
+      expect(component.dataSource.data.map((q) => q.cotizacionProductosId)).toEqual([900]);
+    });
   });
 });

@@ -22,7 +22,7 @@
           }
           }}
         </div>
-        <div class="mt-4 flex flex-col sm:flex-row items-center sm:gap-4 md:mt-4">
+        <div class="mt-4 flex flex-col sm:flex-row sm:flex-wrap items-center sm:gap-4 md:mt-4">
           <!-- Search -->
           <div class="flex-auto w-full">
             <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
@@ -32,13 +32,19 @@
             </mat-form-field>
           </div>
 
-          <!-- Date Picker -->
-          <div class="flex-none w-full sm:w-60">
+          <!-- Rango de fechas de creación: inicio y fin separados (inclusivos) -->
+          <div class="flex-none w-full sm:w-52">
             <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-              <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="onDateChange()"
-                placeholder="Fecha cotización">
-              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
+              <span matPrefix class="text-secondary mr-2 text-sm">Desde</span>
+              <input matInput type="date" class="input-fecha-desde" aria-label="Fecha inicio" [(ngModel)]="fechaDesde"
+                [max]="fechaHasta || null" (change)="onDateChange()" />
+            </mat-form-field>
+          </div>
+          <div class="flex-none w-full sm:w-52">
+            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+              <span matPrefix class="text-secondary mr-2 text-sm">Hasta</span>
+              <input matInput type="date" class="input-fecha-hasta" aria-label="Fecha fin" [(ngModel)]="fechaHasta"
+                [min]="fechaDesde || null" (change)="onDateChange()" />
             </mat-form-field>
           </div>
 
@@ -79,6 +85,7 @@
             </button>
           </div>
         </div>
+        <div *ngIf="errorFechas" class="error-fechas mt-2 text-sm text-red-600">{{ errorFechas }}</div>
       </div>
 
       <!-- Main actions -->
