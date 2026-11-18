@@ -15,7 +15,7 @@ import { Expediente, ExpedienteDocumento, ExpedienteRenglon } from './expediente
 import { MotivoRechazoDialogComponent } from './motivo-rechazo-dialog.component';
 import { PreviewDocumentoDialogComponent, TipoVista } from './preview-documento-dialog.component';
 
-const TAMANO_MAXIMO = 10 * 1024 * 1024;
+const TAMANO_MAXIMO = 50 * 1024 * 1024;
 /** Fotografía en el catálogo sembrado: en el celular abre la cámara frontal. */
 const TIPO_FOTOGRAFIA = 14;
 
@@ -52,6 +52,8 @@ export class ExpedienteComponent implements OnInit, OnChanges {
     readonly error = signal<string | null>(null);
     readonly ocupados = signal<ReadonlySet<number>>(new Set<number>());
     readonly validadosAbierto = signal(false);
+    /** ID del tipo de documento sobre el que se está arrastrando un archivo. */
+    readonly arrastrandoSobre = signal<number | null>(null);
     /** Renglón DC-3 con el mini formulario de curso y vigencia abierto. */
     readonly dc3Abierto = signal<number | null>(null);
     dc3Curso = '';
@@ -170,21 +172,76 @@ export class ExpedienteComponent implements OnInit, OnChanges {
         el.click();
     }
 
+    onDragOver(evento: DragEvent, r: ExpedienteRenglon): void {
+        if (r.estatus === 'NO_APLICA' || this.ocupados().has(r.tipoDocumentoId)) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        if (evento.dataTransfer) {
+            evento.dataTransfer.dropEffect = 'copy';
+        }
+        if (this.arrastrandoSobre() !== r.tipoDocumentoId) {
+            this.arrastrandoSobre.set(r.tipoDocumentoId);
+        }
+    }
+
+    onDragLeave(evento: DragEvent, r: ExpedienteRenglon): void {
+        evento.preventDefault();
+        evento.stopPropagation();
+        if (this.arrastrandoSobre() === r.tipoDocumentoId) {
+            this.arrastrandoSobre.set(null);
+        }
+    }
+
+    onDrop(evento: DragEvent, r: ExpedienteRenglon): void {
+        evento.preventDefault();
+        evento.stopPropagation();
+        this.arrastrandoSobre.set(null);
+
+        if (r.estatus === 'NO_APLICA' || this.ocupados().has(r.tipoDocumentoId)) return;
+
+        const archivo = evento.dataTransfer?.files?.[0];
+        if (!archivo) return;
+
+        let extra: { descripcion: string; fechaVigencia: string } | null = null;
+        if (r.requiereVigencia) {
+            const descripcion = this.dc3Curso.trim();
+            if (!descripcion || !this.dc3Vigencia) {
+                this.dc3Abierto.set(r.tipoDocumentoId);
+                this.aviso('Para DC-3, captura el nombre del curso y su fecha de vigencia antes de subir el archivo.');
+                return;
+            }
+            extra = { descripcion, fechaVigencia: this.dc3Vigencia };
+        }
+
+        this.procesarYSubir(r, archivo, extra);
+    }
+
     alElegir(evento: Event): void {
         const archivo = (evento.target as HTMLInputElement).files?.[0];
         const renglon = this._objetivo;
         if (!archivo || !renglon) return;
+        this.procesarYSubir(renglon, archivo, this._extra);
+    }
+
+    private procesarYSubir(renglon: ExpedienteRenglon, archivo: File, extra: { descripcion: string; fechaVigencia: string } | null): void {
         if (archivo.size > TAMANO_MAXIMO) {
-            this.aviso(`El archivo pesa ${(archivo.size / 1024 / 1024).toFixed(1)} MB y el máximo permitido es 10 MB.`);
+            this.aviso(`El archivo pesa ${(archivo.size / 1024 / 1024).toFixed(1)} MB y el máximo permitido es 50 MB.`);
+            return;
+        }
+
+        const extension = (archivo.name.split('.').pop() ?? '').toLowerCase();
+        const extensionesPermitidas = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!extensionesPermitidas.includes(extension)) {
+            this.aviso(`El formato de «${archivo.name}» no es válido. Solo se admiten PDF, JPG, JPEG o PNG.`);
             return;
         }
 
         const form = new FormData();
         form.append('tipoDocumentoId', String(renglon.tipoDocumentoId));
         form.append('archivo', archivo, archivo.name);
-        if (this._extra) {
-            form.append('descripcion', this._extra.descripcion);
-            form.append('fechaVigencia', this._extra.fechaVigencia);
+        if (extra) {
+            form.append('descripcion', extra.descripcion);
+            form.append('fechaVigencia', extra.fechaVigencia);
         }
 
         this.ocupar(renglon.tipoDocumentoId, true);
@@ -193,6 +250,8 @@ export class ExpedienteComponent implements OnInit, OnChanges {
             next: () => {
                 this.aviso(this.modoRrhh ? 'Documento subido y validado.' : 'Documento subido. RRHH lo revisará.');
                 this.dc3Abierto.set(null);
+                this.dc3Curso = '';
+                this.dc3Vigencia = '';
                 this.ocupar(renglon.tipoDocumentoId, false);
                 this.cargar(false);
             },

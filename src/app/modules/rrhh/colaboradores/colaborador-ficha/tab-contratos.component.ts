@@ -40,6 +40,7 @@ export class TabContratosComponent {
     @ViewChild('firmado', { static: true }) selectorFirmado!: ElementRef<HTMLInputElement>;
     private _contratoFirmado: Contrato | null = null;
     subiendoFirmado: number | null = null;
+    arrastrandoContratoId: number | null = null;
     formAbierto = false;
     editando: Contrato | null = null;
     guardando = false;
@@ -171,19 +172,62 @@ export class TabContratosComponent {
         this.selectorFirmado.nativeElement.click();
     }
 
+    onDragOver(evento: DragEvent, c: Contrato): void {
+        if (this.subiendoFirmado === c.contratoId) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        if (evento.dataTransfer) {
+            evento.dataTransfer.dropEffect = 'copy';
+        }
+        this.arrastrandoContratoId = c.contratoId;
+    }
+
+    onDragLeave(evento: DragEvent, c: Contrato): void {
+        evento.preventDefault();
+        evento.stopPropagation();
+        if (this.arrastrandoContratoId === c.contratoId) {
+            this.arrastrandoContratoId = null;
+        }
+    }
+
+    onDrop(evento: DragEvent, c: Contrato): void {
+        evento.preventDefault();
+        evento.stopPropagation();
+        this.arrastrandoContratoId = null;
+
+        if (this.subiendoFirmado === c.contratoId) return;
+
+        const archivo = evento.dataTransfer?.files?.[0];
+        if (!archivo) return;
+        this.subirArchivoFirmado(c, archivo);
+    }
+
     alElegirFirmado(evento: Event): void {
         const archivo = (evento.target as HTMLInputElement).files?.[0];
         const contrato = this._contratoFirmado;
         if (!archivo || !contrato) return;
-        if (archivo.size > 10 * 1024 * 1024) {
-            this._snackBar.open('El archivo pesa más de 10 MB.', 'Cerrar', { duration: 5000 });
+        this.subirArchivoFirmado(contrato, archivo);
+    }
+
+    private subirArchivoFirmado(contrato: Contrato, archivo: File): void {
+        const TAMANO_MAXIMO = 50 * 1024 * 1024;
+        if (archivo.size > TAMANO_MAXIMO) {
+            this._snackBar.open(`El archivo pesa ${(archivo.size / 1024 / 1024).toFixed(1)} MB y el máximo permitido es 50 MB.`, 'Cerrar', { duration: 5000 });
             return;
         }
+
+        const extension = (archivo.name.split('.').pop() ?? '').toLowerCase();
+        const extensionesPermitidas = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!extensionesPermitidas.includes(extension)) {
+            this._snackBar.open(`El formato «${archivo.name}» no es válido. Solo se admiten PDF, JPG, JPEG o PNG.`, 'Cerrar', { duration: 5000 });
+            return;
+        }
+
         this.subiendoFirmado = contrato.contratoId;
         this._service.subirContratoFirmado(this.colaboradorId, contrato.contratoId, archivo).subscribe({
             next: () => {
                 this.subiendoFirmado = null;
-                this._snackBar.open('Contrato firmado guardado.', 'Cerrar', { duration: 5000 });
+                this._snackBar.open('Contrato firmado guardado exitosamente.', 'Cerrar', { duration: 5000 });
                 this.cambio.emit();
             },
             error: (e) => {

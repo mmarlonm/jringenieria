@@ -99,14 +99,30 @@
             </ng-container>
             <ng-container matColumnDef="firmado">
                 <th mat-header-cell *matHeaderCellDef>Firmado</th>
-                <td mat-cell *matCellDef="let c">
-                    @if (c.tieneArchivoFirmado) {
-                        <button type="button" class="text-emerald-700 font-semibold" (click)="descargarFirmado(c)">✓ {{ c.archivoFirmadoNombre }}</button>
-                        <button type="button" class="ml-2 text-blue-600 font-semibold" [disabled]="subiendoFirmado === c.contratoId" (click)="pedirFirmado(c)">Reemplazar</button>
+                <td mat-cell *matCellDef="let c"
+                    class="transition-all relative p-2"
+                    [ngClass]="arrastrandoContratoId === c.contratoId ? 'bg-primary-50 dark:bg-primary-950/40' : ''"
+                    (dragover)="onDragOver($event, c)"
+                    (dragleave)="onDragLeave($event, c)"
+                    (drop)="onDrop($event, c)">
+                    @if (arrastrandoContratoId === c.contratoId) {
+                        <div class="p-2 border-2 border-dashed border-primary-500 rounded-lg text-center text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-100/50 pointer-events-none animate-pulse">
+                            Soltar archivo aquí (máx. 50 MB)
+                        </div>
                     } @else {
-                        <button mat-stroked-button type="button" [disabled]="subiendoFirmado === c.contratoId" (click)="pedirFirmado(c)">
-                            {{ subiendoFirmado === c.contratoId ? 'Subiendo…' : 'Subir firmado' }}
-                        </button>
+                        <div class="flex flex-col gap-0.5">
+                            <div class="flex items-center">
+                                @if (c.tieneArchivoFirmado) {
+                                    <button type="button" class="text-emerald-700 font-semibold" (click)="descargarFirmado(c)">✓ {{ c.archivoFirmadoNombre }}</button>
+                                    <button type="button" class="ml-2 text-blue-600 font-semibold" [disabled]="subiendoFirmado === c.contratoId" (click)="pedirFirmado(c)">Reemplazar</button>
+                                } @else {
+                                    <button mat-stroked-button type="button" [disabled]="subiendoFirmado === c.contratoId" (click)="pedirFirmado(c)">
+                                        {{ subiendoFirmado === c.contratoId ? 'Subiendo…' : 'Subir firmado' }}
+                                    </button>
+                                }
+                            </div>
+                            <span class="text-[10px] text-secondary">Arrastra el archivo o haz clic (máx. 50 MB)</span>
+                        </div>
                     }
                 </td>
             </ng-container>
