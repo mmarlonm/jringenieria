@@ -17,6 +17,7 @@ import { LeadsService, Lead, UpdateLeadDto, LeadKpi } from './leads.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { LeadDialogComponent } from './lead-dialog/lead-dialog.component';
 import { LeadSeguimientoDialogComponent } from './lead-seguimiento-dialog/lead-seguimiento-dialog.component';
+import { LeadVerDialogComponent } from './lead-ver-dialog/lead-ver-dialog.component';
 import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
@@ -283,6 +284,15 @@ export class LeadsComponent implements OnInit {
           error: () => this.showSnackBar('Error al actualizar el lead', 'Cerrar', 'bg-red-600 text-white')
         });
       }
+    });
+  }
+
+  /** Visualizacion de solo lectura del lead (icono del ojo en cada tarjeta y fila). */
+  openVerDialog(lead: Lead): void {
+    this.dialog.open(LeadVerDialogComponent, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: { lead }
     });
   }
 

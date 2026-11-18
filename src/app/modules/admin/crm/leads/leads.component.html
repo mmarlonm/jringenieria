@@ -266,9 +266,14 @@
                   <mat-icon svgIcon="heroicons_outline:calendar" class="icon-size-3.5"></mat-icon>
                   <span>Recibido: {{ lead.fechaRegistro | date:'dd-MM-yyyy HH:mm' }}</span>
                 </div>
-                <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
-                  <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
-                </button>
+                <div class="flex items-center">
+                  <button mat-icon-button class="btn-ver-lead w-7 h-7 min-h-7 text-slate-400 hover:text-primary" matTooltip="Ver detalle" (click)="openVerDialog(lead)">
+                    <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4"></mat-icon>
+                  </button>
+                  <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
+                    <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                  </button>
+                </div>
               </div>
               <h3 class="font-extrabold text-slate-800 dark:text-slate-200 text-base mt-1">{{ lead.nombreContacto }}</h3>
               <p class="text-xs font-bold text-primary dark:text-slate-400 mt-0.5">{{ lead.empresa }}</p>
@@ -329,9 +334,14 @@
                   <mat-icon svgIcon="heroicons_outline:check-circle" class="icon-size-3.5 text-green-500"></mat-icon>
                   <span>Calificado: {{ lead.fechaCalificacion | date:'dd-MM-yyyy HH:mm' }}</span>
                 </div>
-                <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
-                  <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
-                </button>
+                <div class="flex items-center">
+                  <button mat-icon-button class="btn-ver-lead w-7 h-7 min-h-7 text-slate-400 hover:text-primary" matTooltip="Ver detalle" (click)="openVerDialog(lead)">
+                    <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4"></mat-icon>
+                  </button>
+                  <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
+                    <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                  </button>
+                </div>
               </div>
               <h3 class="font-extrabold text-slate-800 dark:text-slate-200 text-base mt-1">{{ lead.nombreContacto }}</h3>
               <p class="text-xs font-bold text-primary dark:text-slate-400 mt-0.5">{{ lead.empresa }}</p>
@@ -404,9 +414,14 @@
                   <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-3.5 text-red-500"></mat-icon>
                   <span>Descartado: {{ lead.fechaActualizacion | date:'dd-MM-yyyy HH:mm' }}</span>
                 </div>
-                <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
-                  <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
-                </button>
+                <div class="flex items-center">
+                  <button mat-icon-button class="btn-ver-lead w-7 h-7 min-h-7 text-slate-400 hover:text-primary" matTooltip="Ver detalle" (click)="openVerDialog(lead)">
+                    <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4"></mat-icon>
+                  </button>
+                  <button mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
+                    <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>
+                  </button>
+                </div>
               </div>
               <h3 class="font-extrabold text-slate-800 dark:text-slate-200 text-base mt-1">{{ lead.nombreContacto }}</h3>
               <p class="text-xs font-bold text-primary dark:text-slate-400 mt-0.5">{{ lead.empresa }}</p>
@@ -517,6 +532,9 @@
             <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Acciones</th>
             <td mat-cell *matCellDef="let lead">
               <div class="flex items-center gap-1.5">
+                <button mat-icon-button class="btn-ver-lead" matTooltip="Ver detalle" (click)="openVerDialog(lead)">
+                  <mat-icon svgIcon="heroicons_outline:eye" class="text-slate-500 hover:text-primary"></mat-icon>
+                </button>
                 <!-- Edit button always visible -->
                 <button mat-icon-button matTooltip="Editar Lead" (click)="openEditDialog(lead)">
                   <mat-icon svgIcon="heroicons_outline:pencil-square" class="text-slate-500 hover:text-primary"></mat-icon>
