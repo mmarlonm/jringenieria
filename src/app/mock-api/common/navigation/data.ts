@@ -161,6 +161,13 @@ export const defaultNavigation: FuseNavigationItem[] = [
                         type: 'basic',
                         icon: 'heroicons_outline:folder',
                         link: '/administration/iso-documentacion'
+                    },
+                    {
+                        id: 'administracion.minutas',
+                        title: 'Nube de Minutas',
+                        type: 'basic',
+                        icon: 'heroicons_outline:cloud',
+                        link: '/administration/minutas'
                     }
                 ]
             },
@@ -616,6 +623,7 @@ export const compactNavigation: FuseNavigationItem[] = [
             { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' },
             { id: 'administracion.calidad', title: 'Calidad', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/administration/calidad' },
             { id: 'administracion.iso-documentacion', title: 'Documentación ISO', type: 'basic', icon: 'heroicons_outline:folder', link: '/administration/iso-documentacion' },
+            { id: 'administracion.minutas', title: 'Nube de Minutas', type: 'basic', icon: 'heroicons_outline:cloud', link: '/administration/minutas' },
             { id: 'administracion.notificaciones', title: 'Configuración de Notificaciones', type: 'basic', icon: 'heroicons_outline:bell', link: '/administration/notificaciones' }
         ]
     }
@@ -754,6 +762,7 @@ export const futuristicNavigation: FuseNavigationItem[] = [
             { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' },
             { id: 'administracion.calidad', title: 'Calidad', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/administration/calidad' },
             { id: 'administracion.iso-documentacion', title: 'Documentación ISO', type: 'basic', icon: 'heroicons_outline:folder', link: '/administration/iso-documentacion' },
+            { id: 'administracion.minutas', title: 'Nube de Minutas', type: 'basic', icon: 'heroicons_outline:cloud', link: '/administration/minutas' },
             { id: 'administracion.notificaciones', title: 'Configuración de Notificaciones', type: 'basic', icon: 'heroicons_outline:bell', link: '/administration/notificaciones' }
         ]
     }
@@ -896,6 +905,7 @@ export const horizontalNavigation: FuseNavigationItem[] = [
             { id: 'administracion.proveedores.reportes.resumen', title: 'Resumen de Proveedores', type: 'basic', icon: 'heroicons_outline:presentation-chart-line', link: '/administration/proveedores/reportes/resumen' },
             { id: 'administracion.calidad', title: 'Calidad', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/administration/calidad' },
             { id: 'administracion.iso-documentacion', title: 'Documentación ISO', type: 'basic', icon: 'heroicons_outline:folder', link: '/administration/iso-documentacion' },
+            { id: 'administracion.minutas', title: 'Nube de Minutas', type: 'basic', icon: 'heroicons_outline:cloud', link: '/administration/minutas' },
             { id: 'administracion.notificaciones', title: 'Configuración de Notificaciones', type: 'basic', icon: 'heroicons_outline:bell', link: '/administration/notificaciones' }
         ]
     }

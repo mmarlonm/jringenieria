@@ -10,7 +10,7 @@ import { cloneDeep } from 'lodash-es';
 const MODULOS_CON_NOMBRE_EXACTO = ['finanzas.'];
 
 /** Entradas del menú que se muestran siempre, sin importar los permisos. */
-const SIEMPRE_VISIBLES = ['dashboards.identidad', 'dashboards.neural-graph'];
+const SIEMPRE_VISIBLES = ['dashboards.identidad', 'dashboards.neural-graph', 'administracion.minutas'];
 
 /**
  * ¿La vista `permiso` habilita la entrada del menú `idItem`?

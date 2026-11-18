@@ -46,6 +46,10 @@ export default [
         loadComponent: () => import('./iso-documentacion/iso-documentacion.component').then(m => m.IsoDocumentacionComponent)
     },
     {
+        path: 'minutas',
+        loadComponent: () => import('./minutas/minutas.component').then(m => m.MinutasComponent)
+    },
+    {
         path: 'tickets',
         loadChildren: () => import('./tickets/tickets.routes').then(m => m.ticketsRoutes)
     },
