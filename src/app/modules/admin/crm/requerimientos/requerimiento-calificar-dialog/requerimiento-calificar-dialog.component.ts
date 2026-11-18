@@ -11,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
-import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento, AprobarRequerimientoResultadoDto } from '../requerimientos.service';
+import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento, AprobarRequerimientoResultadoDto, TIPOS_PROYECTO } from '../requerimientos.service';
 import {
   CATEGORIA_GENERAL, CHECKLIST, ItemChecklist, archivosDeCategoria, etiquetaCategoria, guardarBlob, iconoArchivo, temaArchivo, validarArchivos
 } from '../requerimiento-archivos.utils';
@@ -41,6 +41,9 @@ type Pestana = 'clasificacion' | 'checklist' | 'seguimiento' | 'archivos' | 'apr
 export class RequerimientoCalificarDialogComponent implements OnInit {
   requerimiento: Requerimiento;
   calificarForm: FormGroup;
+  /** Datos que Ingenieria necesita para abrir el caso: se piden al aprobar, ya no en el requerimiento. */
+  aprobacionForm: FormGroup;
+  readonly tiposProyecto = TIPOS_PROYECTO;
   currentUser: any;
   /** Solo el responsable asignado califica; los demás ven la calificación sin poder cambiarla. */
   puedeCalificar: boolean;
@@ -83,6 +86,14 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     this.requerimiento = data.requerimiento;
     this.currentUser = data.currentUser;
     this.puedeCalificar = data.puedeCalificar;
+
+    this.aprobacionForm = this.fb.group({
+      tipoProyecto: [this.requerimiento.tipoProyecto ?? '', [Validators.required]],
+      titulo: [this.requerimiento.titulo ?? '', [Validators.required, Validators.maxLength(500)]]
+    });
+    if (!this.puedeCalificar || this.estaAprobado) {
+      this.aprobacionForm.disable();
+    }
 
     this.calificarForm = this.fb.group({
       estatus: [this.requerimiento.estatus || 'Pendiente', [Validators.required]],
@@ -302,11 +313,15 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     if (!this.requerimiento.solicitanteId && !this.requerimiento.solicitanteNombre) {
       faltantes.push('Solicitante');
     }
-    if (!this.requerimiento.tipoProyecto?.trim()) {
+    const datos = this.aprobacionForm.getRawValue();
+    if (!datos.tipoProyecto?.trim()) {
       faltantes.push('Tipo de proyecto');
     }
-    if (!this.requerimiento.titulo?.trim()) {
+    if (!datos.titulo?.trim()) {
       faltantes.push('Título');
+    }
+    if ((datos.titulo ?? '').trim().length > 500) {
+      faltantes.push('Título (máximo 500 caracteres)');
     }
     return faltantes;
   }
@@ -349,10 +364,17 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   private ejecutarAprobacion(): void {
     if (this.aprobando && this.aprobadoResultado) return;
     this.aprobando = true;
-    this.reqService.aprobarRequerimiento(this.requerimiento.id).subscribe({
+    const datos = this.aprobacionForm.getRawValue();
+    this.reqService.aprobarRequerimiento(this.requerimiento.id, {
+      tipoProyecto: (datos.tipoProyecto ?? '').trim(),
+      titulo: (datos.titulo ?? '').trim()
+    }).subscribe({
       next: (res) => {
         this.aprobando = false;
         this.aprobadoResultado = res;
+        this.requerimiento.tipoProyecto = (datos.tipoProyecto ?? '').trim();
+        this.requerimiento.titulo = (datos.titulo ?? '').trim();
+        this.aprobacionForm.disable();
         this.requerimiento.estatus = res.estatus;
         this.requerimiento.seguimientoProyectoId = res.idSeguimiento;
         this.calificarForm.get('estatus')?.setValue(res.estatus);

@@ -33,6 +33,15 @@ describe('RequerimientosService - Aprobación', () => {
     req.flush({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' });
   });
 
+  it('El_servicio_aprobar_manda_el_tipo_y_el_titulo_capturados_al_aprobar', () => {
+    service.aprobarRequerimiento(8, { tipoProyecto: 'Instalación', titulo: 'Modernización de subestación' }).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/Requerimiento/8/aprobar`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ tipoProyecto: 'Instalación', titulo: 'Modernización de subestación' });
+    req.flush({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' });
+  });
+
   // El API exige sesión: una navegación directa a la URL (<a href>, window.open) no lleva el token y da 401.
   it('Descargar_un_archivo_lo_pide_como_blob_por_HttpClient_para_llevar_la_sesion', () => {
     let recibido: Blob | null = null;

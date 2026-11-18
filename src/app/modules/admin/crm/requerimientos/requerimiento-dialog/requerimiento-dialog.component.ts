@@ -13,7 +13,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable, map } from 'rxjs';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
-import { RequerimientosService, Requerimiento, RequerimientoArchivo, TIPOS_PROYECTO } from '../requerimientos.service';
+import { RequerimientosService, Requerimiento, RequerimientoArchivo } from '../requerimientos.service';
 import { EngineeringService, Solicitante } from 'app/modules/admin/engineering/engineering.service';
 import { CATEGORIA_GENERAL, abrirBlobEnPestana, etiquetaCategoria, guardarBlob, iconoArchivo, temaArchivo, validarArchivos } from '../requerimiento-archivos.utils';
 import Swal from 'sweetalert2';
@@ -46,7 +46,6 @@ export class RequerimientoDialogComponent implements OnInit {
   solicitantes: Solicitante[] = [];
   cargandoSolicitantes = false;
   errorSolicitantes: string | null = null;
-  readonly tiposProyecto = TIPOS_PROYECTO;
 
   /** Archivos guardados previamente en el requerimiento (en modo edición). */
   archivosExistentes: RequerimientoArchivo[] = [];
@@ -79,8 +78,6 @@ export class RequerimientoDialogComponent implements OnInit {
       email: [data.requerimiento?.email || '', [Validators.email]],
       sucursal: [data.requerimiento?.sucursal || 'Pachuca', [Validators.required]],
       solicitanteId: [data.requerimiento?.solicitanteId ?? null, [Validators.required]],
-      tipoProyecto: [data.requerimiento?.tipoProyecto ?? '', [Validators.required]],
-      titulo: [data.requerimiento?.titulo ?? '', [Validators.required, Validators.maxLength(500)]],
       descripcion: [data.requerimiento?.descripcion || '', [Validators.required]],
       usuarioAsignadoId: [data.requerimiento?.usuarioAsignadoId || null],
       fechaRecepcion: [data.requerimiento?.fechaRecepcion ? new Date(data.requerimiento.fechaRecepcion) : new Date(), [Validators.required]]

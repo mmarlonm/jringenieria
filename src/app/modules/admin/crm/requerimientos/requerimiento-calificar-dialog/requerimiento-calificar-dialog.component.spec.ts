@@ -189,6 +189,71 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('#42');
   });
 
+  it('Tipo_y_titulo_se_piden_en_la_pestana_Aprobacion_y_el_requerimiento_ya_no_los_trae', () => {
+    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: 1 });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('Datos para Ingeniería');
+    expect(fixture.nativeElement.querySelector('#aprobacion-form')).not.toBeNull();
+    // Sin tipo ni titulo no se puede aprobar y el aviso dice cuales faltan
+    const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
+    expect(btn.disabled).toBeTrue();
+    expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual(['Tipo de proyecto', 'Título']);
+    // El requerimiento ya esta completo (solicitante): no hace falta editarlo
+    expect(fixture.nativeElement.querySelector('.btn-editar-faltante')).toBeNull();
+  });
+
+  it('Al_capturar_tipo_y_titulo_se_habilita_Aprobar_y_viajan_en_la_peticion', () => {
+    spyOn(Swal, 'fire').and.callFake(() => ({
+      then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
+    } as any));
+    const spyAprobar = jasmine.createSpy('aprobarRequerimiento').and.returnValue(
+      of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' })
+    );
+    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: 1 }, { aprobarRequerimiento: spyAprobar });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    fixture.componentInstance.aprobacionForm.patchValue({ tipoProyecto: 'Instalación', titulo: '  Subestación ACME  ' });
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
+    expect(btn.disabled).toBeFalse();
+
+    btn.click();
+    fixture.detectChanges();
+
+    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { tipoProyecto: 'Instalación', titulo: 'Subestación ACME' });
+    // Ya aprobado: se ve lo que se mando a Ingenieria y los campos se bloquean
+    expect(fixture.componentInstance.requerimiento.tipoProyecto).toBe('Instalación');
+    expect(fixture.componentInstance.aprobacionForm.disabled).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.resumen-titulo')?.textContent).toContain('Subestación ACME');
+  });
+
+  it('Sin_solicitante_el_aviso_ofrece_editar_el_requerimiento', () => {
+    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: undefined });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.camposFaltantesAprobacion).toContain('Solicitante');
+    expect(fixture.nativeElement.querySelector('.btn-editar-faltante')).not.toBeNull();
+  });
+
+  it('Quien_no_es_el_responsable_ve_los_campos_pero_no_puede_escribir', () => {
+    abrir(false, { estatus: 'Calificado Técnico', solicitanteId: 1 });
+
+    expect(fixture.componentInstance.aprobacionForm.disabled).toBeTrue();
+  });
+
+  it('Un_titulo_de_mas_de_500_caracteres_no_deja_aprobar', () => {
+    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: 1 });
+    fixture.componentInstance.aprobacionForm.patchValue({ tipoProyecto: 'Instalación', titulo: 'x'.repeat(501) });
+
+    expect(fixture.componentInstance.puedeAprobar).toBeFalse();
+    expect(fixture.componentInstance.camposFaltantesAprobacion.join(' ')).toContain('Título');
+  });
+
   it('Aprobar_no_se_repite_con_doble_clic', () => {
     spyOn(Swal, 'fire').and.callFake(() => ({
       then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }

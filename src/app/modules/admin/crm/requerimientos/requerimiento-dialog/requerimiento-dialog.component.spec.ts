@@ -84,21 +84,18 @@ describe('RequerimientoDialogComponent', () => {
     fixture.detectChanges();
   }
 
-  it('El_formulario_pide_solicitante_tipo_y_titulo', () => {
+  it('El_formulario_pide_solicitante_pero_ya_no_tipo_ni_titulo_de_proyecto', () => {
     inicializar();
 
     expect(component.reqForm.contains('solicitanteId')).toBeTrue();
-    expect(component.reqForm.contains('tipoProyecto')).toBeTrue();
-    expect(component.reqForm.contains('titulo')).toBeTrue();
-
-    const solCtrl = component.reqForm.get('solicitanteId');
-    const tipoCtrl = component.reqForm.get('tipoProyecto');
-    const tituloCtrl = component.reqForm.get('titulo');
-
-    expect(solCtrl?.hasError('required')).toBeTrue();
-    expect(tipoCtrl?.hasError('required')).toBeTrue();
-    expect(tituloCtrl?.hasError('required')).toBeTrue();
+    expect(component.reqForm.contains('tipoProyecto')).toBeFalse();
+    expect(component.reqForm.contains('titulo')).toBeFalse();
+    expect(component.reqForm.get('solicitanteId')?.hasError('required')).toBeTrue();
     expect(component.reqForm.valid).toBeFalse();
+
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Tipo de proyecto');
+    expect(texto).not.toContain('Título del proyecto');
   });
 
   it('La_fecha_se_llama_Fecha_de_la_requisicion', () => {
@@ -119,8 +116,6 @@ describe('RequerimientoDialogComponent', () => {
       sucursal: 'Querétaro',
       descripcion: 'Instalación de transformador en patio de maniobras',
       solicitanteId: 2,
-      tipoProyecto: 'Construcción e instalación',
-      titulo: 'Subestación y Transformador 500kVA',
       fechaRecepcion: new Date('2026-11-13T12:00:00Z')
     });
 
@@ -128,40 +123,33 @@ describe('RequerimientoDialogComponent', () => {
     component.onSubmit();
 
     expect(mockReqService.createRequerimiento).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        solicitanteId: 2,
-        tipoProyecto: 'Construcción e instalación',
-        titulo: 'Subestación y Transformador 500kVA'
-      })
+      jasmine.objectContaining({ solicitanteId: 2 })
     );
+    const enviado = mockReqService.createRequerimiento.calls.mostRecent().args[0] as any;
+    expect('tipoProyecto' in enviado).toBeFalse();
+    expect('titulo' in enviado).toBeFalse();
   });
 
-  it('Al_editar_un_requerimiento_antiguo_se_piden_los_campos_nuevos', () => {
+  it('Al_editar_un_requerimiento_antiguo_se_pide_el_solicitante_y_no_se_tocan_tipo_ni_titulo', () => {
     const antiguo = mockRequerimientoAntiguo();
     inicializar({ requerimiento: antiguo, users: [] });
 
     expect(component.reqForm.get('solicitanteId')?.hasError('required')).toBeTrue();
-    expect(component.reqForm.get('tipoProyecto')?.hasError('required')).toBeTrue();
-    expect(component.reqForm.get('titulo')?.hasError('required')).toBeTrue();
     expect(component.reqForm.valid).toBeFalse();
 
-    component.reqForm.patchValue({
-      solicitanteId: 1,
-      tipoProyecto: 'Ingeniería',
-      titulo: 'Diseño de Alimentadores de Media Tensión'
-    });
+    component.reqForm.patchValue({ solicitanteId: 1 });
 
     expect(component.reqForm.valid).toBeTrue();
     component.onSubmit();
 
     expect(mockReqService.updateRequerimiento).toHaveBeenCalledWith(
       antiguo.id,
-      jasmine.objectContaining({
-        solicitanteId: 1,
-        tipoProyecto: 'Ingeniería',
-        titulo: 'Diseño de Alimentadores de Media Tensión'
-      })
+      jasmine.objectContaining({ solicitanteId: 1 })
     );
+    // Sin esas llaves el API conserva lo que el requerimiento ya tenga guardado
+    const enviado = mockReqService.updateRequerimiento.calls.mostRecent().args[1] as any;
+    expect('tipoProyecto' in enviado).toBeFalse();
+    expect('titulo' in enviado).toBeFalse();
   });
 
   it('Un_error_al_cargar_los_solicitantes_se_ve', () => {

@@ -130,6 +130,15 @@ describe('RequerimientoVerDialogComponent', () => {
     expect(fixture.nativeElement.querySelector('app-proceso-comercial')).not.toBeNull();
   });
 
+  it('La_visualizacion_ya_no_muestra_tipo_ni_titulo_de_proyecto', () => {
+    configurar({ id: 10 }, of(mockRequerimiento({ tipoProyecto: 'Ingeniería', titulo: 'Instalación de Subestación Eléctrica' })));
+
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Tipo de proyecto');
+    expect(texto).not.toContain('Título del proyecto');
+    expect(texto).not.toContain('Instalación de Subestación Eléctrica');
+  });
+
   it('La_visualizacion_es_de_solo_lectura', () => {
     configurar({ id: 10 });
     const inputs = fixture.nativeElement.querySelectorAll('input:not([type="hidden"]), textarea, select');
@@ -164,8 +173,6 @@ describe('RequerimientoVerDialogComponent', () => {
     expect(text).toContain('contacto@ficticio.com');
     expect(text).toContain('Querétaro');
     expect(text).toContain('Solicitante Ficticio');
-    expect(text).toContain('Ingeniería');
-    expect(text).toContain('Instalación de Subestación Eléctrica');
     expect(text).toContain('Creador Ficticio');
     expect(text).toContain('Responsable Ficticio');
     expect(text).toContain('Proyecto de modernización eléctrica integral');
@@ -231,16 +238,15 @@ describe('RequerimientoVerDialogComponent', () => {
 
   it('La_visualizacion_muestra_escapado_lo_que_viene_del_API', () => {
     const req = mockRequerimiento({
-      titulo: '<b>Titulo Peligroso</b>',
+      nombreContacto: '<b>Contacto Peligroso</b>',
       descripcion: '<script>alert("xss")</script><img src="x" onerror="evil()">'
     });
     configurar({ id: 10 }, of(req));
 
     expect(fixture.nativeElement.querySelector('script')).toBeNull();
     expect(fixture.nativeElement.querySelector('img[onerror]')).toBeNull();
-    const tituloEl = fixture.nativeElement.querySelector('[data-testid="campo-titulo"]');
-    expect(tituloEl.querySelector('b')).toBeNull();
-    expect(tituloEl.textContent).toContain('<b>Titulo Peligroso</b>');
+    expect(fixture.nativeElement.querySelector('b')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('<b>Contacto Peligroso</b>');
     const descEl = fixture.nativeElement.querySelector('[data-testid="campo-descripcion"]');
     expect(descEl.textContent).toContain('<script>alert("xss")</script><img src="x" onerror="evil()">');
   });

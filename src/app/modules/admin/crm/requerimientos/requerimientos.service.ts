@@ -129,6 +129,11 @@ export interface UpdateRequerimientoDto {
   titulo?: string;
 }
 
+export interface AprobarRequerimientoDatos {
+  tipoProyecto?: string;
+  titulo?: string;
+}
+
 export interface AprobarRequerimientoResultadoDto {
   idSeguimiento: number;
   folio: string;
@@ -202,8 +207,9 @@ export class RequerimientosService {
     return this.http.post(`${this.apiUrl}/${id}/calificar`, dto);
   }
 
-  aprobarRequerimiento(id: number): Observable<AprobarRequerimientoResultadoDto> {
-    return this.http.post<AprobarRequerimientoResultadoDto>(`${this.apiUrl}/${id}/aprobar`, {});
+  /** Tipo de proyecto y titulo se capturan al aprobar (ya no en el requerimiento); si no se mandan, el API usa los guardados. */
+  aprobarRequerimiento(id: number, datos?: AprobarRequerimientoDatos): Observable<AprobarRequerimientoResultadoDto> {
+    return this.http.post<AprobarRequerimientoResultadoDto>(`${this.apiUrl}/${id}/aprobar`, datos ?? {});
   }
 
   // Archivos
