@@ -27,6 +27,9 @@
         </button>
     </div>
 
+    <!-- Proceso: en que paso va (Lead -> Requerimiento -> Ingenieria / Cotizacion) -->
+    <app-proceso-comercial tipo="caso" [id]="idSeguimiento" [refresco]="detalle?.etapaActual + '|' + detalle?.cancelado" class="block shrink-0 px-6 py-3 border-b border-slate-200 dark:border-slate-800"></app-proceso-comercial>
+
     <mat-progress-bar *ngIf="cargando || guardando" mode="indeterminate"></mat-progress-bar>
 
     <!-- Error message banner -->

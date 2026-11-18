@@ -30,6 +30,7 @@ import {
 } from '../cotizacion-etapas.models';
 import { EtapaConfig, obtenerEtapaConfig } from '../etapas.config';
 import { puedeAutorizar } from '../etapa-permisos.utils';
+import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
 
 export interface EtapaDetalleDialogData {
     idSeguimiento: number;
@@ -54,7 +55,8 @@ export interface EtapaDetalleDialogData {
         MatDatepickerModule,
         MatNativeDateModule,
         MatTooltipModule,
-        MatProgressBarModule
+        MatProgressBarModule,
+        ProcesoComercialComponent
     ],
     templateUrl: './etapa-detalle-dialog.component.html',
     styleUrls: ['./etapa-detalle-dialog.component.scss']

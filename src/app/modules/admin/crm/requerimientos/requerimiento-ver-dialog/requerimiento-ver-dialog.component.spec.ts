@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
 import { RequerimientosComponent } from '../requerimientos.component';
 import { RequerimientoVerDialogComponent, RequerimientoVerDialogData } from './requerimiento-ver-dialog.component';
+import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
 import Swal from 'sweetalert2';
 
 function mockRequerimiento(overrides: Partial<Requerimiento> = {}): Requerimiento {
@@ -52,6 +53,7 @@ describe('RequerimientoVerDialogComponent', () => {
   let fixture: ComponentFixture<RequerimientoVerDialogComponent>;
   let component: RequerimientoVerDialogComponent;
   let mockReqService: jasmine.SpyObj<RequerimientosService>;
+  let procesoMock: { obtener: jasmine.Spy };
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<RequerimientoVerDialogComponent>>;
 
   beforeEach(() => {
@@ -69,12 +71,15 @@ describe('RequerimientoVerDialogComponent', () => {
     mockReqService.puedeCalificar.and.returnValue(data.puedeCalificar ?? true);
     mockReqService.descargarArchivoUrl.and.callFake((reqId, archId) => `/api/Requerimiento/${reqId}/archivos/${archId}/descargar`);
 
+    procesoMock = { obtener: jasmine.createSpy('obtener').and.returnValue(of({ actual: 'requerimiento', mensaje: 'Por calificar', pasos: [] })) };
+
     TestBed.configureTestingModule({
       imports: [RequerimientoVerDialogComponent, NoopAnimationsModule, MatIconTestingModule],
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: data },
         { provide: MatDialogRef, useValue: mockDialogRef },
-        { provide: RequerimientosService, useValue: mockReqService }
+        { provide: RequerimientosService, useValue: mockReqService },
+        { provide: ProcesoComercialService, useValue: procesoMock }
       ]
     });
 
@@ -116,6 +121,13 @@ describe('RequerimientoVerDialogComponent', () => {
         data: jasmine.objectContaining({ id: req.id })
       })
     );
+  });
+
+  it('La_visualizacion_muestra_en_que_proceso_va_el_requerimiento', () => {
+    configurar({ id: 10 });
+
+    expect(procesoMock.obtener).toHaveBeenCalledWith('requerimiento', 10);
+    expect(fixture.nativeElement.querySelector('app-proceso-comercial')).not.toBeNull();
   });
 
   it('La_visualizacion_es_de_solo_lectura', () => {

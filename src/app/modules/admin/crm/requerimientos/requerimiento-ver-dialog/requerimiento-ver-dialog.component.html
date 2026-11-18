@@ -34,6 +34,9 @@
 
   <!-- Contenido -->
   <div class="p-6 overflow-y-auto space-y-6 flex-1">
+    <!-- Proceso: en que paso va (Lead -> Requerimiento -> Ingenieria / Cotizacion) -->
+    <app-proceso-comercial *ngIf="requerimiento" tipo="requerimiento" [id]="requerimiento.id" class="block"></app-proceso-comercial>
+
     <!-- Estado: Cargando -->
     <div *ngIf="cargando" class="flex flex-col items-center justify-center py-12 text-gray-400">
       <mat-icon svgIcon="heroicons_outline:arrow-path" class="icon-size-8 animate-spin mb-2"></mat-icon>

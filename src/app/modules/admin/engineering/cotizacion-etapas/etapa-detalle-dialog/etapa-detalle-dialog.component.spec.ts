@@ -8,6 +8,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CotizacionEtapasDetalleDto, ESTATUS_ETAPA } from '../cotizacion-etapas.models';
 import { obtenerEtapaConfig } from '../etapas.config';
+import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
 
 describe('EtapaDetalleDialogComponent', () => {
     let component: EtapaDetalleDialogComponent;
@@ -16,6 +17,7 @@ describe('EtapaDetalleDialogComponent', () => {
     let usersMock: jasmine.SpyObj<UsersService>;
     let subcontratacionMock: jasmine.SpyObj<SubcontratacionService>;
     let dialogRefMock: jasmine.SpyObj<MatDialogRef<EtapaDetalleDialogComponent>>;
+    let procesoMock: { obtener: jasmine.Spy };
 
     const mockDetalle: CotizacionEtapasDetalleDto = {
         idSeguimiento: 10,
@@ -97,6 +99,8 @@ describe('EtapaDetalleDialogComponent', () => {
             return null;
         });
 
+        procesoMock = { obtener: jasmine.createSpy('obtener').and.returnValue(of({ actual: 'ingenieria', mensaje: 'Va en Ingeniería', pasos: [] })) };
+
         await TestBed.configureTestingModule({
             imports: [EtapaDetalleDialogComponent, NoopAnimationsModule],
             providers: [
@@ -104,7 +108,8 @@ describe('EtapaDetalleDialogComponent', () => {
                 { provide: MatDialogRef, useValue: dialogRefMock },
                 { provide: CotizacionEtapasService, useValue: serviceMock },
                 { provide: UsersService, useValue: usersMock },
-                { provide: SubcontratacionService, useValue: subcontratacionMock }
+                { provide: SubcontratacionService, useValue: subcontratacionMock },
+                { provide: ProcesoComercialService, useValue: procesoMock }
             ]
         }).compileComponents();
 
@@ -117,6 +122,11 @@ describe('EtapaDetalleDialogComponent', () => {
         expect(component).toBeTruthy();
         expect(serviceMock.obtener).toHaveBeenCalledWith(10);
         expect(component.etapaActualDto?.etapa).toBe(1);
+    });
+
+    it('muestra en que proceso va el caso de Ingenieria', () => {
+        expect(procesoMock.obtener).toHaveBeenCalledWith('caso', 10);
+        expect(fixture.nativeElement.querySelector('app-proceso-comercial')).not.toBeNull();
     });
 
     it('con autorizador designado distinto al usuario actual, puedeAutorizarAccion es false', () => {

@@ -9,6 +9,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError, BehaviorSubject } from 'rxjs';
+import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
 import Swal from 'sweetalert2';
 import { CatalogosSgc, RespuestaObtenerSgc, EncabezadoCotizacionSgc, CotizacionSgcVista, PartidaSgc } from '../quotes-products.types';
 import { registerLocaleData } from '@angular/common';
@@ -28,6 +29,7 @@ describe('QuoteDetailsComponent SGC', () => {
   let mockChatService: any;
   let mockRouter: any;
   let paramMapSubject: BehaviorSubject<any>;
+  let mockProcesoService: { obtener: jasmine.Spy };
 
   const mockCatalogos: CatalogosSgc = {
     tipos: [
@@ -46,6 +48,7 @@ describe('QuoteDetailsComponent SGC', () => {
 
   beforeEach(async () => {
     paramMapSubject = new BehaviorSubject(convertToParamMap({ id: 'new' }));
+    mockProcesoService = { obtener: jasmine.createSpy('obtener').and.returnValue(of({ actual: 'cotizacion', mensaje: 'Va en Cotización', pasos: [] })) };
 
     mockQuotesService = {
       get userInformation() {
@@ -154,6 +157,7 @@ describe('QuoteDetailsComponent SGC', () => {
           },
         },
         { provide: MatDialog, useValue: { open: jasmine.createSpy('open') } },
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
       ],
     }).compileComponents();
 
@@ -701,6 +705,26 @@ describe('QuoteDetailsComponent SGC', () => {
 
     const args = mockQuotesService.guardarSgc.calls.mostRecent().args[0];
     expect(args.partidas).toEqual([]);
+  });
+
+  it('Una_cotizacion_nueva_no_pide_el_proceso_y_una_existente_si', () => {
+    expect(mockProcesoService.obtener).not.toHaveBeenCalled();
+
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 10,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'Borrador' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        acciones: { editar: true, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false }
+      })
+    );
+    paramMapSubject.next(convertToParamMap({ id: '10' }));
+    fixture.detectChanges();
+
+    expect(mockProcesoService.obtener).toHaveBeenCalledWith('cotizacion', 10);
+    expect(fixture.nativeElement.querySelector('app-proceso-comercial')).not.toBeNull();
   });
 
   it('Si_no_se_puede_editar_los_formularios_quedan_deshabilitados_y_no_hay_boton_Guardar', () => {

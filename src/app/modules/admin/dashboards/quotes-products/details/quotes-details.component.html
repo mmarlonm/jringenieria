@@ -13,6 +13,9 @@
     </button>
   </div>
 
+  <!-- Proceso: en que paso va (Lead -> Requerimiento -> Ingenieria / Cotizacion) -->
+  <app-proceso-comercial *ngIf="quotesId" tipo="cotizacion" [id]="quotesId" [refresco]="procesoRefresco" class="block mb-4 shrink-0"></app-proceso-comercial>
+
   <!-- Franja de sólo lectura cuando la cotización no es editable -->
   <div *ngIf="soloLectura" class="franja-solo-lectura bg-amber-50 border-l-4 border-amber-500 p-4 mb-4 text-amber-800">
     {{ mensajeFranjaSoloLectura }}

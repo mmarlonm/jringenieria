@@ -15,6 +15,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
 import { LeadsService, LeadArchivo } from '../leads.service';
+import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
 
 @Component({
   selector: 'app-lead-dialog',
@@ -34,7 +35,8 @@ import { LeadsService, LeadArchivo } from '../leads.service';
     MatTooltipModule,
     MatChipsModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    ProcesoComercialComponent
   ],
   templateUrl: './lead-dialog.component.html'
 })

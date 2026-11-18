@@ -1,5 +1,6 @@
 import { Component, OnInit, LOCALE_ID } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
+import { ProcesoComercialComponent } from "app/shared/proceso-comercial/proceso-comercial.component";
 import { QuotesService } from "../quotes-products.service";
 import {
   FormBuilder,
@@ -93,6 +94,7 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     RevisionSgcComponent,
     VersionesSgcComponent,
     SeguimientoSgcComponent,
+    ProcesoComercialComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -104,6 +106,8 @@ export class QuoteDetailsComponent implements OnInit {
   estatus: any[] = [];
   unidadesDeNegocio: any[] = [];
   quotesId: number | null = null;
+  /** Cambia cada vez que se cargan los datos SGC: hace que el panel del proceso vuelva a consultar. */
+  procesoRefresco = 0;
 
   clienteFiltro = new FormControl("");
   filteredClients: any[] = [];
@@ -390,6 +394,7 @@ export class QuoteDetailsComponent implements OnInit {
         };
 
         if (sgcRes.sgc) {
+          this.procesoRefresco++;
           this.esHeredada = false;
           this.folio = sgcRes.sgc.folio;
           this.version = sgcRes.sgc.version;

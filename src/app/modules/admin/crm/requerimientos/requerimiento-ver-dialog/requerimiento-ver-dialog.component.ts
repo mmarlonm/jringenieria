@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
 import { guardarBlob } from '../requerimiento-archivos.utils';
+import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
 import Swal from 'sweetalert2';
 
 export interface RequerimientoVerDialogData {
@@ -22,7 +23,8 @@ export interface RequerimientoVerDialogData {
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    ProcesoComercialComponent
   ],
   templateUrl: './requerimiento-ver-dialog.component.html'
 })

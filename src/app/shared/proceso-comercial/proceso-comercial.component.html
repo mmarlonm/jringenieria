@@ -1,0 +1,32 @@
+<section *ngIf="tipo && id" class="proceso-comercial rounded-xl border border-gray-200 dark:border-gray-700 p-3" aria-label="Proceso comercial">
+  <div class="flex items-center justify-between gap-2 mb-2">
+    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 m-0">Proceso</h3>
+    <span *ngIf="proceso" class="proceso-mensaje text-xs text-gray-600 dark:text-gray-300 text-right">{{ proceso.mensaje }}</span>
+  </div>
+
+  <!-- Cargando -->
+  <p *ngIf="cargando" class="proceso-cargando text-xs text-gray-400 m-0">Cargando proceso...</p>
+
+  <!-- Error con Reintentar (nunca se silencia) -->
+  <div *ngIf="!cargando && error" class="proceso-error flex items-center justify-between gap-3 text-xs text-red-700 dark:text-red-300" role="alert">
+    <span>{{ error }}</span>
+    <button type="button" class="proceso-reintentar underline font-semibold" (click)="cargar()">Reintentar</button>
+  </div>
+
+  <!-- Linea del proceso -->
+  <ol *ngIf="proceso" class="grid grid-cols-2 sm:grid-cols-4 gap-2 list-none p-0 m-0">
+    <li *ngFor="let paso of proceso.pasos; trackBy: trackPaso"
+        class="proceso-paso rounded-lg border p-2 flex flex-col gap-1 min-w-0"
+        [ngClass]="clases(paso)"
+        [attr.data-paso]="paso.clave"
+        [attr.data-estado]="paso.estado"
+        [attr.aria-current]="paso.estado === 'actual' ? 'step' : null">
+      <div class="flex items-center gap-1.5">
+        <mat-icon class="icon-size-4 shrink-0" [svgIcon]="icono(paso)"></mat-icon>
+        <span class="text-sm font-semibold truncate">{{ paso.titulo }}</span>
+      </div>
+      <span class="paso-estado text-[11px] font-semibold uppercase tracking-wide opacity-80">{{ etiqueta(paso) }}</span>
+      <span class="paso-detalle text-xs leading-snug break-words">{{ paso.detalle }}</span>
+    </li>
+  </ol>
+</section>
