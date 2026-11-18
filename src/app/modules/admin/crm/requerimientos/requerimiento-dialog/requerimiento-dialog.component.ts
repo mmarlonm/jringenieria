@@ -77,7 +77,8 @@ export class RequerimientoDialogComponent implements OnInit {
       telefono: [data.requerimiento?.telefono || ''],
       email: [data.requerimiento?.email || '', [Validators.email]],
       sucursal: [data.requerimiento?.sucursal || 'Pachuca', [Validators.required]],
-      solicitanteId: [data.requerimiento?.solicitanteId ?? null, [Validators.required]],
+      // Opcional: Ingeniería lo exige para abrir el caso y se pide al aprobar si todavía falta
+      solicitanteId: [data.requerimiento?.solicitanteId ?? null],
       descripcion: [data.requerimiento?.descripcion || '', [Validators.required]],
       usuarioAsignadoId: [data.requerimiento?.usuarioAsignadoId || null],
       fechaRecepcion: [data.requerimiento?.fechaRecepcion ? new Date(data.requerimiento.fechaRecepcion) : new Date(), [Validators.required]]

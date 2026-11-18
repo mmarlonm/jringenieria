@@ -314,9 +314,6 @@
                             <p class="mt-1 font-bold">{{ camposFaltantesAprobacion.join(', ') }}</p>
                         </div>
                     </div>
-                    <button *ngIf="!requerimiento.solicitanteId && !requerimiento.solicitanteNombre" type="button" mat-stroked-button color="primary" class="btn-editar-faltante shrink-0" (click)="editarRequerimiento()">
-                        Editar requerimiento
-                    </button>
                 </div>
             </div>
 
@@ -343,8 +340,8 @@
                     </div>
                     <div>
                         <span class="text-xs text-slate-400 block">Solicitante</span>
-                        <span class="font-semibold" [ngClass]="{'text-amber-600': !requerimiento.solicitanteId && !requerimiento.solicitanteNombre}">
-                            {{ requerimiento.solicitanteNombre || (requerimiento.solicitanteId ? '#' + requerimiento.solicitanteId : 'Sin definir') }}
+                        <span class="font-semibold resumen-solicitante" [ngClass]="{'text-amber-600': !solicitanteResumen}">
+                            {{ solicitanteResumen || 'Sin definir' }}
                         </span>
                     </div>
                     <div *ngIf="estaAprobado && requerimiento.tipoProyecto" class="resumen-tipo">
@@ -369,6 +366,14 @@
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Datos para Ingeniería</h4>
                     <p class="text-xs text-slate-400 mt-1">Se piden al aprobar porque Ingeniería los necesita para abrir el caso.</p>
                 </div>
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Solicitante</mat-label>
+                    <mat-select formControlName="solicitanteId" required>
+                        <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">{{ s.nombreCompleto }} ({{ s.empresa }})</mat-option>
+                    </mat-select>
+                    <mat-hint *ngIf="errorSolicitantes" class="text-red-600">{{ errorSolicitantes }}</mat-hint>
+                    <mat-error *ngIf="aprobacionForm.get('solicitanteId')?.hasError('required')">El solicitante es obligatorio</mat-error>
+                </mat-form-field>
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Tipo de proyecto</mat-label>
                     <mat-select formControlName="tipoProyecto" required>

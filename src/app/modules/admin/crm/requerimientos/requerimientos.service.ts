@@ -130,6 +130,8 @@ export interface UpdateRequerimientoDto {
 }
 
 export interface AprobarRequerimientoDatos {
+  /** Opcional al capturar el requerimiento; Ingeniería lo exige para abrir el caso, así que viaja aquí si faltaba. */
+  solicitanteId?: number;
   tipoProyecto?: string;
   titulo?: string;
 }

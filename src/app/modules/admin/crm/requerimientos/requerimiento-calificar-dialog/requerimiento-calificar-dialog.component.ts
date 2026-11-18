@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
+import { EngineeringService, Solicitante } from 'app/modules/admin/engineering/engineering.service';
 import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento, AprobarRequerimientoResultadoDto, TIPOS_PROYECTO } from '../requerimientos.service';
 import {
   CATEGORIA_GENERAL, CHECKLIST, ItemChecklist, archivosDeCategoria, etiquetaCategoria, guardarBlob, iconoArchivo, temaArchivo, validarArchivos
@@ -44,6 +45,8 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   /** Datos que Ingenieria necesita para abrir el caso: se piden al aprobar, ya no en el requerimiento. */
   aprobacionForm: FormGroup;
   readonly tiposProyecto = TIPOS_PROYECTO;
+  solicitantes: Solicitante[] = [];
+  errorSolicitantes: string | null = null;
   currentUser: any;
   /** Solo el responsable asignado califica; los demás ven la calificación sin poder cambiarla. */
   puedeCalificar: boolean;
@@ -80,6 +83,7 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private reqService: RequerimientosService,
+    private engineeringService: EngineeringService,
     private dialogRef: MatDialogRef<RequerimientoCalificarDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { requerimiento: Requerimiento; currentUser: any; puedeCalificar: boolean }
   ) {
@@ -88,6 +92,8 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     this.puedeCalificar = data.puedeCalificar;
 
     this.aprobacionForm = this.fb.group({
+      // El solicitante es opcional al capturar el requerimiento; Ingeniería lo exige, así que si falta se pide aquí
+      solicitanteId: [this.requerimiento.solicitanteId ?? null, [Validators.required]],
       tipoProyecto: [this.requerimiento.tipoProyecto ?? '', [Validators.required]],
       titulo: [this.requerimiento.titulo ?? '', [Validators.required, Validators.maxLength(500)]]
     });
@@ -126,6 +132,14 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   ngOnInit(): void {
     this.loadArchivos();
     this.loadSeguimientos();
+    this.cargarSolicitantes();
+  }
+
+  private cargarSolicitantes(): void {
+    this.engineeringService.getSolicitantes().subscribe({
+      next: sols => this.solicitantes = (sols || []).filter(s => s.activo),
+      error: () => this.errorSolicitantes = 'No se pudieron cargar los solicitantes.'
+    });
   }
 
   // ------------------------------------------------------------------ pestañas
@@ -308,12 +322,21 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       this.requerimiento.estatus === 'Calificado Técnico';
   }
 
+  /** Nombre del solicitante elegido en «Datos para Ingeniería» (o el que ya trae el requerimiento); null si no hay. */
+  get solicitanteResumen(): string | null {
+    const id = this.aprobacionForm.get('solicitanteId')?.value;
+    if (!id) return null;
+    return this.solicitantes.find(s => s.idSolicitante === id)?.nombreCompleto
+      ?? (id === this.requerimiento.solicitanteId ? this.requerimiento.solicitanteNombre : null)
+      ?? '#' + id;
+  }
+
   get camposFaltantesAprobacion(): string[] {
     const faltantes: string[] = [];
-    if (!this.requerimiento.solicitanteId && !this.requerimiento.solicitanteNombre) {
+    const datos = this.aprobacionForm.getRawValue();
+    if (!datos.solicitanteId) {
       faltantes.push('Solicitante');
     }
-    const datos = this.aprobacionForm.getRawValue();
     if (!datos.tipoProyecto?.trim()) {
       faltantes.push('Tipo de proyecto');
     }
@@ -331,10 +354,6 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       !this.estaAprobado &&
       this.esEstatusCalificado &&
       this.camposFaltantesAprobacion.length === 0;
-  }
-
-  editarRequerimiento(): void {
-    this.dialogRef.close({ accion: 'editar', requerimiento: this.requerimiento });
   }
 
   aprobar(): void {
@@ -366,12 +385,15 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     this.aprobando = true;
     const datos = this.aprobacionForm.getRawValue();
     this.reqService.aprobarRequerimiento(this.requerimiento.id, {
+      solicitanteId: datos.solicitanteId,
       tipoProyecto: (datos.tipoProyecto ?? '').trim(),
       titulo: (datos.titulo ?? '').trim()
     }).subscribe({
       next: (res) => {
         this.aprobando = false;
         this.aprobadoResultado = res;
+        this.requerimiento.solicitanteNombre = this.solicitanteResumen ?? undefined;
+        this.requerimiento.solicitanteId = datos.solicitanteId;
         this.requerimiento.tipoProyecto = (datos.tipoProyecto ?? '').trim();
         this.requerimiento.titulo = (datos.titulo ?? '').trim();
         this.aprobacionForm.disable();

@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError, Subject } from 'rxjs';
+import { EngineeringService } from 'app/modules/admin/engineering/engineering.service';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
 import { RequerimientoCalificarDialogComponent } from './requerimiento-calificar-dialog.component';
 import Swal from 'sweetalert2';
@@ -38,7 +39,12 @@ describe('RequerimientoCalificarDialogComponent', () => {
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: { requerimiento: requerimiento(override), currentUser: { id: 18 }, puedeCalificar } },
         { provide: MatDialogRef, useValue: dialogRefSpy },
-        { provide: RequerimientosService, useValue: mockReqService }
+        { provide: RequerimientosService, useValue: mockReqService },
+        { provide: EngineeringService, useValue: { getSolicitantes: () => of([
+          { idSolicitante: 1, nombreCompleto: 'Solicitante Uno', empresa: 'Empresa A', activo: true },
+          { idSolicitante: 2, nombreCompleto: 'Solicitante Dos', empresa: 'Empresa B', activo: true },
+          { idSolicitante: 3, nombreCompleto: 'Solicitante Baja', empresa: 'Empresa C', activo: false }
+        ]) } }
       ]
     });
     fixture = TestBed.createComponent(RequerimientoCalificarDialogComponent);
@@ -158,7 +164,8 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(texto).toContain('Solicitante');
     expect(texto).toContain('Tipo de proyecto');
     expect(texto).toContain('Título');
-    expect(texto).toContain('Editar requerimiento');
+    // El solicitante se elige ahi mismo, en «Datos para Ingeniería»: ya no hay que volver a editar el requerimiento
+    expect(texto).not.toContain('Editar requerimiento');
   });
 
   it('Aprobar_pide_confirmacion_y_muestra_el_folio', () => {
@@ -201,8 +208,6 @@ describe('RequerimientoCalificarDialogComponent', () => {
     const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
     expect(btn.disabled).toBeTrue();
     expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual(['Tipo de proyecto', 'Título']);
-    // El requerimiento ya esta completo (solicitante): no hace falta editarlo
-    expect(fixture.nativeElement.querySelector('.btn-editar-faltante')).toBeNull();
   });
 
   it('Al_capturar_tipo_y_titulo_se_habilita_Aprobar_y_viajan_en_la_peticion', () => {
@@ -224,20 +229,40 @@ describe('RequerimientoCalificarDialogComponent', () => {
     btn.click();
     fixture.detectChanges();
 
-    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { tipoProyecto: 'Instalación', titulo: 'Subestación ACME' });
+    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { solicitanteId: 1, tipoProyecto: 'Instalación', titulo: 'Subestación ACME' });
     // Ya aprobado: se ve lo que se mando a Ingenieria y los campos se bloquean
     expect(fixture.componentInstance.requerimiento.tipoProyecto).toBe('Instalación');
     expect(fixture.componentInstance.aprobacionForm.disabled).toBeTrue();
     expect(fixture.nativeElement.querySelector('.resumen-titulo')?.textContent).toContain('Subestación ACME');
   });
 
-  it('Sin_solicitante_el_aviso_ofrece_editar_el_requerimiento', () => {
-    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: undefined });
+  it('Sin_solicitante_se_pide_en_Datos_para_Ingenieria_y_viaja_en_la_peticion', () => {
+    spyOn(Swal, 'fire').and.callFake(() => ({
+      then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
+    } as any));
+    const spyAprobar = jasmine.createSpy('aprobarRequerimiento').and.returnValue(
+      of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' })
+    );
+    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: undefined, tipoProyecto: 'Instalación', titulo: 'Subestación' }, { aprobarRequerimiento: spyAprobar });
     pestana('Aprobación').click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.camposFaltantesAprobacion).toContain('Solicitante');
-    expect(fixture.nativeElement.querySelector('.btn-editar-faltante')).not.toBeNull();
+    // Opcional en el requerimiento, pero Ingenieria lo exige: sin elegirlo no se puede aprobar
+    expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual(['Solicitante']);
+    expect((fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement).disabled).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.btn-editar-faltante')).toBeNull();
+
+    fixture.componentInstance.aprobacionForm.patchValue({ solicitanteId: 2 });
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
+    expect(btn.disabled).toBeFalse();
+
+    btn.click();
+    fixture.detectChanges();
+
+    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { solicitanteId: 2, tipoProyecto: 'Instalación', titulo: 'Subestación' });
+    expect(fixture.componentInstance.requerimiento.solicitanteId).toBe(2);
+    expect(fixture.componentInstance.requerimiento.solicitanteNombre).toBe('Solicitante Dos');
   });
 
   it('Quien_no_es_el_responsable_ve_los_campos_pero_no_puede_escribir', () => {

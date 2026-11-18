@@ -84,18 +84,34 @@ describe('RequerimientoDialogComponent', () => {
     fixture.detectChanges();
   }
 
-  it('El_formulario_pide_solicitante_pero_ya_no_tipo_ni_titulo_de_proyecto', () => {
+  it('El_solicitante_es_opcional_y_ya_no_se_piden_tipo_ni_titulo_de_proyecto', () => {
     inicializar();
 
     expect(component.reqForm.contains('solicitanteId')).toBeTrue();
     expect(component.reqForm.contains('tipoProyecto')).toBeFalse();
     expect(component.reqForm.contains('titulo')).toBeFalse();
-    expect(component.reqForm.get('solicitanteId')?.hasError('required')).toBeTrue();
-    expect(component.reqForm.valid).toBeFalse();
+    expect(component.reqForm.get('solicitanteId')?.hasError('required')).toBeFalse();
 
     const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('Solicitante (opcional)');
     expect(texto).not.toContain('Tipo de proyecto');
     expect(texto).not.toContain('Título del proyecto');
+  });
+
+  it('Se_puede_crear_un_requerimiento_sin_solicitante', () => {
+    inicializar();
+
+    component.reqForm.patchValue({
+      nombreContacto: 'Carlos López',
+      empresa: 'Logística SA',
+      descripcion: 'Instalación de transformador'
+    });
+
+    expect(component.reqForm.valid).toBeTrue();
+    component.onSubmit();
+
+    const enviado = mockReqService.createRequerimiento.calls.mostRecent().args[0] as any;
+    expect(enviado.solicitanteId).toBeNull();
   });
 
   it('La_fecha_se_llama_Fecha_de_la_requisicion', () => {
@@ -130,12 +146,12 @@ describe('RequerimientoDialogComponent', () => {
     expect('titulo' in enviado).toBeFalse();
   });
 
-  it('Al_editar_un_requerimiento_antiguo_se_pide_el_solicitante_y_no_se_tocan_tipo_ni_titulo', () => {
+  it('Al_editar_un_requerimiento_antiguo_el_solicitante_se_puede_agregar_y_no_se_tocan_tipo_ni_titulo', () => {
     const antiguo = mockRequerimientoAntiguo();
     inicializar({ requerimiento: antiguo, users: [] });
 
-    expect(component.reqForm.get('solicitanteId')?.hasError('required')).toBeTrue();
-    expect(component.reqForm.valid).toBeFalse();
+    // Sin solicitante guardado el formulario ya es valido: no se exige
+    expect(component.reqForm.valid).toBeTrue();
 
     component.reqForm.patchValue({ solicitanteId: 1 });
 

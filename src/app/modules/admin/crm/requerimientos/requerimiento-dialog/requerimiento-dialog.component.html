@@ -68,13 +68,14 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Solicitante</mat-label>
-                    <mat-select formControlName="solicitanteId" required>
+                    <mat-label>Solicitante (opcional)</mat-label>
+                    <mat-select formControlName="solicitanteId">
+                        <!-- Si ya hay uno guardado no se ofrece quitarlo: el API conserva el guardado cuando no llega valor -->
+                        <mat-option *ngIf="!data.requerimiento?.solicitanteId" [value]="null">Sin solicitante</mat-option>
                         <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">
                             {{ s.nombreCompleto }} ({{ s.empresa }})
                         </mat-option>
                     </mat-select>
-                    <mat-error *ngIf="reqForm.get('solicitanteId')?.hasError('required')">El solicitante es obligatorio</mat-error>
                 </mat-form-field>
             </div>
 
