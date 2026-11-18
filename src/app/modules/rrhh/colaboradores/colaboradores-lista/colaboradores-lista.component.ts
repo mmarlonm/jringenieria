@@ -42,7 +42,7 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
 
     displayedColumns = ['codigo', 'nombre', 'sucursal', 'departamento', 'puesto', 'estatus', 'estatusContrato', 'expediente', 'vencimiento', 'acciones'];
 
-    filtroEstatus = new FormControl<EstatusColaborador | ''>('', { nonNullable: true });
+    filtroEstatus = new FormControl<EstatusColaborador | ''>('ACTIVO', { nonNullable: true });
     /** 0 = todas las sucursales (un valor null deja el select en blanco). */
     filtroSucursal = new FormControl<number>(0, { nonNullable: true });
     filtroBuscar = new FormControl<string>('', { nonNullable: true });
@@ -84,9 +84,9 @@ export class ColaboradoresListaComponent implements OnInit, OnDestroy {
     readonly esGrupo = (_: number, fila: FilaLista): boolean => fila.esGrupo;
     readonly esColaborador = (_: number, fila: FilaLista): boolean => !fila.esGrupo;
 
-    /** Sin filtros activos: si la lista sale vacía es que aún no hay colaboradores. */
+    /** Sin filtros activos: si la lista sale vacía es que aún no hay colaboradores activos. */
     get sinFiltros(): boolean {
-        return !this.filtroEstatus.value && !this.filtroSucursal.value && !this.filtroBuscar.value;
+        return (this.filtroEstatus.value === 'ACTIVO' || !this.filtroEstatus.value) && !this.filtroSucursal.value && !this.filtroBuscar.value;
     }
 
     /** Consulta los usuarios que aún no son colaboradores (en el clic, no al crear el diálogo) y abre el diálogo para elegir. */
