@@ -11,7 +11,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MinutasService } from './minutas.service';
-import { Minuta, MinutaCatalogos, MinutaUsuario, MinutaSucursal } from './minutas.types';
+import { Minuta, MinutaCatalogos } from './minutas.types';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -32,238 +32,144 @@ import Swal from 'sweetalert2';
         MatTooltipModule
     ],
     template: `
-        <div class="flex flex-col max-h-[92vh] max-w-[750px] w-full bg-slate-900 text-slate-100 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60">
-            <!-- Header con degradado glassmorphism -->
-            <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 border-b border-white/10 backdrop-blur-md">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
-                        <mat-icon class="icon-size-5" [svgIcon]="isEdit ? 'heroicons_outline:pencil-square' : 'heroicons_outline:cloud-arrow-up'"></mat-icon>
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-bold tracking-tight text-white m-0">
-                            {{ isEdit ? 'Editar Minuta de Reunión' : 'Subir Minuta a la Nube' }}
-                        </h2>
-                        <p class="text-xs text-slate-400 m-0">
-                            Gestión y repositorio centralizado ISO 9001
-                        </p>
-                    </div>
+        <div class="flex flex-col max-w-160 w-full overflow-hidden bg-card rounded-2xl shadow-xl">
+            <!-- Header -->
+            <div class="flex items-center justify-between h-16 pl-6 pr-4 bg-[#212529] text-white">
+                <div class="flex items-center">
+                    <mat-icon class="text-current" [svgIcon]="isEdit ? 'heroicons_outline:pencil' : 'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                    <span class="ml-2 text-lg font-semibold tracking-tight">{{ isEdit ? 'Editar Minuta' : 'Subir Minuta' }}</span>
                 </div>
-                <button mat-icon-button (click)="cancelar()" class="text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors">
-                    <mat-icon class="icon-size-5">close</mat-icon>
+                <button mat-icon-button (click)="cancelar()" [tabIndex]="-1">
+                    <mat-icon class="text-current" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
                 </button>
             </div>
 
-            <!-- Contenido scrollable -->
-            <form [formGroup]="form" class="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-                
+            <!-- Content -->
+            <form [formGroup]="form" class="p-6 sm:p-8 overflow-y-auto space-y-4 max-h-[75vh]">
                 <!-- Título -->
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                        Título de la Minuta o Reunión <span class="text-red-400">*</span>
-                    </label>
-                    <input type="text" formControlName="titulo"
-                           placeholder="Ej. Minuta de Revisión por la Dirección - Q4"
-                           class="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
-                    <p *ngIf="form.get('titulo')?.invalid && form.get('titulo')?.touched" class="text-xs text-red-400 mt-1">
-                        El título es obligatorio.
-                    </p>
-                </div>
+                <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                    <mat-label>Título de la Minuta o Reunión</mat-label>
+                    <input matInput formControlName="titulo" placeholder="Ej. Minuta de Revisión por la Dirección - Q4" required>
+                    <mat-error *ngIf="form.get('titulo')?.hasError('required')">El título es requerido</mat-error>
+                </mat-form-field>
 
-                <!-- Fila: Sucursal y Fecha de Reunión -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Sucursal -->
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                            Sucursal <span class="text-red-400">*</span>
-                        </label>
-                        <select formControlName="sucursalId"
-                                class="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
-                            <option [ngValue]="null">🌐 Todas las sucursales (General)</option>
-                            <option *ngFor="let s of catalogos.sucursales" [ngValue]="s.sucursalId">
-                                🏢 {{ s.nombre }}
-                            </option>
-                        </select>
-                    </div>
+                    <mat-form-field [subscriptSizing]="'dynamic'">
+                        <mat-label>Sucursal</mat-label>
+                        <mat-select formControlName="sucursalId">
+                            <mat-option [value]="null">Todas las sucursales</mat-option>
+                            @for (s of catalogos.sucursales; track s.sucursalId) {
+                                <mat-option [value]="s.sucursalId">{{ s.nombre }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
 
                     <!-- Fecha de Reunión -->
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                            Fecha de la Reunión <span class="text-red-400">*</span>
-                        </label>
-                        <input type="date" formControlName="fechaReunion"
-                               class="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
-                    </div>
+                    <mat-form-field [subscriptSizing]="'dynamic'">
+                        <mat-label>Fecha de la Reunión</mat-label>
+                        <input matInput type="date" formControlName="fechaReunion" required>
+                        <mat-error *ngIf="form.get('fechaReunion')?.hasError('required')">La fecha es requerida</mat-error>
+                    </mat-form-field>
                 </div>
 
-                <!-- Palabras Clave / Tags -->
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                            Palabras Clave (Búsqueda Rápida)
-                        </label>
-                        <span class="text-[11px] text-slate-400">Separar por comas</span>
-                    </div>
-                    <div class="relative">
-                        <input type="text" formControlName="palabrasClave"
-                               placeholder="Ej. calidad, auditoría, compras, no conformidad, mantenimiento"
-                               class="w-full pl-9 pr-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
-                        <mat-icon class="icon-size-4 absolute left-3 top-3 text-slate-400" svgIcon="heroicons_outline:tag"></mat-icon>
-                    </div>
-                    <div *ngIf="palabrasClavePreview.length > 0" class="flex flex-wrap gap-1.5 mt-2">
-                        <span *ngFor="let tag of palabrasClavePreview"
-                              class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                            #{{ tag }}
-                        </span>
-                    </div>
-                </div>
+                <!-- Palabras Clave -->
+                <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                    <mat-label>Palabras Clave (separadas por comas)</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_outline:tag'"></mat-icon>
+                    <input matInput formControlName="palabrasClave" placeholder="calidad, auditoría, no conformidad, compras, mantenimiento">
+                </mat-form-field>
 
-                <!-- Descripción / Resumen -->
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                        Resumen o Temas Tratados
-                    </label>
-                    <textarea formControlName="descripcion" rows="3"
-                              placeholder="Breve resumen de acuerdos, compromisos o temas clave abordados en la minuta..."
-                              class="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all resize-none"></textarea>
-                </div>
+                <!-- Resumen / Temas -->
+                <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                    <mat-label>Resumen o Temas Tratados</mat-label>
+                    <textarea matInput formControlName="descripcion" rows="3" placeholder="Acuerdos principales, notas o compromisos..."></textarea>
+                </mat-form-field>
 
-                <!-- Sección: Control de Visibilidad y Permisos -->
-                <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-3">
+                <!-- Visibilidad -->
+                <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h4 class="text-sm font-semibold text-white m-0 flex items-center gap-2">
-                                <mat-icon class="icon-size-4 text-amber-400" [svgIcon]="form.get('esPublica')?.value ? 'heroicons_outline:globe-alt' : 'heroicons_outline:lock-closed'"></mat-icon>
-                                Visibilidad y Privacidad
-                            </h4>
-                            <p class="text-xs text-slate-400 m-0">
-                                {{ form.get('esPublica')?.value ? 'Cualquier usuario con acceso a Minutas puede consultarla' : 'Solo los usuarios autorizados explícitamente pueden verla' }}
-                            </p>
+                            <div class="text-sm font-semibold text-gray-900">Visibilidad de la Minuta</div>
+                            <div class="text-xs text-secondary mt-0.5">
+                                {{ form.get('esPublica')?.value ? 'Pública: visible para todos los usuarios' : 'Restringida: únicamente visible para los usuarios seleccionados' }}
+                            </div>
                         </div>
                         <mat-slide-toggle formControlName="esPublica" color="primary">
-                            <span class="text-xs font-semibold text-slate-300">
-                                {{ form.get('esPublica')?.value ? 'Pública' : 'Restringida' }}
-                            </span>
+                            {{ form.get('esPublica')?.value ? 'Pública' : 'Restringida' }}
                         </mat-slide-toggle>
                     </div>
 
-                    <!-- Selector de usuarios permitidos si es privada -->
-                    <div *ngIf="!form.get('esPublica')?.value" class="pt-3 border-t border-slate-700/60 animate-fade-in">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-amber-300 mb-1.5">
-                            Seleccionar Usuarios con Acceso a esta Minuta <span class="text-red-400">*</span>
-                        </label>
-                        <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
-                            <mat-select formControlName="usuariosIds" multiple placeholder="Selecciona los usuarios autorizados">
-                                <mat-select-trigger>
-                                    {{ obtenerTextoUsuariosSeleccionados() }}
-                                </mat-select-trigger>
-                                <mat-option *ngFor="let u of catalogos.usuarios" [value]="u.usuarioId">
-                                    <div class="flex flex-col">
-                                        <span class="font-medium text-slate-200">{{ u.nombre }}</span>
-                                        <span class="text-xs text-slate-400" *ngIf="u.email">{{ u.email }}</span>
-                                    </div>
-                                </mat-option>
+                    <!-- Selector de usuarios si es privada -->
+                    <div *ngIf="!form.get('esPublica')?.value" class="mt-4 pt-3 border-t border-gray-200">
+                        <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                            <mat-label>Usuarios con acceso</mat-label>
+                            <mat-select formControlName="usuariosIds" multiple placeholder="Seleccionar usuarios">
+                                @for (u of catalogos.usuarios; track u.usuarioId) {
+                                    <mat-option [value]="u.usuarioId">{{ u.nombre }}</mat-option>
+                                }
                             </mat-select>
                         </mat-form-field>
-                        <p class="text-[11px] text-slate-400 mt-0.5">
-                            Nota: Los administradores y tú (como autor) siempre tendrán acceso a consultarla.
-                        </p>
+                        <div class="text-[11px] text-secondary mt-1">
+                            Los administradores y tú (como autor) siempre podrán consultarla.
+                        </div>
                     </div>
                 </div>
 
-                <!-- Dropzone de archivo -->
+                <!-- Archivo adjunto -->
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                        Archivo de la Minuta {{ isEdit ? '(Opcional para reemplazar)' : '*' }}
-                    </label>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                        Archivo Adjunto {{ isEdit ? '(Opcional para reemplazar)' : '*' }}
+                    </div>
 
-                    <!-- Zona Drag & Drop -->
                     <div (dragover)="onDragOver($event)"
                          (dragleave)="onDragLeave($event)"
                          (drop)="onFileDrop($event)"
                          (click)="fileInput.click()"
                          [ngClass]="{
-                            'border-blue-500 bg-blue-500/10': isDragging,
-                            'border-slate-700 bg-slate-800/40 hover:bg-slate-800/80 hover:border-slate-600': !isDragging
+                            'border-primary bg-primary-50/20': isDragging,
+                            'border-gray-300 bg-gray-50 hover:bg-gray-100': !isDragging
                          }"
-                         class="cursor-pointer border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-200 flex flex-col items-center justify-center group">
-                        
+                         class="cursor-pointer border-2 border-dashed rounded-xl p-5 text-center transition-colors flex flex-col items-center justify-center">
                         <input #fileInput type="file" (change)="onFileSelected($event)" class="hidden"
                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.txt,.zip">
+                        
+                        <mat-icon class="icon-size-8 text-primary mb-2" [svgIcon]="'heroicons_outline:arrow-up-tray'"></mat-icon>
 
-                        <!-- Icono -->
-                        <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 group-hover:scale-110 transition-transform flex items-center justify-center text-blue-400 mb-3 shadow-md">
-                            <mat-icon class="icon-size-6" svgIcon="heroicons_outline:arrow-up-tray"></mat-icon>
+                        <div *ngIf="!archivoSeleccionado && !archivoActualNombre" class="text-sm">
+                            <span class="font-semibold text-primary">Haz clic para examinar</span> o arrastra tu archivo aquí
+                            <div class="text-xs text-secondary mt-1">PDF, Word, Excel, PowerPoint, imágenes o ZIP (hasta 50 MB)</div>
                         </div>
 
-                        <div *ngIf="!archivoSeleccionado && !archivoActualNombre">
-                            <p class="text-sm font-semibold text-slate-200 m-0">
-                                Arrastra y suelta aquí tu minuta, o <span class="text-blue-400 underline">haz clic para examinar</span>
-                            </p>
-                            <p class="text-xs text-slate-400 mt-1 m-0">
-                                Formatos admitidos: PDF, Word (DOCX), Excel (XLSX), PowerPoint, Imágenes o ZIP (Hasta 50 MB)
-                            </p>
-                        </div>
-
-                        <div *ngIf="archivoSeleccionado" class="flex items-center gap-3 bg-blue-500/10 border border-blue-500/30 px-4 py-2.5 rounded-xl">
-                            <mat-icon class="icon-size-5 text-blue-400" svgIcon="heroicons_outline:document-text"></mat-icon>
-                            <div class="text-left">
-                                <p class="text-xs font-bold text-white m-0">{{ archivoSeleccionado.name }}</p>
-                                <p class="text-[11px] text-blue-300 m-0">{{ formatearTamano(archivoSeleccionado.size) }}</p>
-                            </div>
-                            <button type="button" mat-icon-button (click)="$event.stopPropagation(); removerArchivo()" class="text-slate-400 hover:text-red-400">
+                        <div *ngIf="archivoSeleccionado" class="flex items-center gap-2">
+                            <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_outline:document-text'"></mat-icon>
+                            <span class="font-semibold text-sm">{{ archivoSeleccionado.name }}</span>
+                            <span class="text-xs text-secondary">({{ formatearTamano(archivoSeleccionado.size) }})</span>
+                            <button type="button" mat-icon-button (click)="$event.stopPropagation(); removerArchivo()" class="text-gray-400 hover:text-rose-600">
                                 <mat-icon class="icon-size-4">close</mat-icon>
                             </button>
                         </div>
 
-                        <div *ngIf="!archivoSeleccionado && archivoActualNombre" class="flex items-center gap-3 bg-slate-800 border border-slate-700 px-4 py-2.5 rounded-xl">
-                            <mat-icon class="icon-size-5 text-emerald-400" svgIcon="heroicons_outline:check-circle"></mat-icon>
-                            <div class="text-left">
-                                <p class="text-xs font-bold text-slate-200 m-0">Archivo actual: {{ archivoActualNombre }}</p>
-                                <p class="text-[11px] text-slate-400 m-0">Haz clic o arrastra para reemplazarlo por uno nuevo</p>
-                            </div>
+                        <div *ngIf="!archivoSeleccionado && archivoActualNombre" class="text-sm">
+                            <span class="font-medium text-gray-700">Archivo actual: {{ archivoActualNombre }}</span>
+                            <div class="text-xs text-secondary mt-1">Haz clic o arrastra para reemplazarlo si deseas</div>
                         </div>
                     </div>
                 </div>
-
             </form>
 
-            <!-- Footer con acciones -->
-            <div class="flex items-center justify-between px-6 py-4 bg-slate-900 border-t border-slate-800">
-                <button type="button" mat-button (click)="cancelar()" [disabled]="guardando"
-                        class="text-slate-400 hover:text-white">
+            <!-- Actions -->
+            <div class="flex items-center justify-end px-6 py-4 bg-gray-50 border-t border-gray-100 gap-3">
+                <button mat-button type="button" (click)="cancelar()" [disabled]="guardando">
                     Cancelar
                 </button>
-                <button type="button" mat-flat-button (click)="guardar()" [disabled]="guardando || form.invalid"
-                        class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2 rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2">
+                <button mat-flat-button color="primary" type="button" (click)="guardar()" [disabled]="guardando || form.invalid">
                     <mat-progress-spinner *ngIf="guardando" [diameter]="18" mode="indeterminate" class="mr-2"></mat-progress-spinner>
-                    <mat-icon *ngIf="!guardando" class="icon-size-5" [svgIcon]="isEdit ? 'heroicons_outline:check' : 'heroicons_outline:cloud-arrow-up'"></mat-icon>
                     <span>{{ isEdit ? 'Guardar Cambios' : 'Subir Minuta' }}</span>
                 </button>
             </div>
         </div>
-    `,
-    styles: [`
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 9999px;
-        }
-        ::ng-deep .mat-mdc-select-panel {
-            background: #1e293b !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-        ::ng-deep .mat-mdc-option {
-            color: #cbd5e1 !important;
-        }
-        ::ng-deep .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
-            color: #60a5fa !important;
-        }
-        ::ng-deep .mat-pseudo-checkbox-checked.mat-pseudo-checkbox-minimal::after {
-            color: #60a5fa !important;
-        }
-    `]
+    `
 })
 export class MinutaDialogComponent implements OnInit {
     private _fb = inject(FormBuilder);
@@ -300,24 +206,6 @@ export class MinutaDialogComponent implements OnInit {
         });
     }
 
-    get palabrasClavePreview(): string[] {
-        const val = this.form.get('palabrasClave')?.value;
-        if (!val || typeof val !== 'string') return [];
-        return val.split(new RegExp('[,;]'))
-            .map(s => s.trim())
-            .filter(s => s.length > 0);
-    }
-
-    obtenerTextoUsuariosSeleccionados(): string {
-        const ids: number[] = this.form.get('usuariosIds')?.value || [];
-        if (ids.length === 0) return 'Ningún usuario seleccionado';
-        if (ids.length === 1) {
-            const u = this.catalogos.usuarios.find(x => x.usuarioId === ids[0]);
-            return u ? u.nombre : '1 usuario';
-        }
-        return `${ids.length} usuarios autorizados`;
-    }
-
     onDragOver(e: DragEvent): void {
         e.preventDefault();
         e.stopPropagation();
@@ -346,7 +234,6 @@ export class MinutaDialogComponent implements OnInit {
     }
 
     procesarArchivo(file: File): void {
-        // Validar tamaño máximo: 50MB
         const maxBytes = 50 * 1024 * 1024;
         if (file.size > maxBytes) {
             Swal.fire('Archivo demasiado grande', 'El archivo no debe exceder 50 MB.', 'warning');
@@ -411,13 +298,13 @@ export class MinutaDialogComponent implements OnInit {
 
         if (this.isEdit && this.data.minuta) {
             this._minutasService.actualizar(this.data.minuta.minutaId, formData).subscribe({
-                next: (res) => {
+                next: () => {
                     this.guardando = false;
                     Swal.fire({
                         icon: 'success',
                         title: 'Minuta actualizada',
                         text: 'Los cambios fueron guardados exitosamente.',
-                        timer: 1800,
+                        timer: 1600,
                         showConfirmButton: false
                     });
                     this.dialogRef.close(true);
@@ -430,13 +317,13 @@ export class MinutaDialogComponent implements OnInit {
             });
         } else {
             this._minutasService.crear(formData).subscribe({
-                next: (res) => {
+                next: () => {
                     this.guardando = false;
                     Swal.fire({
                         icon: 'success',
                         title: 'Minuta subida',
-                        text: 'La minuta fue guardada y clasificada correctamente en la nube.',
-                        timer: 1800,
+                        text: 'La minuta fue guardada exitosamente.',
+                        timer: 1600,
                         showConfirmButton: false
                     });
                     this.dialogRef.close(true);

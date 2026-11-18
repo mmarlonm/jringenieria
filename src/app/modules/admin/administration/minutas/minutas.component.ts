@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTableModule } from '@angular/material/table';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -15,7 +16,7 @@ import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
 import { environment } from 'environments/environment';
 import { MinutasService } from './minutas.service';
-import { Minuta, MinutaCatalogos, MinutaSucursal } from './minutas.types';
+import { Minuta, MinutaCatalogos } from './minutas.types';
 import { MinutaDialogComponent } from './minuta-dialog.component';
 import Swal from 'sweetalert2';
 
@@ -24,7 +25,6 @@ import Swal from 'sweetalert2';
     standalone: true,
     imports: [
         CommonModule,
-        FormsModule,
         ReactiveFormsModule,
         MatButtonModule,
         MatIconModule,
@@ -33,6 +33,7 @@ import Swal from 'sweetalert2';
         MatSelectModule,
         MatTooltipModule,
         MatProgressSpinnerModule,
+        MatTableModule,
         MatDialogModule,
         MatSnackBarModule
     ],
@@ -40,29 +41,31 @@ import Swal from 'sweetalert2';
     styleUrls: ['./minutas.component.scss']
 })
 export class MinutasComponent implements OnInit {
-    private _minutasService = inject(MinutasService);
-    private _dialog = inject(MatDialog);
-    private _snackBar = inject(MatSnackBar);
-    private _cdr = inject(ChangeDetectorRef);
+    private readonly _minutasService = inject(MinutasService);
+    private readonly _dialog = inject(MatDialog);
+    private readonly _snackBar = inject(MatSnackBar);
+    private readonly _cdr = inject(ChangeDetectorRef);
 
     onlyOfficeDocsUrl: string = environment.apiOnlyOffice;
 
     minutas: Minuta[] = [];
     catalogos: MinutaCatalogos = { sucursales: [], usuarios: [] };
 
-    // Filtros
-    sucursalFiltro: number | null = null;
-    busquedaControl = new FormControl('');
-    modoVista: 'cards' | 'tabla' = 'cards';
+    filtroSucursal = new FormControl<number>(0);
+    filtroBuscar = new FormControl<string>('');
+    filtroVisibilidad = new FormControl<string>('');
 
     cargando = false;
-    cargandoCatalogos = false;
+    columnasVisibles = ['sucursal', 'fecha', 'titulo', 'archivo', 'visibilidad', 'autor', 'acciones'];
 
     ngOnInit(): void {
         this.cargarCatalogos();
         this.cargarMinutas();
 
-        this.busquedaControl.valueChanges
+        this.filtroSucursal.valueChanges.subscribe(() => this.cargarMinutas());
+        this.filtroVisibilidad.valueChanges.subscribe(() => this.cargarMinutas());
+
+        this.filtroBuscar.valueChanges
             .pipe(
                 debounceTime(300),
                 distinctUntilChanged()
@@ -73,27 +76,30 @@ export class MinutasComponent implements OnInit {
     }
 
     cargarCatalogos(): void {
-        this.cargandoCatalogos = true;
         this._minutasService.obtenerCatalogos().subscribe({
             next: (cat) => {
                 this.catalogos = cat;
-                this.cargandoCatalogos = false;
                 this._cdr.markForCheck();
             },
-            error: (err) => {
-                console.error('Error al cargar catálogos de minutas:', err);
-                this.cargandoCatalogos = false;
-            }
+            error: (err) => console.error('Error al cargar catálogos de minutas:', err)
         });
     }
 
     cargarMinutas(): void {
         this.cargando = true;
-        const buscar = this.busquedaControl.value || '';
+        const sucursalId = this.filtroSucursal.value && this.filtroSucursal.value > 0 ? this.filtroSucursal.value : null;
+        const buscar = this.filtroBuscar.value || '';
 
-        this._minutasService.listar(this.sucursalFiltro, buscar).subscribe({
+        this._minutasService.listar(sucursalId, buscar).subscribe({
             next: (data) => {
-                this.minutas = data;
+                const vis = this.filtroVisibilidad.value;
+                if (vis === 'PUBLICA') {
+                    this.minutas = data.filter(m => m.esPublica);
+                } else if (vis === 'RESTRINGIDA') {
+                    this.minutas = data.filter(m => !m.esPublica);
+                } else {
+                    this.minutas = data;
+                }
                 this.cargando = false;
                 this._cdr.markForCheck();
             },
@@ -106,23 +112,14 @@ export class MinutasComponent implements OnInit {
         });
     }
 
-    cambiarSucursal(sucursalId: number | null): void {
-        this.sucursalFiltro = sucursalId;
-        this.cargarMinutas();
-    }
-
-    limpiarBusqueda(): void {
-        this.busquedaControl.setValue('');
-    }
-
     filtrarPorPalabraClave(tag: string): void {
-        this.busquedaControl.setValue(tag);
+        this.filtroBuscar.setValue(tag);
     }
 
     abrirDialogoCrear(): void {
         const ref = this._dialog.open(MinutaDialogComponent, {
             width: '95vw',
-            maxWidth: '750px',
+            maxWidth: '650px',
             data: {
                 catalogos: this.catalogos
             },
@@ -130,16 +127,14 @@ export class MinutasComponent implements OnInit {
         });
 
         ref.afterClosed().subscribe((guardado) => {
-            if (guardado) {
-                this.cargarMinutas();
-            }
+            if (guardado) this.cargarMinutas();
         });
     }
 
     abrirDialogoEditar(minuta: Minuta): void {
         const ref = this._dialog.open(MinutaDialogComponent, {
             width: '95vw',
-            maxWidth: '750px',
+            maxWidth: '650px',
             data: {
                 minuta: minuta,
                 catalogos: this.catalogos
@@ -148,9 +143,7 @@ export class MinutasComponent implements OnInit {
         });
 
         ref.afterClosed().subscribe((guardado) => {
-            if (guardado) {
-                this.cargarMinutas();
-            }
+            if (guardado) this.cargarMinutas();
         });
     }
 
@@ -158,13 +151,11 @@ export class MinutasComponent implements OnInit {
         const ext = (minuta.archivoExtension || '').toLowerCase().replace('.', '');
         const fileName = minuta.archivoNombreOriginal;
 
-        // 1. Archivos Office -> OnlyOffice en modo 'view'
         if (this.esDocumentoOffice(ext)) {
             this.abrirOnlyOffice(minuta);
             return;
         }
 
-        // 2. PDF o Imágenes -> Visor modal nativo
         this._snackBar.open(`Cargando vista previa de ${fileName}...`, '', { duration: 1500 });
 
         this._minutasService.preview(minuta.minutaId).subscribe({
@@ -216,13 +207,10 @@ export class MinutasComponent implements OnInit {
                         }
                     });
                 } else {
-                    // Si OnlyOffice no está disponible, ofrecer descarga directa
                     this.descargar(minuta);
                 }
             },
-            error: (err) => {
-                console.error('Error con OnlyOffice:', err);
-                // Si falla OnlyOffice, ofrecer descarga
+            error: () => {
                 Swal.fire({
                     title: 'Editor OnlyOffice no disponible',
                     text: '¿Deseas descargar el documento directamente para revisarlo en tu equipo?',
@@ -240,7 +228,7 @@ export class MinutasComponent implements OnInit {
     }
 
     descargar(minuta: Minuta): void {
-        this._snackBar.open(`Iniciando descarga de ${minuta.archivoNombreOriginal}...`, '', { duration: 2000 });
+        this._snackBar.open(`Descargando ${minuta.archivoNombreOriginal}...`, '', { duration: 2000 });
 
         this._minutasService.descargar(minuta.minutaId).subscribe({
             next: (blob) => {
@@ -263,7 +251,7 @@ export class MinutasComponent implements OnInit {
     eliminar(minuta: Minuta): void {
         Swal.fire({
             title: '¿Eliminar minuta?',
-            text: `¿Estás seguro de eliminar la minuta "${minuta.titulo}"? Esta acción no se puede deshacer.`,
+            text: `¿Estás seguro de eliminar la minuta "${minuta.titulo}"?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
@@ -303,18 +291,7 @@ export class MinutasComponent implements OnInit {
         if (['xls', 'xlsx'].includes(e)) return 'heroicons_outline:table-cells';
         if (['ppt', 'pptx'].includes(e)) return 'heroicons_outline:presentation-chart-bar';
         if (['jpg', 'jpeg', 'png', 'webp'].includes(e)) return 'heroicons_outline:photo';
-        if (['zip', 'rar'].includes(e)) return 'heroicons_outline:archive-box';
-        return 'heroicons_outline:document';
-    }
-
-    obtenerColorIcono(ext: string): string {
-        const e = (ext || '').toLowerCase().replace('.', '');
-        if (e === 'pdf') return 'text-red-400 bg-red-500/10 border-red-500/20';
-        if (['doc', 'docx'].includes(e)) return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-        if (['xls', 'xlsx'].includes(e)) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-        if (['ppt', 'pptx'].includes(e)) return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-        if (['jpg', 'jpeg', 'png', 'webp'].includes(e)) return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
-        return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
+        return 'heroicons_outline:paper-clip';
     }
 
     formatearTamano(bytes?: number): string {

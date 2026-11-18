@@ -1,366 +1,176 @@
-<div class="flex flex-col flex-auto min-w-0 bg-slate-950 text-slate-100 min-h-full">
+<div class="flex flex-col flex-auto min-w-0">
 
-    <!-- Header Glassmorphism -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border-b border-white/10 px-6 py-7 lg:px-10">
-        <!-- Luces de fondo decorativas -->
-        <div class="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -top-24 -right-24 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 max-w-7xl mx-auto">
-            <div class="flex items-center space-x-4">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/25 border border-white/20">
-                    <mat-icon class="icon-size-8 text-white" svgIcon="heroicons_outline:cloud"></mat-icon>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2.5">
-                        <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight text-white m-0">
-                            Nube de Minutas
-                        </h1>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
-                            ISO 9001:2015
-                        </span>
-                    </div>
-                    <p class="text-sm text-slate-400 mt-1 m-0">
-                        Repositorio centralizado de minutas por sucursal, control de visibilidad y búsqueda por palabras clave.
-                    </p>
-                </div>
+    <!-- Header -->
+    <div class="flex flex-col shadow bg-card">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-10 border-b">
+            <div>
+                <div class="text-3xl font-bold tracking-tight">Nube de Minutas</div>
+                <div class="text-secondary">Repositorio centralizado de minutas por sucursal y control de acceso (ISO 9001).</div>
             </div>
-
-            <!-- Botón Subir Minuta -->
-            <div class="flex items-center gap-3">
-                <button type="button" (click)="abrirDialogoCrear()"
-                        class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-600/30 border border-white/10 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
-                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:cloud-arrow-up"></mat-icon>
-                    <span>Subir Minuta</span>
+            <div class="mt-4 flex flex-wrap gap-3 sm:mt-0">
+                <button mat-flat-button color="primary" type="button" (click)="abrirDialogoCrear()">
+                    <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                    <span class="ml-2">Nueva minuta</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Barra de Controles y Filtros -->
-    <div class="max-w-7xl w-full mx-auto px-6 lg:px-10 py-6">
-        <div class="bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-xl space-y-4">
-            
-            <!-- Fila superior: Buscador de palabras clave y selector de vista -->
-            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-                <!-- Buscador de Palabras Clave / Título -->
-                <div class="relative flex-1">
-                    <mat-icon class="icon-size-5 absolute left-3.5 top-3 text-slate-400" svgIcon="heroicons_outline:magnifying-glass"></mat-icon>
-                    <input type="text" [formControl]="busquedaControl"
-                           placeholder="Buscar por palabra clave (#auditoría, #compras), título, tema o archivo..."
-                           class="w-full pl-11 pr-10 py-2.5 bg-slate-800/90 border border-slate-700/80 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all">
-                    <button *ngIf="busquedaControl.value" (click)="limpiarBusqueda()" type="button"
-                            class="absolute right-3 top-2.5 text-slate-400 hover:text-white transition-colors">
-                        <mat-icon class="icon-size-4">close</mat-icon>
-                    </button>
-                </div>
+    <!-- Main Content -->
+    <div class="p-6 sm:p-10">
 
-                <!-- Selector de Modo de Vista (Cards / Tabla) -->
-                <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700/80 self-end md:self-auto">
-                    <button type="button" (click)="modoVista = 'cards'"
-                            [ngClass]="{
-                                'bg-blue-600 text-white shadow-md': modoVista === 'cards',
-                                'text-slate-400 hover:text-white': modoVista !== 'cards'
-                            }"
-                            class="p-2 rounded-lg transition-all"
-                            matTooltip="Vista en Tarjetas">
-                        <mat-icon class="icon-size-5" svgIcon="heroicons_outline:squares-2x2"></mat-icon>
-                    </button>
-                    <button type="button" (click)="modoVista = 'tabla'"
-                            [ngClass]="{
-                                'bg-blue-600 text-white shadow-md': modoVista === 'tabla',
-                                'text-slate-400 hover:text-white': modoVista !== 'tabla'
-                            }"
-                            class="p-2 rounded-lg transition-all"
-                            matTooltip="Vista en Tabla">
-                        <mat-icon class="icon-size-5" svgIcon="heroicons_outline:list-bullet"></mat-icon>
-                    </button>
-                </div>
-            </div>
+        <!-- Filtros -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <!-- Sucursal -->
+            <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Sucursal</mat-label>
+                <mat-select [formControl]="filtroSucursal">
+                    <mat-option [value]="0">Todas las sucursales</mat-option>
+                    @for (s of catalogos.sucursales; track s.sucursalId) {
+                        <mat-option [value]="s.sucursalId">{{ s.nombre }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
 
-            <!-- Fila inferior: Filtro por Sucursal (Pills) -->
-            <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-1 custom-scrollbar">
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1.5 whitespace-nowrap">
-                    <mat-icon class="icon-size-4 text-blue-400" svgIcon="heroicons_outline:building-office-2"></mat-icon>
-                    Sucursal:
-                </span>
+            <!-- Buscar -->
+            <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Buscar</mat-label>
+                <input matInput [formControl]="filtroBuscar" placeholder="Palabra clave, título, tema o archivo...">
+                <mat-icon matSuffix [svgIcon]="'heroicons_outline:magnifying-glass'"></mat-icon>
+            </mat-form-field>
 
-                <!-- Botón: Todas las sucursales -->
-                <button type="button" (click)="cambiarSucursal(null)"
-                        [ngClass]="{
-                            'bg-blue-600 text-white shadow-md font-bold': sucursalFiltro === null,
-                            'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white': sucursalFiltro !== null
-                        }"
-                        class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all whitespace-nowrap flex items-center gap-1.5">
-                    <span>🌐 Todas</span>
-                </button>
-
-                <!-- Botón por cada Sucursal activa -->
-                <button *ngFor="let s of catalogos.sucursales" type="button" (click)="cambiarSucursal(s.sucursalId)"
-                        [ngClass]="{
-                            'bg-blue-600 text-white shadow-md font-bold': sucursalFiltro === s.sucursalId,
-                            'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white': sucursalFiltro !== s.sucursalId
-                        }"
-                        class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all whitespace-nowrap flex items-center gap-1.5">
-                    <span>🏢 {{ s.nombre }}</span>
-                </button>
-            </div>
-
-            <!-- Resumen de resultados -->
-            <div class="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/5">
-                <div>
-                    Mostrando <span class="font-bold text-white">{{ minutas.length }}</span> minutas encontradas
-                    <span *ngIf="busquedaControl.value" class="text-blue-400 ml-1">
-                        para "{{ busquedaControl.value }}"
-                    </span>
-                </div>
-                <div *ngIf="cargando" class="flex items-center gap-2 text-blue-400">
-                    <mat-progress-spinner [diameter]="14" mode="indeterminate"></mat-progress-spinner>
-                    <span>Actualizando...</span>
-                </div>
-            </div>
+            <!-- Visibilidad -->
+            <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Visibilidad</mat-label>
+                <mat-select [formControl]="filtroVisibilidad">
+                    <mat-option value="">Todas</mat-option>
+                    <mat-option value="PUBLICA">Públicas</mat-option>
+                    <mat-option value="RESTRINGIDA">Restringidas</mat-option>
+                </mat-select>
+            </mat-form-field>
         </div>
 
-        <!-- Estado de Carga Inicial -->
-        <div *ngIf="cargando && minutas.length === 0" class="flex flex-col items-center justify-center py-20">
-            <mat-progress-spinner [diameter]="48" mode="indeterminate" class="text-blue-500 mb-4"></mat-progress-spinner>
-            <p class="text-slate-400 text-sm">Cargando repositorio de minutas...</p>
+        <!-- Spinner -->
+        <div *ngIf="cargando" class="flex flex-col items-center justify-center p-16 space-y-3">
+            <mat-progress-spinner diameter="40" strokeWidth="4" mode="indeterminate"></mat-progress-spinner>
+            <span class="text-xs font-bold text-secondary uppercase tracking-wider">Cargando minutas...</span>
         </div>
 
-        <!-- Estado Vacío (Sin minutas) -->
-        <div *ngIf="!cargando && minutas.length === 0" class="flex flex-col items-center justify-center py-16 bg-slate-900/40 border border-white/5 rounded-2xl text-center mt-6 p-8">
-            <div class="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-400 mb-4 border border-white/10 shadow-inner">
-                <mat-icon class="icon-size-8" svgIcon="heroicons_outline:document-magnifying-glass"></mat-icon>
+        <!-- Estado vacío -->
+        <div *ngIf="!cargando && minutas.length === 0"
+             class="flex flex-col items-center justify-center p-16 sm:p-24 bg-card rounded-2xl border-2 border-dashed border-gray-200 text-center shadow-xs mt-6">
+            <div class="p-4 bg-primary-50 rounded-2xl text-primary mb-3">
+                <mat-icon class="icon-size-10" [svgIcon]="'heroicons_outline:folder-plus'"></mat-icon>
             </div>
-            <h3 class="text-lg font-bold text-white m-0">No se encontraron minutas</h3>
-            <p class="text-sm text-slate-400 max-w-md mt-1 mb-5">
-                {{ busquedaControl.value || sucursalFiltro ? 'No hay minutas que coincidan con los criterios de búsqueda o sucursal seleccionada.' : 'Aún no se han cargado minutas en este apartado. Comienza subiendo la primera minuta de reunión.' }}
-            </p>
-            <div class="flex gap-3">
-                <button *ngIf="busquedaControl.value || sucursalFiltro" (click)="limpiarBusqueda(); cambiarSucursal(null)" type="button"
-                        class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl border border-white/10 transition-colors">
-                    Limpiar Filtros
-                </button>
-                <button (click)="abrirDialogoCrear()" type="button"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/30 transition-colors flex items-center gap-1.5">
-                    <mat-icon class="icon-size-4" svgIcon="heroicons_outline:cloud-arrow-up"></mat-icon>
-                    <span>Subir Minuta</span>
-                </button>
+            <div class="text-base font-bold text-gray-800">No hay minutas registradas</div>
+            <div class="text-xs text-secondary mt-1 max-w-sm">
+                No se encontraron minutas con los filtros seleccionados o aún no se han subido documentos.
             </div>
+            <button mat-flat-button color="primary" type="button" (click)="abrirDialogoCrear()" class="mt-5">
+                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                <span class="ml-2">Subir primera minuta</span>
+            </button>
         </div>
 
-        <!-- MODO 1: VISTA DE TARJETAS (CARDS GRID) -->
-        <div *ngIf="!cargando && minutas.length > 0 && modoVista === 'cards'"
-             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-            
-            <div *ngFor="let m of minutas"
-                 class="group relative flex flex-col justify-between bg-slate-900/90 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/40 rounded-2xl p-5 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300">
-                
-                <!-- Encabezado de la Tarjeta -->
-                <div>
-                    <!-- Badges superiores: Sucursal, Fecha y Privacidad -->
-                    <div class="flex items-center justify-between gap-2 mb-3">
-                        <!-- Sucursal Badge -->
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                            <mat-icon class="icon-size-3.5" svgIcon="heroicons_outline:building-office"></mat-icon>
-                            {{ m.sucursalNombre || 'Todas las sucursales' }}
-                        </span>
+        <!-- Tabla -->
+        <div *ngIf="!cargando && minutas.length > 0" class="mt-6 bg-card shadow rounded-2xl overflow-auto">
+            <table mat-table [dataSource]="minutas" class="w-full">
+                <!-- Sucursal -->
+                <ng-container matColumnDef="sucursal">
+                    <th mat-header-cell *matHeaderCellDef>Sucursal</th>
+                    <td mat-cell *matCellDef="let m" class="font-semibold whitespace-nowrap">
+                        {{ m.sucursalNombre || 'Todas' }}
+                    </td>
+                </ng-container>
 
-                        <!-- Visibilidad Badge -->
-                        <span *ngIf="m.esPublica"
-                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              matTooltip="Minuta visible para todos los usuarios">
-                            <mat-icon class="icon-size-3 text-emerald-400" svgIcon="heroicons_outline:globe-alt"></mat-icon>
+                <!-- Fecha Reunión -->
+                <ng-container matColumnDef="fecha">
+                    <th mat-header-cell *matHeaderCellDef>Fecha Reunión</th>
+                    <td mat-cell *matCellDef="let m" class="text-secondary whitespace-nowrap">
+                        {{ m.fechaReunion | date:'dd/MM/yyyy' }}
+                    </td>
+                </ng-container>
+
+                <!-- Título y Palabras Clave -->
+                <ng-container matColumnDef="titulo">
+                    <th mat-header-cell *matHeaderCellDef>Título / Temas</th>
+                    <td mat-cell *matCellDef="let m" class="py-3">
+                        <div class="font-semibold text-default">{{ m.titulo }}</div>
+                        <div *ngIf="m.descripcion" class="text-xs text-secondary line-clamp-1 mt-0.5">{{ m.descripcion }}</div>
+                        <div *ngIf="m.palabrasClaveLista?.length > 0" class="flex flex-wrap gap-1 mt-1.5">
+                            @for (tag of m.palabrasClaveLista; track tag) {
+                                <button type="button" (click)="filtrarPorPalabraClave(tag)"
+                                        class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 hover:bg-primary-100 hover:text-primary text-gray-700 transition-colors">
+                                    #{{ tag }}
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Archivo -->
+                <ng-container matColumnDef="archivo">
+                    <th mat-header-cell *matHeaderCellDef>Archivo</th>
+                    <td mat-cell *matCellDef="let m" class="whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                            <mat-icon class="icon-size-5 text-secondary" [svgIcon]="obtenerIconoArchivo(m.archivoExtension)"></mat-icon>
+                            <div>
+                                <div class="text-xs font-medium text-default truncate max-w-[200px]" [title]="m.archivoNombreOriginal">
+                                    {{ m.archivoNombreOriginal }}
+                                </div>
+                                <div class="text-[11px] text-secondary">{{ formatearTamano(m.tamanoBytes) }}</div>
+                            </div>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Visibilidad -->
+                <ng-container matColumnDef="visibilidad">
+                    <th mat-header-cell *matHeaderCellDef>Visibilidad</th>
+                    <td mat-cell *matCellDef="let m" class="whitespace-nowrap">
+                        <span *ngIf="m.esPublica" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                             Pública
                         </span>
-
-                        <span *ngIf="!m.esPublica"
-                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 cursor-help"
+                        <span *ngIf="!m.esPublica" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800"
                               [matTooltip]="'Visible para: ' + (m.usuariosPermitidosNombres.join(', ') || 'Usuarios autorizados')">
-                            <mat-icon class="icon-size-3 text-amber-400" svgIcon="heroicons_outline:lock-closed"></mat-icon>
-                            Privada ({{ m.usuariosPermitidosIds.length }})
+                            Restringida ({{ m.usuariosPermitidosIds.length }})
                         </span>
-                    </div>
+                    </td>
+                </ng-container>
 
-                    <!-- Título -->
-                    <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 m-0 mb-1.5"
-                        [matTooltip]="m.titulo">
-                        {{ m.titulo }}
-                    </h3>
+                <!-- Autor -->
+                <ng-container matColumnDef="autor">
+                    <th mat-header-cell *matHeaderCellDef>Subido por</th>
+                    <td mat-cell *matCellDef="let m" class="text-secondary text-xs whitespace-nowrap">
+                        {{ m.usuarioCreacionNombre }}
+                    </td>
+                </ng-container>
 
-                    <!-- Fecha de la Reunión -->
-                    <div class="flex items-center gap-1.5 text-xs text-slate-400 mb-3">
-                        <mat-icon class="icon-size-4 text-slate-500" svgIcon="heroicons_outline:calendar"></mat-icon>
-                        <span>Reunión: {{ m.fechaReunion | date:'dd MMM yyyy' }}</span>
-                    </div>
-
-                    <!-- Resumen / Descripción -->
-                    <p *ngIf="m.descripcion" class="text-xs text-slate-300 line-clamp-2 m-0 mb-3 leading-relaxed">
-                        {{ m.descripcion }}
-                    </p>
-
-                    <!-- Palabras Clave / Tags (Clickeables para filtrar) -->
-                    <div *ngIf="m.palabrasClaveLista.length > 0" class="flex flex-wrap gap-1.5 mb-4">
-                        <button *ngFor="let tag of m.palabrasClaveLista" type="button"
-                                (click)="filtrarPorPalabraClave(tag)"
-                                class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-800 text-blue-300 hover:bg-blue-600 hover:text-white border border-slate-700/80 transition-all"
-                                matTooltip="Filtrar por esta palabra clave">
-                            #{{ tag }}
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Footer de la Tarjeta: Archivo y Acciones -->
-                <div class="pt-3 border-t border-slate-800/80">
-                    <!-- Ficha de Archivo Adjunto -->
-                    <div class="flex items-center justify-between bg-slate-950/60 border border-white/5 rounded-xl p-2.5 mb-3">
-                        <div class="flex items-center gap-2.5 overflow-hidden">
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center border"
-                                 [ngClass]="obtenerColorIcono(m.archivoExtension)">
-                                <mat-icon class="icon-size-4.5" [svgIcon]="obtenerIconoArchivo(m.archivoExtension)"></mat-icon>
-                            </div>
-                            <div class="overflow-hidden">
-                                <p class="text-xs font-semibold text-slate-200 truncate m-0 max-w-[170px]"
-                                   [matTooltip]="m.archivoNombreOriginal">
-                                    {{ m.archivoNombreOriginal }}
-                                </p>
-                                <p class="text-[10px] text-slate-400 m-0">
-                                    {{ formatearTamano(m.tamanoBytes) }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Botón Previsualizar destacado -->
-                        <button type="button" (click)="previsualizar(m)"
-                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 transition-all shadow-sm"
-                                matTooltip="Previsualizar documento">
-                            <mat-icon class="icon-size-4" svgIcon="heroicons_outline:eye"></mat-icon>
-                            <span>Ver</span>
-                        </button>
-                    </div>
-
-                    <!-- Fila inferior: Autor y Botones de acción -->
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] text-slate-400 truncate max-w-[150px]" [matTooltip]="'Subido por: ' + m.usuarioCreacionNombre">
-                            Por: {{ m.usuarioCreacionNombre }}
-                        </span>
-
-                        <div class="flex items-center gap-1">
-                            <!-- Descargar -->
-                            <button type="button" mat-icon-button (click)="descargar(m)"
-                                    class="text-slate-400 hover:text-emerald-400 transition-colors w-8 h-8"
-                                    matTooltip="Descargar archivo">
-                                <mat-icon class="icon-size-4.5" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
+                <!-- Acciones -->
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+                    <td mat-cell *matCellDef="let m" class="text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1">
+                            <button mat-stroked-button (click)="previsualizar(m)" matTooltip="Previsualizar documento">
+                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:eye'"></mat-icon>
+                                <span class="ml-1">Ver</span>
                             </button>
-
-                            <!-- Editar -->
-                            <button *ngIf="m.puedeEditar" type="button" mat-icon-button (click)="abrirDialogoEditar(m)"
-                                    class="text-slate-400 hover:text-blue-400 transition-colors w-8 h-8"
-                                    matTooltip="Editar minuta / permisos">
-                                <mat-icon class="icon-size-4.5" svgIcon="heroicons_outline:pencil-square"></mat-icon>
+                            <button mat-icon-button (click)="descargar(m)" matTooltip="Descargar">
+                                <mat-icon [svgIcon]="'heroicons_outline:arrow-down-tray'"></mat-icon>
                             </button>
-
-                            <!-- Eliminar -->
-                            <button *ngIf="m.puedeEliminar" type="button" mat-icon-button (click)="eliminar(m)"
-                                    class="text-slate-400 hover:text-red-400 transition-colors w-8 h-8"
-                                    matTooltip="Eliminar minuta">
-                                <mat-icon class="icon-size-4.5" svgIcon="heroicons_outline:trash"></mat-icon>
+                            <button *ngIf="m.puedeEditar" mat-icon-button (click)="abrirDialogoEditar(m)" matTooltip="Editar">
+                                <mat-icon [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                            </button>
+                            <button *ngIf="m.puedeEliminar" mat-icon-button (click)="eliminar(m)" matTooltip="Eliminar" class="text-rose-600">
+                                <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
                             </button>
                         </div>
-                    </div>
-                </div>
+                    </td>
+                </ng-container>
 
-            </div>
-        </div>
-
-        <!-- MODO 2: VISTA DE TABLA -->
-        <div *ngIf="!cargando && minutas.length > 0 && modoVista === 'tabla'"
-             class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl mt-6">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-950 text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800">
-                        <tr>
-                            <th class="py-3.5 px-4">Sucursal</th>
-                            <th class="py-3.5 px-4">Fecha Reunión</th>
-                            <th class="py-3.5 px-4">Título y Palabras Clave</th>
-                            <th class="py-3.5 px-4">Archivo</th>
-                            <th class="py-3.5 px-4">Privacidad</th>
-                            <th class="py-3.5 px-4 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800/80">
-                        <tr *ngFor="let m of minutas" class="hover:bg-slate-800/50 transition-colors">
-                            <!-- Sucursal -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                                    🏢 {{ m.sucursalNombre || 'Todas' }}
-                                </span>
-                            </td>
-
-                            <!-- Fecha -->
-                            <td class="py-3 px-4 whitespace-nowrap text-xs text-slate-300">
-                                {{ m.fechaReunion | date:'dd/MM/yyyy' }}
-                            </td>
-
-                            <!-- Título y Tags -->
-                            <td class="py-3 px-4">
-                                <p class="font-bold text-white m-0">{{ m.titulo }}</p>
-                                <p *ngIf="m.descripcion" class="text-xs text-slate-400 line-clamp-1 m-0 mt-0.5">{{ m.descripcion }}</p>
-                                <div *ngIf="m.palabrasClaveLista.length > 0" class="flex flex-wrap gap-1 mt-1.5">
-                                    <button *ngFor="let tag of m.palabrasClaveLista" type="button"
-                                            (click)="filtrarPorPalabraClave(tag)"
-                                            class="inline-block px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-800 text-blue-300 hover:bg-blue-600 hover:text-white border border-slate-700">
-                                        #{{ tag }}
-                                    </button>
-                                </div>
-                            </td>
-
-                            <!-- Archivo -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                <div class="flex items-center gap-2">
-                                    <mat-icon class="icon-size-4.5" [svgIcon]="obtenerIconoArchivo(m.archivoExtension)"></mat-icon>
-                                    <div>
-                                        <p class="text-xs font-semibold text-slate-200 truncate max-w-[180px] m-0">{{ m.archivoNombreOriginal }}</p>
-                                        <p class="text-[10px] text-slate-400 m-0">{{ formatearTamano(m.tamanoBytes) }}</p>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <!-- Privacidad -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                <span *ngIf="m.esPublica" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    Pública
-                                </span>
-                                <span *ngIf="!m.esPublica" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                                      [matTooltip]="'Visible para: ' + (m.usuariosPermitidosNombres.join(', ') || 'Usuarios autorizados')">
-                                    Restringida ({{ m.usuariosPermitidosIds.length }})
-                                </span>
-                            </td>
-
-                            <!-- Acciones -->
-                            <td class="py-3 px-4 text-right whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1">
-                                    <button type="button" (click)="previsualizar(m)"
-                                            class="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white text-xs font-semibold rounded-lg border border-blue-500/30 transition-all flex items-center gap-1"
-                                            matTooltip="Previsualizar">
-                                        <mat-icon class="icon-size-4" svgIcon="heroicons_outline:eye"></mat-icon>
-                                        <span>Ver</span>
-                                    </button>
-                                    <button type="button" mat-icon-button (click)="descargar(m)" class="text-slate-400 hover:text-emerald-400 w-8 h-8" matTooltip="Descargar">
-                                        <mat-icon class="icon-size-4" svgIcon="heroicons_outline:arrow-down-tray"></mat-icon>
-                                    </button>
-                                    <button *ngIf="m.puedeEditar" type="button" mat-icon-button (click)="abrirDialogoEditar(m)" class="text-slate-400 hover:text-blue-400 w-8 h-8" matTooltip="Editar">
-                                        <mat-icon class="icon-size-4" svgIcon="heroicons_outline:pencil-square"></mat-icon>
-                                    </button>
-                                    <button *ngIf="m.puedeEliminar" type="button" mat-icon-button (click)="eliminar(m)" class="text-slate-400 hover:text-red-400 w-8 h-8" matTooltip="Eliminar">
-                                        <mat-icon class="icon-size-4" svgIcon="heroicons_outline:trash"></mat-icon>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                <tr mat-header-row *matHeaderRowDef="columnasVisibles"></tr>
+                <tr mat-row *matRowDef="let row; columns: columnasVisibles;" class="hover:bg-gray-50/50"></tr>
+            </table>
         </div>
 
     </div>
