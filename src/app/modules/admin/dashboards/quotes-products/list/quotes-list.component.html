@@ -1,14 +1,13 @@
 <div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
-  <!-- Main -->
-  <div class="flex-auto">
-    <!-- Header -->
-    <div class="flex flex-auto flex-col justify-between px-6 sm:flex-col md:flex- md:px-8">
+  <!-- Header -->
+  <div class="flex-none px-4 pt-4 pb-3 sm:px-6 sm:pt-6 md:px-8 border-b border-gray-100 dark:border-gray-800 bg-card">
+    <div class="flex flex-col">
       <!-- Title -->
       <div>
-        <div class="text-4xl font-extrabold leading-none tracking-tight">
+        <div class="text-3xl sm:text-4xl font-extrabold leading-none tracking-tight">
           Cotizaciones de Productos
         </div>
-        <div class="text-secondary ml-0.5 font-medium">
+        <div class="text-secondary ml-0.5 font-medium mt-1">
           @if (quotesCount > 0) {
           {{ quotesCount }}
           }
@@ -22,9 +21,9 @@
           }
           }}
         </div>
-        <div class="mt-4 flex flex-col sm:flex-row sm:flex-wrap items-center sm:gap-4 md:mt-4">
+        <div class="mt-4 flex flex-col gap-3">
           <!-- Search -->
-          <div class="flex-auto w-full">
+          <div class="w-full">
             <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full min-w-50" subscriptSizing="dynamic">
               <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
               <input matInput [(ngModel)]="filterValue" (keyup)="applyFilter()" [autocomplete]="'off'"
@@ -32,81 +31,89 @@
             </mat-form-field>
           </div>
 
-          <!-- Rango de fechas de creación: inicio y fin separados (inclusivos) -->
-          <div class="flex-none w-full sm:w-52">
-            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-              <span matPrefix class="text-secondary mr-2 text-sm">Desde</span>
-              <input matInput type="date" class="input-fecha-desde" aria-label="Fecha inicio" [(ngModel)]="fechaDesde"
-                [max]="fechaHasta || null" (change)="onDateChange()" />
-            </mat-form-field>
-          </div>
-          <div class="flex-none w-full sm:w-52">
-            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-              <span matPrefix class="text-secondary mr-2 text-sm">Hasta</span>
-              <input matInput type="date" class="input-fecha-hasta" aria-label="Fecha fin" [(ngModel)]="fechaHasta"
-                [min]="fechaDesde || null" (change)="onDateChange()" />
-            </mat-form-field>
-          </div>
+          <!-- Rango de fechas, Etapa, Marcas y Acciones -->
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <!-- Rango de fechas de creación: inicio y fin separados (inclusivos) -->
+            <div class="w-full sm:w-48">
+              <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                <span matPrefix class="text-secondary mr-2 text-sm font-medium">Desde</span>
+                <input #inputDesde matInput type="date" class="input-fecha-desde" aria-label="Fecha inicio" [(ngModel)]="fechaDesde"
+                  [max]="fechaHasta || null" (change)="onDateChange()" />
+                <button mat-icon-button matSuffix type="button" class="w-7 h-7 min-h-7 text-secondary hover:text-primary cursor-pointer"
+                  (click)="abrirPicker(inputDesde); $event.stopPropagation()" matTooltip="Abrir calendario" aria-label="Abrir calendario">
+                  <mat-icon class="icon-size-4">calendar_today</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+            <div class="w-full sm:w-48">
+              <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                <span matPrefix class="text-secondary mr-2 text-sm font-medium">Hasta</span>
+                <input #inputHasta matInput type="date" class="input-fecha-hasta" aria-label="Fecha fin" [(ngModel)]="fechaHasta"
+                  [min]="fechaDesde || null" (change)="onDateChange()" />
+                <button mat-icon-button matSuffix type="button" class="w-7 h-7 min-h-7 text-secondary hover:text-primary cursor-pointer"
+                  (click)="abrirPicker(inputHasta); $event.stopPropagation()" matTooltip="Abrir calendario" aria-label="Abrir calendario">
+                  <mat-icon class="icon-size-4">calendar_today</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
 
-          <!-- Etapa Filter -->
-          <div class="flex-none w-full sm:w-48">
-            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-              <mat-select [(ngModel)]="filtroEtapa" (selectionChange)="filtrarPorEtapa($event.value)" placeholder="Etapa">
-                <mat-option value="todas">Todas las etapas</mat-option>
-                <mat-option *ngFor="let e of etapasFiltro" [value]="e.codigo">{{ e.nombre }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
+            <!-- Etapa Filter -->
+            <div class="w-full sm:w-44">
+              <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                <mat-select [(ngModel)]="filtroEtapa" (selectionChange)="filtrarPorEtapa($event.value)" placeholder="Etapa">
+                  <mat-option value="todas">Todas las etapas</mat-option>
+                  <mat-option *ngFor="let e of etapasFiltro" [value]="e.codigo">{{ e.nombre }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
 
-          <!-- Marcas Filter -->
-          <div class="flex-none w-full sm:w-56">
-            <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-              <mat-select [(ngModel)]="filtroMarcas" (selectionChange)="filtrarPorMarcas($event.value)" placeholder="Marcas" class="select-filtro-marcas">
-                <mat-option value="todas">Todas</mat-option>
-                <mat-option value="vencidas">Vencidas por cerrar</mat-option>
-                <mat-option value="atrasadas">Seguimiento atrasado</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
+            <!-- Marcas Filter -->
+            <div class="w-full sm:w-48">
+              <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
+                <mat-select [(ngModel)]="filtroMarcas" (selectionChange)="filtrarPorMarcas($event.value)" placeholder="Marcas" class="select-filtro-marcas">
+                  <mat-option value="todas">Todas</mat-option>
+                  <mat-option value="vencidas">Vencidas por cerrar</mat-option>
+                  <mat-option value="atrasadas">Seguimiento atrasado</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
 
-          <!-- Indicadores button -->
-          <div class="flex-none py-2 flex justify-end translate-y-1">
-            <button mat-stroked-button color="primary" class="btn-indicadores ml-2" (click)="irAIndicadores()">
-              <mat-icon class="mr-1">analytics</mat-icon>
-              <span>Indicadores</span>
-            </button>
-          </div>
+            <!-- Botones de Acción -->
+            <div class="flex items-center gap-2 sm:ml-auto w-full sm:w-auto justify-end">
+              <!-- Indicadores button -->
+              <button mat-stroked-button color="primary" class="btn-indicadores" (click)="irAIndicadores()">
+                <mat-icon class="mr-1">analytics</mat-icon>
+                <span>Indicadores</span>
+              </button>
 
-          <!-- Add quotes button -->
-          <div class="flex-none py-2 flex justify-end translate-y-1">
-            <button class="ml-2" mat-flat-button color="primary" (click)="addQuote()" *ngIf="tienePermiso('btnAdd')">
-              <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
-              <span class="button-text ml-2 mr-1">Nueva</span>
-            </button>
+              <!-- Add quotes button -->
+              <button mat-flat-button color="primary" (click)="addQuote()" *ngIf="tienePermiso('btnAdd')">
+                <mat-icon svgIcon="heroicons_outline:plus"></mat-icon>
+                <span class="button-text ml-1.5">Nueva</span>
+              </button>
+            </div>
           </div>
         </div>
-        <div *ngIf="errorFechas" class="error-fechas mt-2 text-sm text-red-600">{{ errorFechas }}</div>
+        <div *ngIf="errorFechas" class="error-fechas mt-2 text-sm text-red-600 font-medium">{{ errorFechas }}</div>
       </div>
+    </div>
+  </div>
 
-      <!-- Main actions -->
+  <!-- Cotizaciones list -->
+  <div class="flex-auto flex flex-col min-h-0 p-3 sm:p-4 md:p-6 overflow-hidden">
+
+    <!-- Aviso de error en resumen SGC -->
+    <div *ngIf="errorResumenSgc" class="flex-none aviso-error-resumen bg-amber-50 border-l-4 border-amber-500 p-3 mb-3 text-amber-800 text-xs">
+      No se pudo cargar la información del SGC para las cotizaciones. Mostrando información base.
     </div>
 
-    <!-- Cotizaciones list -->
-    <div class="flex flex-col min-h-screen h-screen w-full px-3 py-4 sm:px-6 sm:py-6 md:px-8">
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="mat-elevation-z4 bg-card rounded-lg flex flex-col flex-auto min-h-0 overflow-hidden border border-gray-200 dark:border-gray-700" *ngIf="quotesCount > 0; else noQuotes">
 
-      <!-- Aviso de error en resumen SGC -->
-      <div *ngIf="errorResumenSgc" class="aviso-error-resumen bg-amber-50 border-l-4 border-amber-500 p-3 mb-4 text-amber-800 text-xs">
-        No se pudo cargar la información del SGC para las cotizaciones. Mostrando información base.
-      </div>
-
-      <!-- CONTENEDOR PRINCIPAL -->
-      <div class="mat-elevation-z8 flex flex-col flex-auto overflow-hidden" *ngIf="quotesCount > 0; else noQuotes">
-
-        <!-- ===================== -->
-        <!-- VISTA DESKTOP / TABLET -->
-        <!-- ===================== -->
-        <div class="hidden sm:block flex-auto relative overflow-x-auto overflow-y-auto"
-          style="max-height: calc(100vh - 280px)">
+      <!-- ===================== -->
+      <!-- VISTA DESKTOP / TABLET -->
+      <!-- ===================== -->
+      <div class="hidden sm:block flex-auto min-h-0 overflow-auto">
 
           <table mat-table [dataSource]="dataSource" matSort class="min-w-[900px] w-full">
 
@@ -319,9 +326,9 @@
         <!-- ============ -->
         <!-- VISTA MÓVIL -->
         <!-- ============ -->
-        <div class="block sm:hidden space-y-4 overflow-y-auto px-1">
+        <div class="block sm:hidden flex-auto min-h-0 space-y-4 overflow-y-auto p-3">
 
-          <div *ngFor="let quote of dataSource.data" class="border rounded-xl p-4 shadow-sm bg-white">
+          <div *ngFor="let quote of dataSource.data" class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm bg-white dark:bg-card">
             <div class="text-xs text-gray-500">Folio</div>
             <div class="font-semibold">{{ obtenerTextoFolio(quote) }}</div>
 
@@ -414,20 +421,18 @@
 
         </div>
 
-        <!-- PAGINADOR -->
-        <mat-paginator class="sticky bottom-0 bg-white" [length]="totalItems" [pageSize]="pageSize"
+        <!-- PAGINADOR (Siempre visible) -->
+        <mat-paginator class="flex-none border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-card z-10" [length]="totalItems" [pageSize]="pageSize"
           [pageIndex]="pageIndex" [pageSizeOptions]="[5, 10, 20, 50]" (page)="onPageChange($event)"
           showFirstLastButtons></mat-paginator>
       </div>
 
       <!-- SIN DATOS -->
       <ng-template #noQuotes>
-        <div class="border-t p-8 text-center text-2xl font-semibold">
+        <div class="mat-elevation-z2 bg-card rounded-lg p-8 sm:p-12 text-center text-xl sm:text-2xl font-semibold text-secondary">
           Sin Cotizaciones
         </div>
       </ng-template>
-
-    </div>
 
   </div>
 </div>

@@ -106,6 +106,7 @@ describe('RequerimientoVerDialogComponent', () => {
       usersSpy,
       dialogSpy,
       jasmine.createSpyObj('MatSnackBar', ['open']),
+      { queryParams: of({}) } as any,
       jasmine.createSpyObj('ChangeDetectorRef', ['detectChanges']),
       { nativeElement: document.createElement('div') } as any
     );

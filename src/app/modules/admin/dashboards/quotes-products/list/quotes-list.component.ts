@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatMenuTrigger, MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
@@ -38,6 +39,7 @@ import moment from 'moment';
     FormsModule,
     MatMenuModule,
     MatSelectModule,
+    MatTooltipModule,
     EtapaChipComponent
   ]
 })
@@ -265,6 +267,18 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
       this.pageIndex = 0;
       this.getQuotes();
     }, 400);
+  }
+
+  abrirPicker(input: HTMLInputElement): void {
+    try {
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      } else {
+        input.focus();
+      }
+    } catch {
+      input.focus();
+    }
   }
 
   getEstatus(): void {
