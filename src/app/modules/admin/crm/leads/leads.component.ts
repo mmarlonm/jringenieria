@@ -292,7 +292,7 @@ export class LeadsComponent implements OnInit {
     this.dialog.open(LeadVerDialogComponent, {
       width: '760px',
       maxWidth: '95vw',
-      data: { lead }
+      data: { lead, users: this.users }
     });
   }
 

@@ -78,6 +78,32 @@ describe('LeadVerDialogComponent', () => {
     expect(el().textContent).toContain('Pachuca');
   });
 
+  it('muestra el usuario asignado tanto en la cabecera como en recepcion', () => {
+    abrir(leadFicticio({ usuarioAsignadoNombre: 'Ing. Carlos Mendoza' }));
+
+    const campoAsignado = el().querySelector('[data-testid="campo-usuario-asignado"]');
+    expect(campoAsignado?.textContent).toContain('Ing. Carlos Mendoza');
+    expect(el().textContent).toContain('Asignado a: Ing. Carlos Mendoza');
+  });
+
+  it('resuelve el usuario asignado desde users si usuarioAsignadoNombre viene vacio', () => {
+    const leadSinNombre = leadFicticio({ idUsuarioAsignado: 42, usuarioAsignadoNombre: undefined });
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [LeadVerDialogComponent, NoopAnimationsModule, MatIconTestingModule],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: { lead: leadSinNombre, users: [{ usuarioId: 42, nombreUsuario: 'Laura Vendedora' }] } },
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: LeadsService, useValue: leadsMock },
+        { provide: ProcesoComercialService, useValue: procesoMock }
+      ]
+    });
+    fixture = TestBed.createComponent(LeadVerDialogComponent);
+    fixture.detectChanges();
+
+    expect(el().textContent).toContain('Laura Vendedora');
+  });
+
   it('muestra en que proceso va el lead', () => {
     abrir(leadFicticio());
 

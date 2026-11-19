@@ -9,6 +9,7 @@ import { Lead, LeadArchivo, LeadSeguimiento, LeadsService } from '../leads.servi
 
 export interface LeadVerDialogData {
   lead: Lead;
+  users?: any[];
 }
 
 /** Visualizacion de solo lectura de un lead (como el "ver" de Requerimientos). */
@@ -48,6 +49,17 @@ export class LeadVerDialogComponent implements OnInit {
   ngOnInit(): void {
     this.cargarArchivos();
     this.cargarSeguimientos();
+  }
+
+  get usuarioAsignadoNombre(): string {
+    if (this.lead?.usuarioAsignadoNombre && this.lead.usuarioAsignadoNombre.trim().length > 0) {
+      return this.lead.usuarioAsignadoNombre;
+    }
+    if (this.data?.users && this.lead?.idUsuarioAsignado) {
+      const u = this.data.users.find((x: any) => x.usuarioId === this.lead.idUsuarioAsignado);
+      if (u) return u.nombreUsuario || u.nombreCompleto || u.email || '-';
+    }
+    return '-';
   }
 
   get estaCalificado(): boolean {

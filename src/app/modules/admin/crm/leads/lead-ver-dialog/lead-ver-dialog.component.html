@@ -10,7 +10,14 @@
           Detalle del Lead
           <span class="text-blue-600 dark:text-blue-400 font-normal">{{ lead.nombreContacto }}</span>
         </h2>
-        <p class="text-xs text-gray-500 mt-1">Visualización en solo lectura</p>
+        <div class="flex items-center gap-2 mt-1">
+          <p class="text-xs text-gray-500">Visualización en solo lectura</p>
+          <span class="text-gray-300 dark:text-gray-600">·</span>
+          <span class="text-xs text-slate-600 dark:text-slate-350 flex items-center gap-1 font-medium">
+            <mat-icon svgIcon="heroicons_outline:user" class="icon-size-3.5 text-blue-500"></mat-icon>
+            Asignado a: <strong class="text-gray-800 dark:text-gray-200">{{ usuarioAsignadoNombre }}</strong>
+          </span>
+        </div>
       </div>
     </div>
     <div class="flex items-center gap-2">
@@ -96,8 +103,11 @@
           <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.sucursalQueRecibe || '-' }}</span>
         </div>
         <div>
-          <span class="block text-xs text-gray-400">Responsable asignado</span>
-          <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.usuarioAsignadoNombre || '-' }}</span>
+          <span class="block text-xs text-gray-400">Usuario Asignado</span>
+          <span data-testid="campo-usuario-asignado" class="font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1.5 mt-0.5">
+            <mat-icon svgIcon="heroicons_outline:user-circle" class="icon-size-4 text-blue-600 dark:text-blue-400 flex-shrink-0"></mat-icon>
+            <span>{{ usuarioAsignadoNombre }}</span>
+          </span>
         </div>
         <div>
           <span class="block text-xs text-gray-400">Fecha de registro</span>
