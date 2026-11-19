@@ -184,10 +184,10 @@ export class LeadsComponent implements OnInit {
     this.filteredLeads = this.leads.filter(lead => {
       // Search matches
       const matchesSearch = !search ||
-        lead.nombreContacto.toLowerCase().includes(search) ||
-        lead.empresa.toLowerCase().includes(search) ||
-        lead.email.toLowerCase().includes(search) ||
-        lead.telefono.toLowerCase().includes(search) ||
+        (lead.nombreContacto && lead.nombreContacto.toLowerCase().includes(search)) ||
+        (lead.empresa && lead.empresa.toLowerCase().includes(search)) ||
+        (lead.email && lead.email.toLowerCase().includes(search)) ||
+        (lead.telefono && lead.telefono.toLowerCase().includes(search)) ||
         (lead.necesidadInicial && lead.necesidadInicial.toLowerCase().includes(search));
 
       // Fuente matches

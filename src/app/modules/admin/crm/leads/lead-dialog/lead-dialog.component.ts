@@ -92,8 +92,8 @@ export class LeadDialogComponent implements OnInit {
     this.leadForm = this.fb.group({
       nombreContacto: [lead?.nombreContacto || '', Validators.required],
       empresa: [lead?.empresa || '', Validators.required],
-      telefono: [lead?.telefono || '', [Validators.required, Validators.pattern('^[0-9\\-\\+ ]{10,15}$')]],
-      email: [lead?.email || '', [Validators.required, Validators.email]],
+      telefono: [lead?.telefono || '', [Validators.pattern('^[0-9\\-\\+ ]{10,15}$')]],
+      email: [lead?.email || '', [Validators.email]],
       fuenteLead: [lead?.fuenteLead || 'WhatsApp', Validators.required],
       necesidadInicial: [lead?.necesidadInicial || '', Validators.required],
       sucursalQueRecibe: [lead?.sucursalQueRecibe || 'Pachuca', Validators.required],

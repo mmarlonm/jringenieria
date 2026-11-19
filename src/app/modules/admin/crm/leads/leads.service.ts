@@ -7,8 +7,8 @@ export interface Lead {
   id: number;
   nombreContacto: string;
   empresa: string;
-  telefono: string;
-  email: string;
+  telefono?: string;
+  email?: string;
   fuenteLead: string;
   necesidadInicial: string;
   sucursalQueRecibe: string;
@@ -69,8 +69,8 @@ export interface LeadKpi {
 export interface CreateLeadDto {
   nombreContacto: string;
   empresa: string;
-  telefono: string;
-  email: string;
+  telefono?: string;
+  email?: string;
   fuenteLead: string;
   necesidadInicial: string;
   sucursalQueRecibe: string;
@@ -81,8 +81,8 @@ export interface CreateLeadDto {
 export interface UpdateLeadDto {
   nombreContacto: string;
   empresa: string;
-  telefono: string;
-  email: string;
+  telefono?: string;
+  email?: string;
   fuenteLead: string;
   necesidadInicial: string;
   sucursalQueRecibe: string;

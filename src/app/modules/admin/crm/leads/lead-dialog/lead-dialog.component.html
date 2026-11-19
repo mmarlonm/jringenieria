@@ -44,14 +44,12 @@
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Teléfono</mat-label>
         <input matInput formControlName="telefono" placeholder="Ej. 7711234567" autocomplete="off" />
-        <mat-error *ngIf="leadForm.get('telefono')?.hasError('required')">El teléfono es requerido</mat-error>
         <mat-error *ngIf="leadForm.get('telefono')?.hasError('pattern')">Ingrese un teléfono válido (10-15 dígitos)</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Correo Electrónico</mat-label>
         <input matInput formControlName="email" placeholder="Ej. juan@acme.com" autocomplete="off" />
-        <mat-error *ngIf="leadForm.get('email')?.hasError('required')">El correo es requerido</mat-error>
         <mat-error *ngIf="leadForm.get('email')?.hasError('email')">Ingrese un correo electrónico válido</mat-error>
       </mat-form-field>
     </div>
@@ -189,14 +187,12 @@
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Teléfono</mat-label>
         <input matInput formControlName="telefono" autocomplete="off" />
-        <mat-error *ngIf="leadForm.get('telefono')?.hasError('required')">El teléfono es requerido</mat-error>
         <mat-error *ngIf="leadForm.get('telefono')?.hasError('pattern')">Formato inválido (10-15 dígitos)</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Correo Electrónico</mat-label>
         <input matInput formControlName="email" autocomplete="off" />
-        <mat-error *ngIf="leadForm.get('email')?.hasError('required')">El correo es requerido</mat-error>
         <mat-error *ngIf="leadForm.get('email')?.hasError('email')">Correo inválido</mat-error>
       </mat-form-field>
     </div>

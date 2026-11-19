@@ -482,13 +482,13 @@
           <!-- Telefono -->
           <ng-container matColumnDef="telefono">
             <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Teléfono</th>
-            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-500 dark:text-slate-400">{{ lead.telefono }}</td>
+            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-500 dark:text-slate-400">{{ lead.telefono || '-' }}</td>
           </ng-container>
 
           <!-- Email -->
           <ng-container matColumnDef="email">
             <th mat-header-cell *matHeaderCellDef class="font-bold text-slate-700 dark:text-slate-350">Email</th>
-            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-550 dark:text-slate-450">{{ lead.email }}</td>
+            <td mat-cell *matCellDef="let lead" class="text-xs text-slate-550 dark:text-slate-450">{{ lead.email || '-' }}</td>
           </ng-container>
 
           <!-- Fuente -->
