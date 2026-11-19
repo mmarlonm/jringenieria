@@ -92,10 +92,10 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     this.puedeCalificar = data.puedeCalificar;
 
     this.aprobacionForm = this.fb.group({
-      // El solicitante es opcional al capturar el requerimiento; Ingeniería lo exige, así que si falta se pide aquí
+      // El solicitante es obligatorio para Ingeniería al aprobar; tipo de proyecto y título son opcionales
       solicitanteId: [this.requerimiento.solicitanteId ?? null, [Validators.required]],
-      tipoProyecto: [this.requerimiento.tipoProyecto ?? '', [Validators.required]],
-      titulo: [this.requerimiento.titulo ?? '', [Validators.required, Validators.maxLength(500)]]
+      tipoProyecto: [this.requerimiento.tipoProyecto ?? ''],
+      titulo: [this.requerimiento.titulo ?? '', [Validators.maxLength(500)]]
     });
     if (!this.puedeCalificar || this.estaAprobado) {
       this.aprobacionForm.disable();
@@ -336,12 +336,6 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     const datos = this.aprobacionForm.getRawValue();
     if (!datos.solicitanteId) {
       faltantes.push('Solicitante');
-    }
-    if (!datos.tipoProyecto?.trim()) {
-      faltantes.push('Tipo de proyecto');
-    }
-    if (!datos.titulo?.trim()) {
-      faltantes.push('Título');
     }
     if ((datos.titulo ?? '').trim().length > 500) {
       faltantes.push('Título (máximo 500 caracteres)');

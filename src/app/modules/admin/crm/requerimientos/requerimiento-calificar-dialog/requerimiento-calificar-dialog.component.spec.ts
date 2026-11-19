@@ -126,19 +126,19 @@ describe('RequerimientoCalificarDialogComponent', () => {
     const btnSinSolicitante = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
     expect(btnSinSolicitante.disabled).toBeTrue();
 
-    // 3. Sin tipoProyecto -> disabled
+    // 3. Sin tipoProyecto pero con solicitante -> ENABLED (tipo es opcional)
     abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: undefined, titulo: 'Título' });
     pestana('Aprobación').click();
     fixture.detectChanges();
     const btnSinTipo = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btnSinTipo.disabled).toBeTrue();
+    expect(btnSinTipo.disabled).toBeFalse();
 
-    // 4. Sin título -> disabled
+    // 4. Sin título pero con solicitante -> ENABLED (título es opcional)
     abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: '' });
     pestana('Aprobación').click();
     fixture.detectChanges();
     const btnSinTitulo = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btnSinTitulo.disabled).toBeTrue();
+    expect(btnSinTitulo.disabled).toBeFalse();
 
     // 5. Sin permiso (puedeCalificar: false) -> disabled
     abrir(false, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: 'Título' });
@@ -160,10 +160,9 @@ describe('RequerimientoCalificarDialogComponent', () => {
     pestana('Aprobación').click();
     fixture.detectChanges();
 
+    expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual(['Solicitante']);
     const texto = fixture.nativeElement.textContent;
     expect(texto).toContain('Solicitante');
-    expect(texto).toContain('Tipo de proyecto');
-    expect(texto).toContain('Título');
     // El solicitante se elige ahi mismo, en «Datos para Ingeniería»: ya no hay que volver a editar el requerimiento
     expect(texto).not.toContain('Editar requerimiento');
   });
@@ -196,7 +195,7 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('#42');
   });
 
-  it('Tipo_y_titulo_se_piden_en_la_pestana_Aprobacion_y_el_requerimiento_ya_no_los_trae', () => {
+  it('Tipo_y_titulo_son_opcionales_en_la_pestana_Aprobacion_y_se_puede_aprobar_solo_con_solicitante', () => {
     abrir(true, { estatus: 'Calificado Técnico', solicitanteId: 1 });
     pestana('Aprobación').click();
     fixture.detectChanges();
@@ -204,10 +203,10 @@ describe('RequerimientoCalificarDialogComponent', () => {
     const texto = fixture.nativeElement.textContent;
     expect(texto).toContain('Datos para Ingeniería');
     expect(fixture.nativeElement.querySelector('#aprobacion-form')).not.toBeNull();
-    // Sin tipo ni titulo no se puede aprobar y el aviso dice cuales faltan
+    // Con solicitante y sin tipo ni titulo se puede aprobar porque son opcionales
     const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btn.disabled).toBeTrue();
-    expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual(['Tipo de proyecto', 'Título']);
+    expect(btn.disabled).toBeFalse();
+    expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual([]);
   });
 
   it('Al_capturar_tipo_y_titulo_se_habilita_Aprobar_y_viajan_en_la_peticion', () => {
