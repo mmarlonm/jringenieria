@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewEncapsulation, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -118,6 +119,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     private usersService: UsersService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private el: ElementRef
   ) {}
@@ -126,6 +128,13 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     this.loadRequerimientos();
     this.loadUsers();
     this.loadKpis();
+
+    this.route.queryParams.subscribe(params => {
+      const folio = params['folio'];
+      if (folio) {
+        this.searchControl.setValue(folio);
+      }
+    });
 
     this.searchControl.valueChanges.pipe(debounceTime(300)).subscribe(() => this.applyFilters());
     this.sucursalControl.valueChanges.subscribe(() => this.applyFilters());
@@ -218,8 +227,15 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
   loadRequerimientos(): void {
     this.reqService.getRequerimientos().subscribe({
       next: (data) => {
-        this.requerimientos = data;
+        this.requerimientos = data || [];
         this.applyFilters();
+        const folioQuery = this.route.snapshot.queryParams['folio'];
+        if (folioQuery) {
+          const reqEncontrado = this.requerimientos.find(r => r.folio?.toLowerCase() === folioQuery.toLowerCase());
+          if (reqEncontrado) {
+            this.openVerDialog(reqEncontrado);
+          }
+        }
         this.cdr.detectChanges();
         // Re-init sortable after data reload
         setTimeout(() => this.initSortable(), 100);

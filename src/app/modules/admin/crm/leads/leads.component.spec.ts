@@ -1,6 +1,8 @@
 import { ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { of } from 'rxjs';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { LeadVerDialogComponent } from './lead-ver-dialog/lead-ver-dialog.component';
 import { LeadsComponent } from './leads.component';
@@ -15,11 +17,14 @@ describe('LeadsComponent: ver detalle', () => {
 
   it('el ojo abre el detalle de solo lectura del lead', () => {
     const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    dialog.open.and.returnValue({ afterClosed: () => of(null) } as any);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     const componente = new LeadsComponent(
       jasmine.createSpyObj<LeadsService>('LeadsService', ['getLeads']),
       jasmine.createSpyObj<UsersService>('UsersService', ['getUsers']),
       dialog,
       jasmine.createSpyObj<MatSnackBar>('MatSnackBar', ['open']),
+      router,
       jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges'])
     );
 
@@ -29,5 +34,21 @@ describe('LeadsComponent: ver detalle', () => {
       LeadVerDialogComponent,
       jasmine.objectContaining({ data: { lead } })
     );
+  });
+
+  it('irARequerimiento navega a /crm/requerimientos con queryParams folio', () => {
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const componente = new LeadsComponent(
+      jasmine.createSpyObj<LeadsService>('LeadsService', ['getLeads']),
+      jasmine.createSpyObj<UsersService>('UsersService', ['getUsers']),
+      jasmine.createSpyObj<MatDialog>('MatDialog', ['open']),
+      jasmine.createSpyObj<MatSnackBar>('MatSnackBar', ['open']),
+      router,
+      jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges'])
+    );
+
+    componente.irARequerimiento('REQ-2026-0010');
+
+    expect(router.navigate).toHaveBeenCalledWith(['/crm/requerimientos'], { queryParams: { folio: 'REQ-2026-0010' } });
   });
 });

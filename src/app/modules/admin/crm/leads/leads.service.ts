@@ -21,6 +21,8 @@ export interface Lead {
   potencialPreliminar?: string;
   idUsuarioAsignado: number;
   usuarioAsignadoNombre?: string;
+  requerimientoId?: number;
+  requerimientoFolio?: string;
   fechaRegistro: string;
   fechaCalificacion?: string;
   fechaActualizacion?: string;
@@ -128,6 +130,10 @@ export class LeadsService {
 
   convertLead(id: number, dto: ConvertLeadDto): Observable<Lead> {
     return this.http.post<Lead>(`${this.apiUrl}/${id}/convert`, dto);
+  }
+
+  convertirARequerimiento(id: number): Observable<{ requerimientoId: number; folio: string; mensaje?: string }> {
+    return this.http.post<{ requerimientoId: number; folio: string; mensaje?: string }>(`${this.apiUrl}/${id}/convertir-a-requerimiento`, {});
   }
 
   discardLead(id: number, dto: DiscardLeadDto): Observable<Lead> {

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
@@ -36,6 +37,8 @@ describe('LeadVerDialogComponent', () => {
   let fixture: ComponentFixture<LeadVerDialogComponent>;
   let leadsMock: jasmine.SpyObj<LeadsService>;
   let dialogRef: jasmine.SpyObj<MatDialogRef<LeadVerDialogComponent>>;
+  let routerMock: jasmine.SpyObj<Router>;
+  let matDialogMock: jasmine.SpyObj<MatDialog>;
   let procesoMock: { obtener: jasmine.Spy };
 
   function el(): HTMLElement {
@@ -49,6 +52,8 @@ describe('LeadVerDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { lead } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: LeadsService, useValue: leadsMock },
+        { provide: Router, useValue: routerMock },
+        { provide: MatDialog, useValue: matDialogMock },
         { provide: ProcesoComercialService, useValue: procesoMock }
       ]
     });
@@ -57,11 +62,14 @@ describe('LeadVerDialogComponent', () => {
   }
 
   beforeEach(() => {
-    leadsMock = jasmine.createSpyObj('LeadsService', ['getArchivosLead', 'getSeguimientosLead', 'descargarArchivoLead']);
+    leadsMock = jasmine.createSpyObj('LeadsService', ['getArchivosLead', 'getSeguimientosLead', 'descargarArchivoLead', 'convertirARequerimiento', 'discardLead']);
     leadsMock.getArchivosLead.and.returnValue(of([archivo]));
     leadsMock.getSeguimientosLead.and.returnValue(of([seguimiento]));
     leadsMock.descargarArchivoLead.and.returnValue('http://api/Leads/5/archivos/1/descargar');
+    leadsMock.convertirARequerimiento.and.returnValue(of({ requerimientoId: 10, folio: 'REQ-2026-0001' }));
     dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    routerMock = jasmine.createSpyObj('Router', ['navigate']);
+    matDialogMock = jasmine.createSpyObj('MatDialog', ['open']);
     procesoMock = { obtener: jasmine.createSpy('obtener').and.returnValue(of({ actual: 'lead', mensaje: 'Lead nuevo', pasos: [] })) };
   });
 
@@ -95,6 +103,8 @@ describe('LeadVerDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { lead: leadSinNombre, users: [{ usuarioId: 42, nombreUsuario: 'Laura Vendedora' }] } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: LeadsService, useValue: leadsMock },
+        { provide: Router, useValue: routerMock },
+        { provide: MatDialog, useValue: matDialogMock },
         { provide: ProcesoComercialService, useValue: procesoMock }
       ]
     });
@@ -207,5 +217,31 @@ describe('LeadVerDialogComponent', () => {
 
     expect(leadsMock.descargarArchivoLead).toHaveBeenCalledWith(5, 1);
     expect(clic).toHaveBeenCalled();
+  });
+
+  it('muestra botones Convertir en Requerimiento y Descartado si no tiene requerimiento y no esta descartado', () => {
+    abrir(leadFicticio({ estatus: 'Nuevo', requerimientoFolio: undefined }));
+
+    expect(el().querySelector('.btn-convertir-req')).not.toBeNull();
+    expect(el().querySelector('.btn-descartar')).not.toBeNull();
+    expect(el().querySelector('.btn-ir-req')).toBeNull();
+  });
+
+  it('muestra boton Ver Requerimiento cuando el lead ya tiene requerimientoFolio asignado', () => {
+    abrir(leadFicticio({ estatus: 'Oportunidad', requerimientoFolio: 'REQ-2026-0099' }));
+
+    expect(el().querySelector('.btn-ir-req')).not.toBeNull();
+    expect(el().querySelector('.btn-ir-req')?.textContent).toContain('REQ-2026-0099');
+    expect(el().querySelector('.btn-convertir-req')).toBeNull();
+    expect(el().querySelector('.btn-descartar')).toBeNull();
+  });
+
+  it('irARequerimiento navega a la ruta de requerimientos con el queryParam folio', () => {
+    abrir(leadFicticio({ estatus: 'Oportunidad', requerimientoFolio: 'REQ-2026-0099' }));
+
+    (el().querySelector('.btn-ir-req') as HTMLButtonElement).click();
+
+    expect(dialogRef.close).toHaveBeenCalledWith({ accion: 'navegar', folio: 'REQ-2026-0099' });
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/crm/requerimientos'], { queryParams: { folio: 'REQ-2026-0099' } });
   });
 });

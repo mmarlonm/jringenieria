@@ -290,19 +290,27 @@
             </div>
 
             <!-- Lead actions -->
-            <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-900">
-              <button mat-stroked-button color="warn" class="text-xs py-1" (click)="openDiscardDialog(lead)">
-                <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-4 mr-1"></mat-icon>
-                <span>Descartar</span>
-              </button>
-              <button mat-stroked-button class="text-xs py-1" (click)="openEditDialog(lead)">
-                <mat-icon svgIcon="heroicons_outline:pencil-square" class="icon-size-4 mr-1"></mat-icon>
-                <span>Editar</span>
-              </button>
-              <button mat-flat-button color="primary" class="text-xs py-1" (click)="openConvertDialog(lead)">
-                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4 mr-1"></mat-icon>
-                <span>Calificar ISO</span>
-              </button>
+            <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-900">
+              <div class="grid grid-cols-2 gap-2">
+                <button mat-stroked-button color="warn" class="text-xs py-1" (click)="openDiscardDialog(lead)" matTooltip="Descartar prospecto (si no está a nuestro alcance)">
+                  <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-4 mr-1 text-red-500"></mat-icon>
+                  <span>Descartado</span>
+                </button>
+                <button mat-flat-button color="primary" class="text-xs py-1 bg-blue-600 hover:bg-blue-700 text-white font-medium" (click)="convertirARequerimiento(lead)" matTooltip="Crear Requerimiento formal y pasar directo">
+                  <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1"></mat-icon>
+                  <span>Convertir en Requerimiento</span>
+                </button>
+              </div>
+              <div class="flex items-center justify-end gap-1">
+                <button mat-button class="text-[11px] text-slate-500 py-0.5 px-2 h-7" (click)="openVerDialog(lead)">
+                  <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-3.5 mr-1"></mat-icon>
+                  <span>Ver</span>
+                </button>
+                <button mat-button class="text-[11px] text-slate-500 py-0.5 px-2 h-7" (click)="openEditDialog(lead)">
+                  <mat-icon svgIcon="heroicons_outline:pencil-square" class="icon-size-3.5 mr-1"></mat-icon>
+                  <span>Editar</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -382,6 +390,20 @@
               <button mat-flat-button color="primary" class="text-xs py-1" (click)="openSeguimientoDialog(lead)" matTooltip="Bitácora Seguimiento ISO 7.7">
                 <mat-icon svgIcon="heroicons_outline:chat-bubble-bottom-center-text" class="icon-size-4 mr-1"></mat-icon>
                 <span>Seguimiento</span>
+              </button>
+            </div>
+
+            <!-- Botón Requerimiento en Oportunidad -->
+            <div *ngIf="lead.requerimientoFolio" class="mt-2">
+              <button mat-stroked-button color="primary" class="w-full text-xs py-1 flex items-center justify-center" (click)="irARequerimiento(lead.requerimientoFolio)" matTooltip="Ir a Requerimiento generado">
+                <mat-icon svgIcon="heroicons_outline:arrow-top-right-on-square" class="icon-size-4 mr-1 text-blue-600"></mat-icon>
+                <span>Requerimiento: {{ lead.requerimientoFolio }}</span>
+              </button>
+            </div>
+            <div *ngIf="!lead.requerimientoFolio" class="mt-2">
+              <button mat-flat-button color="primary" class="w-full text-xs py-1 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center font-medium" (click)="convertirARequerimiento(lead)" matTooltip="Crear Requerimiento formal y pasar directo">
+                <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1"></mat-icon>
+                <span>Convertir en Requerimiento</span>
               </button>
             </div>
           </div>
@@ -544,13 +566,19 @@
                   <mat-icon svgIcon="heroicons_outline:chat-bubble-bottom-center-text" class="text-indigo-600"></mat-icon>
                 </button>
                 <ng-container *ngIf="lead.estatus === 'Nuevo'">
-                  <button mat-icon-button color="accent" matTooltip="Calificar e ISO 7.4" (click)="openConvertDialog(lead)">
-                    <mat-icon svgIcon="heroicons_outline:check-badge" class="text-green-500"></mat-icon>
+                  <button mat-icon-button color="primary" matTooltip="Convertir en Requerimiento y pasar directo" (click)="convertirARequerimiento(lead)">
+                    <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="text-blue-600"></mat-icon>
                   </button>
-                  <button mat-icon-button color="warn" matTooltip="Descartar Lead" (click)="openDiscardDialog(lead)">
+                  <button mat-icon-button color="warn" matTooltip="Descartar Lead (si no está a nuestro alcance)" (click)="openDiscardDialog(lead)">
                     <mat-icon svgIcon="heroicons_outline:x-circle" class="text-red-500"></mat-icon>
                   </button>
                 </ng-container>
+                <button *ngIf="lead.requerimientoFolio" mat-icon-button color="primary" [matTooltip]="'Ver Requerimiento ' + lead.requerimientoFolio" (click)="irARequerimiento(lead.requerimientoFolio)">
+                  <mat-icon svgIcon="heroicons_outline:arrow-top-right-on-square" class="text-blue-600"></mat-icon>
+                </button>
+                <button *ngIf="lead.estatus === 'Oportunidad' && !lead.requerimientoFolio" mat-icon-button color="primary" matTooltip="Convertir en Requerimiento" (click)="convertirARequerimiento(lead)">
+                  <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="text-blue-600"></mat-icon>
+                </button>
                 <span *ngIf="lead.estatus !== 'Nuevo' && lead.estatus !== 'Oportunidad'" class="text-xs text-slate-400 italic mr-2">{{ lead.estatus }}</span>
                 <button mat-icon-button class="text-slate-400 hover:text-red-500" matTooltip="Eliminar Lead" (click)="deleteLead(lead.id)">
                   <mat-icon svgIcon="heroicons_outline:trash" class="icon-size-4"></mat-icon>

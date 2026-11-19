@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -120,6 +121,7 @@ export class LeadsComponent implements OnInit {
     private usersService: UsersService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -289,11 +291,54 @@ export class LeadsComponent implements OnInit {
 
   /** Visualizacion de solo lectura del lead (icono del ojo en cada tarjeta y fila). */
   openVerDialog(lead: Lead): void {
-    this.dialog.open(LeadVerDialogComponent, {
+    const dialogRef = this.dialog.open(LeadVerDialogComponent, {
       width: '760px',
       maxWidth: '95vw',
       data: { lead, users: this.users }
     });
+    dialogRef.afterClosed().subscribe((res) => {
+      if (res?.accion === 'convertido' || res?.accion === 'descartado') {
+        this.loadLeads();
+      }
+    });
+  }
+
+  convertirARequerimiento(lead: Lead): void {
+    Swal.fire({
+      title: '¿Convertir en Requerimiento?',
+      text: `Se creará el Requerimiento formal para "${lead.empresa || lead.nombreContacto}" y se calificará como Oportunidad para medir conversiones.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, convertir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#2563eb'
+    }).then((res) => {
+      if (res.isConfirmed) {
+        this.leadsService.convertirARequerimiento(lead.id).subscribe({
+          next: (resp) => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Requerimiento generado',
+              text: `Folio: ${resp.folio}. Redirigiendo a Requerimientos...`,
+              timer: 1800,
+              showConfirmButton: false
+            });
+            this.loadLeads();
+            this.router.navigate(['/crm/requerimientos'], { queryParams: { folio: resp.folio } });
+          },
+          error: (err) => {
+            const msg = err?.error?.mensaje || 'Error al convertir el lead a requerimiento';
+            this.showSnackBar(msg, 'Cerrar', 'bg-red-600 text-white');
+          }
+        });
+      }
+    });
+  }
+
+  irARequerimiento(folio?: string): void {
+    if (folio) {
+      this.router.navigate(['/crm/requerimientos'], { queryParams: { folio } });
+    }
   }
 
   openSeguimientoDialog(lead: Lead): void {
