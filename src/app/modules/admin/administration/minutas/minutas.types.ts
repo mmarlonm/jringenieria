@@ -1,6 +1,8 @@
 export interface Minuta {
     minutaId: number;
+    folio?: string;
     titulo: string;
+    area?: string;
     descripcion?: string;
     fechaReunion: string;
     sucursalId?: number;
@@ -25,6 +27,12 @@ export interface Minuta {
 export interface MinutaCatalogos {
     sucursales: MinutaSucursal[];
     usuarios: MinutaUsuario[];
+    areas?: MinutaArea[];
+}
+
+export interface MinutaArea {
+    clave: string;
+    nombre: string;
 }
 
 export interface MinutaSucursal {

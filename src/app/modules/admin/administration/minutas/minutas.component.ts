@@ -56,7 +56,7 @@ export class MinutasComponent implements OnInit {
     filtroVisibilidad = new FormControl<string>('');
 
     cargando = false;
-    columnasVisibles = ['sucursal', 'fecha', 'titulo', 'archivo', 'visibilidad', 'autor', 'acciones'];
+    columnasVisibles = ['folio', 'sucursal', 'fecha', 'titulo', 'archivo', 'visibilidad', 'autor', 'acciones'];
 
     ngOnInit(): void {
         this.cargarCatalogos();
@@ -175,7 +175,7 @@ export class MinutasComponent implements OnInit {
                     this._dialog.open(ImagePreviewDialogComponent, {
                         data: {
                             url: fileURL,
-                            name: fileName,
+                            name: (minuta.folio ? `${minuta.folio}: ` : '') + fileName,
                             isPdf: isPdf
                         }
                     });

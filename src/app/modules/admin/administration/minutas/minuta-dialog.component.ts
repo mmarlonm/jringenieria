@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,9 +35,12 @@ import Swal from 'sweetalert2';
         <div class="flex flex-col max-w-160 w-full overflow-hidden bg-card rounded-2xl shadow-xl">
             <!-- Header -->
             <div class="flex items-center justify-between h-16 pl-6 pr-4 bg-[#212529] text-white">
-                <div class="flex items-center">
+                <div class="flex items-center gap-2">
                     <mat-icon class="text-current" [svgIcon]="isEdit ? 'heroicons_outline:pencil' : 'heroicons_outline:cloud-arrow-up'"></mat-icon>
-                    <span class="ml-2 text-lg font-semibold tracking-tight">{{ isEdit ? 'Editar Minuta' : 'Subir Minuta' }}</span>
+                    <span class="text-lg font-semibold tracking-tight">{{ isEdit ? 'Editar Minuta' : 'Subir Minuta' }}</span>
+                    <span *ngIf="data.minuta?.folio" class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                        {{ data.minuta?.folio }}
+                    </span>
                 </div>
                 <button mat-icon-button (click)="cancelar()" [tabIndex]="-1">
                     <mat-icon class="text-current" [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
@@ -46,14 +49,17 @@ import Swal from 'sweetalert2';
 
             <!-- Content -->
             <form [formGroup]="form" class="p-6 sm:p-8 overflow-y-auto space-y-4 max-h-[75vh]">
-                <!-- Título -->
-                <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
-                    <mat-label>Título de la Minuta o Reunión</mat-label>
-                    <input matInput formControlName="titulo" placeholder="Ej. Minuta de Revisión por la Dirección - Q4" required>
-                    <mat-error *ngIf="form.get('titulo')?.hasError('required')">El título es requerido</mat-error>
-                </mat-form-field>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Área -->
+                    <mat-form-field [subscriptSizing]="'dynamic'">
+                        <mat-label>Área</mat-label>
+                        <mat-select formControlName="area" (selectionChange)="onAreaChange($event.value)">
+                            @for (a of areasDisponibles; track a.clave) {
+                                <mat-option [value]="a.clave">{{ a.clave }} - {{ a.nombre }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Sucursal -->
                     <mat-form-field [subscriptSizing]="'dynamic'">
                         <mat-label>Sucursal</mat-label>
@@ -68,9 +74,40 @@ import Swal from 'sweetalert2';
                     <!-- Fecha de Reunión -->
                     <mat-form-field [subscriptSizing]="'dynamic'">
                         <mat-label>Fecha de la Reunión</mat-label>
-                        <input matInput type="date" formControlName="fechaReunion" required>
+                        <input matInput type="date" formControlName="fechaReunion" (change)="onFechaChange()" required>
                         <mat-error *ngIf="form.get('fechaReunion')?.hasError('required')">La fecha es requerida</mat-error>
                     </mat-form-field>
+                </div>
+
+                <!-- Input si seleccionó 'OTRO' -->
+                <div *ngIf="form.get('area')?.value === 'OTRO'" class="pt-1">
+                    <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                        <mat-label>Nombre o Siglas del Área Personalizada</mat-label>
+                        <input matInput [formControl]="areaPersonalizadaControl" (input)="onAreaPersonalizadaInput()" placeholder="Ej. CALIDAD, AUDITORIA, MANTTO...">
+                    </mat-form-field>
+                </div>
+
+                <!-- Título con sugerencia MIN-ÁREA-FECHA -->
+                <div>
+                    <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+                        <mat-label>Título de la Minuta</mat-label>
+                        <input matInput formControlName="titulo" (input)="onTituloInput()" placeholder="Ej. MIN-ING-191126" required>
+                        <button *ngIf="tituloSugerido" mat-icon-button matSuffix type="button"
+                                (click)="aplicarTituloSugerido()"
+                                [matTooltip]="'Aplicar título sugerido: ' + tituloSugerido">
+                            <mat-icon class="icon-size-5 text-primary" [svgIcon]="'heroicons_outline:arrow-path'"></mat-icon>
+                        </button>
+                        <mat-error *ngIf="form.get('titulo')?.hasError('required')">El título es requerido</mat-error>
+                    </mat-form-field>
+
+                    <div *ngIf="tituloSugerido" class="flex items-center gap-1.5 mt-1.5 text-xs text-secondary flex-wrap">
+                        <span>Título sugerido:</span>
+                        <button type="button" (click)="aplicarTituloSugerido()"
+                                class="font-mono font-bold text-primary hover:underline bg-primary-50 px-2 py-0.5 rounded border border-primary-200 transition-colors">
+                            {{ tituloSugerido }}
+                        </button>
+                        <span class="text-[11px] text-gray-500">(MIN-ÁREA-FECHA)</span>
+                    </div>
                 </div>
 
                 <!-- Palabras Clave -->
@@ -177,6 +214,10 @@ export class MinutaDialogComponent implements OnInit {
     public dialogRef = inject(MatDialogRef<MinutaDialogComponent>);
 
     form!: FormGroup;
+    areaPersonalizadaControl = new FormControl<string>('');
+    tituloSugerido = '';
+    tituloModificadoManualmente = false;
+
     isEdit = false;
     guardando = false;
     isDragging = false;
@@ -185,17 +226,49 @@ export class MinutaDialogComponent implements OnInit {
 
     catalogos: MinutaCatalogos = { sucursales: [], usuarios: [] };
 
+    areasDisponibles: { clave: string; nombre: string }[] = [
+        { clave: 'ING', nombre: 'Ingeniería' },
+        { clave: 'ADM', nombre: 'Administración' },
+        { clave: 'CAL', nombre: 'Calidad / SGC (ISO)' },
+        { clave: 'DIR', nombre: 'Dirección' },
+        { clave: 'COM', nombre: 'Compras' },
+        { clave: 'VEN', nombre: 'Ventas / Comercial' },
+        { clave: 'PROY', nombre: 'Proyectos' },
+        { clave: 'RH', nombre: 'Recursos Humanos' },
+        { clave: 'MTO', nombre: 'Mantenimiento' },
+        { clave: 'ALM', nombre: 'Almacén / Logística' },
+        { clave: 'SEG', nombre: 'Seguridad e Higiene' },
+        { clave: 'TI', nombre: 'Sistemas y TI' },
+        { clave: 'OPER', nombre: 'Operaciones' },
+        { clave: 'OTRO', nombre: 'Otra área (personalizada)' }
+    ];
+
     constructor(@Inject(MAT_DIALOG_DATA) public data: { minuta?: Minuta; catalogos: MinutaCatalogos }) {
         this.catalogos = data.catalogos || { sucursales: [], usuarios: [] };
         this.isEdit = !!data.minuta;
         this.archivoActualNombre = data.minuta?.archivoNombreOriginal || null;
+
+        if (this.catalogos.areas && this.catalogos.areas.length > 0) {
+            const extra = this.catalogos.areas.filter(ca => !this.areasDisponibles.some(ad => ad.clave === ca.clave));
+            if (extra.length > 0) {
+                const otro = this.areasDisponibles.pop()!;
+                this.areasDisponibles = [...this.areasDisponibles, ...extra, otro];
+            }
+        }
     }
 
     ngOnInit(): void {
         const m = this.data.minuta;
         const fechaFormateada = m?.fechaReunion ? m.fechaReunion.substring(0, 10) : new Date().toISOString().substring(0, 10);
 
+        let areaInicial = m?.area || 'ING';
+        if (m?.area && !this.areasDisponibles.some(a => a.clave === m.area)) {
+            areaInicial = 'OTRO';
+            this.areaPersonalizadaControl.setValue(m.area);
+        }
+
         this.form = this._fb.group({
+            area: [areaInicial],
             titulo: [m?.titulo || '', [Validators.required, Validators.maxLength(200)]],
             sucursalId: [m?.sucursalId || null],
             fechaReunion: [fechaFormateada, [Validators.required]],
@@ -204,6 +277,76 @@ export class MinutaDialogComponent implements OnInit {
             esPublica: [m ? m.esPublica : true],
             usuariosIds: [m?.usuariosPermitidosIds || []]
         });
+
+        this.actualizarTituloSugerido();
+
+        if (this.isEdit) {
+            this.tituloModificadoManualmente = true;
+        } else {
+            if (!this.form.get('titulo')?.value) {
+                this.form.get('titulo')?.setValue(this.tituloSugerido);
+            }
+        }
+    }
+
+    actualizarTituloSugerido(): void {
+        const areaVal = this.form?.get('area')?.value;
+        const effectiveArea = areaVal === 'OTRO'
+            ? (this.areaPersonalizadaControl.value || 'AREA').trim().toUpperCase()
+            : (areaVal || 'ING').trim().toUpperCase();
+
+        const cleanArea = effectiveArea.replace(/[^A-Z0-9]/gi, '') || 'AREA';
+
+        const fechaVal = this.form?.get('fechaReunion')?.value || '';
+        let fechaCode = '';
+        if (fechaVal) {
+            const parts = fechaVal.split('-');
+            if (parts.length === 3) {
+                const y = parts[0].substring(2);
+                const m = parts[1];
+                const d = parts[2];
+                fechaCode = `${d}${m}${y}`;
+            }
+        }
+        if (!fechaCode) {
+            const hoy = new Date();
+            const d = String(hoy.getDate()).padStart(2, '0');
+            const m = String(hoy.getMonth() + 1).padStart(2, '0');
+            const y = String(hoy.getFullYear()).substring(2);
+            fechaCode = `${d}${m}${y}`;
+        }
+
+        this.tituloSugerido = `MIN-${cleanArea}-${fechaCode}`;
+
+        if (!this.tituloModificadoManualmente && !this.isEdit && this.form) {
+            this.form.get('titulo')?.setValue(this.tituloSugerido);
+        }
+    }
+
+    onAreaChange(clave: string): void {
+        if (clave !== 'OTRO') {
+            this.areaPersonalizadaControl.setValue('');
+        }
+        this.actualizarTituloSugerido();
+    }
+
+    onAreaPersonalizadaInput(): void {
+        this.actualizarTituloSugerido();
+    }
+
+    onFechaChange(): void {
+        this.actualizarTituloSugerido();
+    }
+
+    onTituloInput(): void {
+        const val = this.form.get('titulo')?.value || '';
+        this.tituloModificadoManualmente = val.trim() !== this.tituloSugerido;
+    }
+
+    aplicarTituloSugerido(): void {
+        this.actualizarTituloSugerido();
+        this.form.get('titulo')?.setValue(this.tituloSugerido);
+        this.tituloModificadoManualmente = false;
     }
 
     onDragOver(e: DragEvent): void {
@@ -279,9 +422,13 @@ export class MinutaDialogComponent implements OnInit {
 
         this.guardando = true;
         const val = this.form.value;
+        const areaFinal = val.area === 'OTRO'
+            ? (this.areaPersonalizadaControl.value || '').trim().toUpperCase()
+            : (val.area || '').trim().toUpperCase();
 
         const formData = new FormData();
         formData.append('titulo', val.titulo.trim());
+        if (areaFinal) formData.append('area', areaFinal);
         if (val.descripcion) formData.append('descripcion', val.descripcion.trim());
         formData.append('fechaReunion', val.fechaReunion);
         if (val.sucursalId) formData.append('sucursalId', val.sucursalId.toString());
