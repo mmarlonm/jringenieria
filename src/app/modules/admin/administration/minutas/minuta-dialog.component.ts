@@ -65,15 +65,15 @@ import Swal from 'sweetalert2';
                         <mat-label>Sucursal</mat-label>
                         <mat-select formControlName="sucursalId" [compareWith]="compareSucursal">
                             <mat-select-trigger>
-                                <div class="flex items-center gap-1.5" *ngIf="form.get('sucursalId')?.value">
+                                <div class="flex items-center gap-1.5" *ngIf="form.get('sucursalId')?.value && form.get('sucursalId')?.value > 0">
                                     <span>{{ obtenerNombreSucursal(form.get('sucursalId')?.value) }}</span>
                                 </div>
-                                <div class="flex items-center gap-1.5 text-emerald-700 font-medium" *ngIf="!form.get('sucursalId')?.value">
+                                <div class="flex items-center gap-1.5 text-emerald-700 font-medium" *ngIf="!form.get('sucursalId')?.value || form.get('sucursalId')?.value === 0">
                                     <mat-icon class="icon-size-4 text-emerald-600" [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
                                     <span>Todas las sucursales</span>
                                 </div>
                             </mat-select-trigger>
-                            <mat-option [value]="null">
+                            <mat-option [value]="0">
                                 <div class="flex items-center gap-2">
                                     <mat-icon class="icon-size-4 text-emerald-600" [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
                                     <span class="font-medium text-emerald-700">Todas las sucursales</span>
@@ -258,15 +258,15 @@ export class MinutaDialogComponent implements OnInit {
     ];
 
     compareSucursal = (o1: any, o2: any): boolean => {
-        if ((o1 == null || o1 === 0 || o1 === '') && (o2 == null || o2 === 0 || o2 === '')) {
-            return true;
-        }
-        return Number(o1) === Number(o2);
+        const v1 = (o1 === null || o1 === undefined || o1 === '' || o1 === 0 || o1 === '0') ? 0 : Number(o1);
+        const v2 = (o2 === null || o2 === undefined || o2 === '' || o2 === 0 || o2 === '0') ? 0 : Number(o2);
+        return v1 === v2;
     };
 
     obtenerNombreSucursal(id: any): string {
-        if (!id || id === 0) return 'Todas las sucursales';
-        const s = this.catalogos.sucursales.find(suc => suc.sucursalId === Number(id));
+        const num = Number(id || 0);
+        if (num === 0) return 'Todas las sucursales';
+        const s = this.catalogos.sucursales.find(suc => suc.sucursalId === num);
         return s ? s.nombre : 'Todas las sucursales';
     }
 
@@ -314,7 +314,7 @@ export class MinutaDialogComponent implements OnInit {
         this.form = this._fb.group({
             area: [areaInicial],
             titulo: [m?.titulo || '', [Validators.required, Validators.maxLength(200)]],
-            sucursalId: [m?.sucursalId || null],
+            sucursalId: [m?.sucursalId ? Number(m.sucursalId) : 0],
             fechaReunion: [fechaFormateada, [Validators.required]],
             palabrasClave: [m?.palabrasClave || ''],
             descripcion: [m?.descripcion || ''],

@@ -85,16 +85,16 @@ describe('MinutaDialogComponent', () => {
         expect(component.form.get('area')?.value).toBe('COM');
     });
 
-    it('permite seleccionar Todas las sucursales (sucursalId null) y muestra Todas las sucursales', () => {
+    it('permite seleccionar Todas las sucursales (sucursalId 0) y muestra Todas las sucursales', () => {
         configurar({ catalogos: catalogosMock });
 
-        component.form.get('sucursalId')?.setValue(null);
+        component.form.get('sucursalId')?.setValue(0);
         fixture.detectChanges();
 
-        expect(component.form.get('sucursalId')?.value).toBeNull();
-        expect(component.obtenerNombreSucursal(null)).toBe('Todas las sucursales');
-        expect(component.compareSucursal(null, null)).toBeTrue();
-        expect(component.compareSucursal(null, 0)).toBeTrue();
+        expect(component.form.get('sucursalId')?.value).toBe(0);
+        expect(component.obtenerNombreSucursal(0)).toBe('Todas las sucursales');
+        expect(component.compareSucursal(0, 0)).toBeTrue();
+        expect(component.compareSucursal(0, null)).toBeTrue();
     });
 
     it('al guardar con Todas las sucursales envia sucursalId 0 al backend', () => {

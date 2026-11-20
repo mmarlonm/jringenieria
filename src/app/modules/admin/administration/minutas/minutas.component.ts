@@ -85,6 +85,12 @@ export class MinutasComponent implements OnInit {
         });
     }
 
+    obtenerNombreSucursalFiltro(id: number | null): string {
+        if (!id || id === 0) return 'Todas las sucursales';
+        const s = this.catalogos.sucursales.find(suc => suc.sucursalId === id);
+        return s ? s.nombre : 'Todas las sucursales';
+    }
+
     cargarMinutas(): void {
         this.cargando = true;
         const sucursalId = this.filtroSucursal.value && this.filtroSucursal.value > 0 ? this.filtroSucursal.value : null;
