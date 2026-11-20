@@ -30,9 +30,10 @@ describe('LeadsComponent: ver detalle', () => {
 
     componente.openVerDialog(lead);
 
+    // El diálogo recibe también la lista de usuarios (para convertir en requerimiento y descartar); sin ngOnInit va vacía
     expect(dialog.open).toHaveBeenCalledWith(
       LeadVerDialogComponent,
-      jasmine.objectContaining({ data: { lead } })
+      jasmine.objectContaining({ data: { lead, users: [] } })
     );
   });
 

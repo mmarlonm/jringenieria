@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
+import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { RequerimientosComponent } from './requerimientos.component';
 import { Requerimiento, RequerimientosService } from './requerimientos.service';
@@ -74,6 +75,11 @@ describe('RequerimientosComponent - Aprobados', () => {
           useValue: {
             getUsers: () => of([])
           }
+        },
+        // El componente lee ?folio= de la ruta para abrir un requerimiento (desde el panel de leads): sin parámetros en estas pruebas
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParams: of({}), snapshot: { queryParams: {} } }
         }
       ]
     });

@@ -99,10 +99,11 @@ describe('filtro del menú por vistas', () => {
             expect(ids(menu)).toContain('catalogs.clients');
         });
 
-        it('sin vistas solo quedan las dos entradas que siempre se muestran', () => {
+        it('sin vistas solo quedan las tres entradas que siempre se muestran (SIEMPRE_VISIBLES)', () => {
             const menu = filtrarMenuPorVistas(defaultNavigation, []);
 
-            expect(hojas(menu)).toEqual(['dashboards.identidad', 'dashboards.neural-graph']);
+            // «Nube de Minutas» se agregó a SIEMPRE_VISIBLES a propósito (commit bd03e5c5): la ven todos los usuarios
+            expect(hojas(menu)).toEqual(['dashboards.identidad', 'dashboards.neural-graph', 'administracion.minutas']);
         });
 
         it('devuelve copias: no modifica el menú original', () => {
