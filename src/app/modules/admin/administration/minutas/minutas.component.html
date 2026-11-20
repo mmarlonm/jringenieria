@@ -25,7 +25,12 @@
             <mat-form-field subscriptSizing="dynamic">
                 <mat-label>Sucursal</mat-label>
                 <mat-select [formControl]="filtroSucursal">
-                    <mat-option [value]="0">Todas las sucursales</mat-option>
+                    <mat-option [value]="0">
+                        <div class="flex items-center gap-2">
+                            <mat-icon class="icon-size-4 text-emerald-600" [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
+                            <span class="font-medium text-emerald-700">Todas las sucursales</span>
+                        </div>
+                    </mat-option>
                     @for (s of catalogos.sucursales; track s.sucursalId) {
                         <mat-option [value]="s.sucursalId">{{ s.nombre }}</mat-option>
                     }
@@ -90,7 +95,13 @@
                 <ng-container matColumnDef="sucursal">
                     <th mat-header-cell *matHeaderCellDef>Sucursal</th>
                     <td mat-cell *matCellDef="let m" class="font-semibold whitespace-nowrap">
-                        {{ m.sucursalNombre || 'Todas' }}
+                        <span *ngIf="m.sucursalId" class="text-default font-medium">
+                            {{ m.sucursalNombre }}
+                        </span>
+                        <span *ngIf="!m.sucursalId" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <mat-icon class="icon-size-3.5 text-emerald-600" [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
+                            Todas las sucursales
+                        </span>
                     </td>
                 </ng-container>
 

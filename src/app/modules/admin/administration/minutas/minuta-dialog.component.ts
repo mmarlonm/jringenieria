@@ -63,8 +63,22 @@ import Swal from 'sweetalert2';
                     <!-- Sucursal -->
                     <mat-form-field [subscriptSizing]="'dynamic'">
                         <mat-label>Sucursal</mat-label>
-                        <mat-select formControlName="sucursalId">
-                            <mat-option [value]="null">Todas las sucursales</mat-option>
+                        <mat-select formControlName="sucursalId" [compareWith]="compareSucursal">
+                            <mat-select-trigger>
+                                <div class="flex items-center gap-1.5" *ngIf="form.get('sucursalId')?.value">
+                                    <span>{{ obtenerNombreSucursal(form.get('sucursalId')?.value) }}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-emerald-700 font-medium" *ngIf="!form.get('sucursalId')?.value">
+                                    <mat-icon class="icon-size-4 text-emerald-600" [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
+                                    <span>Todas las sucursales</span>
+                                </div>
+                            </mat-select-trigger>
+                            <mat-option [value]="null">
+                                <div class="flex items-center gap-2">
+                                    <mat-icon class="icon-size-4 text-emerald-600" [svgIcon]="'heroicons_outline:globe-alt'"></mat-icon>
+                                    <span class="font-medium text-emerald-700">Todas las sucursales</span>
+                                </div>
+                            </mat-option>
                             @for (s of catalogos.sucursales; track s.sucursalId) {
                                 <mat-option [value]="s.sucursalId">{{ s.nombre }}</mat-option>
                             }
@@ -231,8 +245,8 @@ export class MinutaDialogComponent implements OnInit {
         { clave: 'ADM', nombre: 'Administración' },
         { clave: 'CAL', nombre: 'Calidad / SGC (ISO)' },
         { clave: 'DIR', nombre: 'Dirección' },
-        { clave: 'COM', nombre: 'Compras' },
-        { clave: 'VEN', nombre: 'Ventas / Comercial' },
+        { clave: 'CMP', nombre: 'Compras' },
+        { clave: 'COM', nombre: 'Ventas / Comercial' },
         { clave: 'PROY', nombre: 'Proyectos' },
         { clave: 'RH', nombre: 'Recursos Humanos' },
         { clave: 'MTO', nombre: 'Mantenimiento' },
@@ -243,26 +257,56 @@ export class MinutaDialogComponent implements OnInit {
         { clave: 'OTRO', nombre: 'Otra área (personalizada)' }
     ];
 
+    compareSucursal = (o1: any, o2: any): boolean => {
+        if ((o1 == null || o1 === 0 || o1 === '') && (o2 == null || o2 === 0 || o2 === '')) {
+            return true;
+        }
+        return Number(o1) === Number(o2);
+    };
+
+    obtenerNombreSucursal(id: any): string {
+        if (!id || id === 0) return 'Todas las sucursales';
+        const s = this.catalogos.sucursales.find(suc => suc.sucursalId === Number(id));
+        return s ? s.nombre : 'Todas las sucursales';
+    }
+
     constructor(@Inject(MAT_DIALOG_DATA) public data: { minuta?: Minuta; catalogos: MinutaCatalogos }) {
         this.catalogos = data.catalogos || { sucursales: [], usuarios: [] };
         this.isEdit = !!data.minuta;
         this.archivoActualNombre = data.minuta?.archivoNombreOriginal || null;
+        this.sincronizarAreas();
+    }
 
+    sincronizarAreas(): void {
         if (this.catalogos.areas && this.catalogos.areas.length > 0) {
             const extra = this.catalogos.areas.filter(ca => !this.areasDisponibles.some(ad => ad.clave === ca.clave));
             if (extra.length > 0) {
-                const otro = this.areasDisponibles.pop()!;
+                const otroIndex = this.areasDisponibles.findIndex(a => a.clave === 'OTRO');
+                const otro = otroIndex >= 0 ? this.areasDisponibles.splice(otroIndex, 1)[0] : { clave: 'OTRO', nombre: 'Otra área (personalizada)' };
                 this.areasDisponibles = [...this.areasDisponibles, ...extra, otro];
             }
         }
     }
 
     ngOnInit(): void {
+        if (!this.catalogos.sucursales || this.catalogos.sucursales.length === 0) {
+            this._minutasService.obtenerCatalogos().subscribe({
+                next: (cat) => {
+                    this.catalogos = cat;
+                    this.sincronizarAreas();
+                }
+            });
+        }
+
         const m = this.data.minuta;
         const fechaFormateada = m?.fechaReunion ? m.fechaReunion.substring(0, 10) : new Date().toISOString().substring(0, 10);
 
         let areaInicial = m?.area || 'ING';
-        if (m?.area && !this.areasDisponibles.some(a => a.clave === m.area)) {
+        if (areaInicial === 'VEN' || areaInicial === 'VENT') {
+            areaInicial = 'COM';
+        }
+
+        if (m?.area && !this.areasDisponibles.some(a => a.clave === areaInicial)) {
             areaInicial = 'OTRO';
             this.areaPersonalizadaControl.setValue(m.area);
         }
@@ -431,7 +475,11 @@ export class MinutaDialogComponent implements OnInit {
         if (areaFinal) formData.append('area', areaFinal);
         if (val.descripcion) formData.append('descripcion', val.descripcion.trim());
         formData.append('fechaReunion', val.fechaReunion);
-        if (val.sucursalId) formData.append('sucursalId', val.sucursalId.toString());
+        if (val.sucursalId && Number(val.sucursalId) > 0) {
+            formData.append('sucursalId', val.sucursalId.toString());
+        } else {
+            formData.append('sucursalId', '0');
+        }
         if (val.palabrasClave) formData.append('palabrasClave', val.palabrasClave.trim());
         formData.append('esPublica', esPublica.toString());
 
