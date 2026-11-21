@@ -38,6 +38,14 @@
         <span>{{ errorMsg }}</span>
     </div>
 
+    <!-- Franja enviada a autorizar -->
+    <div *ngIf="ultimaRevision?.enviadaAutorizarFecha" class="mx-6 mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-sm flex items-center gap-2">
+        <mat-icon class="text-amber-600 dark:text-amber-400 text-base">schedule</mat-icon>
+        <span>
+            Enviada a autorizar el {{ ultimaRevision?.enviadaAutorizarFecha | date:'dd/MM/yyyy' }} · Pendiente de {{ etapaActualDto?.autorizaNombre || 'autorizador' }}
+        </span>
+    </div>
+
     <!-- Caso cancelado: qué se puede hacer con él -->
     <div *ngIf="detalle?.cancelado" class="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-sm flex items-start gap-2">
         <mat-icon class="text-rose-500 shrink-0">block</mat-icon>
@@ -116,14 +124,15 @@
                                     </mat-select>
                                 </mat-form-field>
 
-                                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-                                    <mat-label>Autorizador Designado (Opcional)</mat-label>
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Autorizador designado *</mat-label>
                                     <mat-select formControlName="autorizaUsuarioId">
-                                        <mat-option [value]="null">-- Cualquier usuario autorizado --</mat-option>
+                                        <mat-option [value]="null">-- Sin designar --</mat-option>
                                         <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
                                             {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
                                         </mat-option>
                                     </mat-select>
+                                    <mat-hint class="text-xs text-slate-500">Obligatorio para enviar a autorizar. Solo esa persona (o un administrador) puede autorizar o rechazar</mat-hint>
                                 </mat-form-field>
                             </div>
                         </div>
@@ -648,6 +657,16 @@
                 class="text-xs"
             >
                 Poner en Proceso
+            </button>
+
+            <button
+                *ngIf="puedeOperarAcciones"
+                mat-stroked-button
+                (click)="enviarAutorizacion()"
+                [disabled]="guardando || !etapaActualDto?.autorizaUsuarioId || form.dirty"
+                class="text-xs"
+            >
+                Enviar a autorizar
             </button>
 
             <!-- Rechazar y Autorizar: solo el autorizador designado (o un administrador) -->

@@ -220,6 +220,11 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
                     texto: 'No Aplica',
                     clases: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700'
                 };
+            case ESTATUS_ETAPA.AutorizadaInterna:
+                return {
+                    texto: 'Pendiente del cliente',
+                    clases: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                };
             default:
                 return { texto: 'Desconocido', clases: 'bg-gray-100 text-gray-700' };
         }

@@ -198,6 +198,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
             case ESTATUS_ETAPA.Autorizada: return 'Autorizada';
             case ESTATUS_ETAPA.Rechazada: return 'Rechazada';
             case ESTATUS_ETAPA.NoAplica: return 'No aplica';
+            case ESTATUS_ETAPA.AutorizadaInterna: return 'Autorizada por JR · pendiente del cliente';
             default: return '-';
         }
     }
@@ -396,6 +397,26 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     // --- ACCIONES DE ESTATUS ---
+    enviarAutorizacion(): void {
+        if (this.guardando || !this.etapaActualDto?.autorizaUsuarioId || this.form.dirty) return;
+        this.guardando = true;
+        this.errorMsg = null;
+
+        this._service.enviarAutorizacion(this.idSeguimiento, this.etapaNumero)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: () => {
+                    this.guardando = false;
+                    this.huboCambios = true;
+                    this.cargarDetalle();
+                },
+                error: (err) => {
+                    this.guardando = false;
+                    this.errorMsg = err?.error?.mensaje || 'Error al enviar a autorizar.';
+                }
+            });
+    }
+
     ponerEnProceso(): void {
         if (this.guardando) return;
         this.guardando = true;

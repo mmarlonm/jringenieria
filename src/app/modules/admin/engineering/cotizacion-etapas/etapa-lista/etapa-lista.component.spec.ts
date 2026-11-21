@@ -87,6 +87,13 @@ describe('EtapaListaComponent', () => {
         expect(component.etapaConfig?.permiteCrear).toBeFalse();
     });
 
+    it('La_lista_muestra_Pendiente_del_cliente_para_el_estatus_6', () => {
+        setup(5);
+        const badge = component.getEstatusBadge(6);
+        expect(badge.texto).toBe('Pendiente del cliente');
+        expect(badge.clases).toContain('text-purple-800');
+    });
+
     // ───── Un clic abre un solo diálogo (antes se apilaban dos) ─────
 
     function dialogoQueSeCierraCuando(): Subject<unknown> {
