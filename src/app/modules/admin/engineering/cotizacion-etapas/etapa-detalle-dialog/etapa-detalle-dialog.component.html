@@ -274,7 +274,7 @@
                             {{ rev.observacionesAutorizacion }}
                         </div>
 
-                        <div *ngIf="rev.resultado === 6 || (etapaNumero === 5 && rev.fechaAutorizacion)" class="text-xs text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg border border-purple-200 dark:border-purple-800">
+                        <div *ngIf="revisionAutorizadaPorJr(rev)" class="text-xs text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg border border-purple-200 dark:border-purple-800">
                             <span>Autorizada por JR el {{ rev.fechaAutorizacion ? (rev.fechaAutorizacion | date:'dd/MM/yyyy HH:mm') : '-' }} por {{ rev.autorizadoPorNombre || 'Autorizador' }}</span>
                         </div>
 

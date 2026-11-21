@@ -287,6 +287,17 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         return false;
     }
 
+    /**
+     * La revisión de la etapa 5 fue autorizada por JR: pendiente del cliente (6) o ya con respuesta del cliente.
+     * No basta con que tenga FechaAutorizacion: el API también la guarda cuando el autorizador RECHAZA.
+     */
+    revisionAutorizadaPorJr(rev: CotizacionEtapasRevisionDto): boolean {
+        if (this.etapaNumero !== 5) return false;
+        return rev.resultado === ESTATUS_ETAPA.AutorizadaInterna
+            || rev.resultado === ESTATUS_ETAPA.Autorizada
+            || !!rev.clienteResultado;
+    }
+
     get puedeSubirArchivoActual(): boolean {
         if (this.etapa5PendienteDelCliente) {
             return this.puedeRegistrarCliente && this.revisionSeleccionadaArchivos === this.ultimaRevision?.numero;

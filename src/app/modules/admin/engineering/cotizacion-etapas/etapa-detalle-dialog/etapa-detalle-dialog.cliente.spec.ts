@@ -357,6 +357,22 @@ describe('EtapaDetalleDialogComponent (Cliente F3)', () => {
         expect(component.casoPasoASeguimiento).toBeTrue();
     });
 
+    it('La_franja_Autorizada_por_JR_no_sale_en_una_revision_que_el_autorizador_rechazo', async () => {
+        await crearComponente();
+        fixture.detectChanges();
+        const base = mockJsonApiEtapa5Estatus6.etapas[0].revisiones[0] as any;
+
+        // El API guarda FechaAutorizacion también al rechazar: una revisión rechazada por el autorizador NO fue autorizada por JR
+        expect(component.revisionAutorizadaPorJr({ ...base, resultado: ESTATUS_ETAPA.Rechazada, clienteResultado: null })).toBeFalse();
+        expect(component.revisionAutorizadaPorJr({ ...base, resultado: ESTATUS_ETAPA.EnProceso, fechaAutorizacion: null, clienteResultado: null })).toBeFalse();
+        // Autorizada por JR y pendiente del cliente
+        expect(component.revisionAutorizadaPorJr({ ...base, resultado: ESTATUS_ETAPA.AutorizadaInterna })).toBeTrue();
+        // El cliente autorizó (o es una autorización anterior, migrada)
+        expect(component.revisionAutorizadaPorJr({ ...base, resultado: ESTATUS_ETAPA.Autorizada, clienteResultado: 3 })).toBeTrue();
+        // El cliente no autorizó: JR sí había autorizado antes
+        expect(component.revisionAutorizadaPorJr({ ...base, resultado: ESTATUS_ETAPA.Rechazada, clienteResultado: 4 })).toBeTrue();
+    });
+
     it('Abre_con_el_JSON_exacto_del_API_de_la_etapa_5_en_estatus_6_sin_errores', async () => {
         await crearComponente();
         fixture.autoDetectChanges(true);
