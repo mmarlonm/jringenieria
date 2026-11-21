@@ -52,4 +52,36 @@ describe('LeadsComponent: ver detalle', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/crm/requerimientos'], { queryParams: { folio: 'REQ-2026-0010' } });
   });
+
+  it('openConvertDialog abre el diálogo de calificación y llama a convertLead al confirmar', () => {
+    const dtoMock = {
+      tipoCliente: 'Industrial',
+      tipoNecesidad: 'Proyectos',
+      zonaAtencion: 'Pachuca',
+      nivelPrioridad: 'Alta',
+      potencialPreliminar: 'Estratégico'
+    };
+    const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    dialog.open.and.returnValue({
+      afterClosed: () => of({ action: 'convert', data: dtoMock })
+    } as any);
+    const leadsService = jasmine.createSpyObj<LeadsService>('LeadsService', ['getLeads', 'convertLead', 'getIndicadoresLeads']);
+    leadsService.convertLead.and.returnValue(of(lead));
+    leadsService.getLeads.and.returnValue(of([lead]));
+    leadsService.getIndicadoresLeads.and.returnValue(of({
+      total: 1, nuevos: 0, calificados: 1, descartados: 0,
+      tasaConversion: 100, tiempoPromedioHoras: 2
+    } as any));
+    const snackBar = jasmine.createSpyObj<MatSnackBar>('MatSnackBar', ['open']);
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    const cdr = jasmine.createSpyObj<ChangeDetectorRef>('ChangeDetectorRef', ['markForCheck', 'detectChanges']);
+
+    const componente = new LeadsComponent(leadsService, jasmine.createSpyObj<UsersService>('UsersService', ['getUsers']), dialog, snackBar, router, cdr);
+
+    componente.openConvertDialog(lead);
+
+    expect(dialog.open).toHaveBeenCalled();
+    expect(leadsService.convertLead).toHaveBeenCalledWith(5, dtoMock);
+    expect(snackBar.open).toHaveBeenCalledWith('Lead calificado y canalizado exitosamente a Oportunidad', 'OK', jasmine.any(Object));
+  });
 });

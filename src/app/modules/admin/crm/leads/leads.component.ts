@@ -297,7 +297,7 @@ export class LeadsComponent implements OnInit {
       data: { lead, users: this.users }
     });
     dialogRef.afterClosed().subscribe((res) => {
-      if (res?.accion === 'convertido' || res?.accion === 'descartado') {
+      if (res?.accion === 'convertido' || res?.accion === 'descartado' || res?.accion === 'calificado') {
         this.loadLeads();
       }
     });

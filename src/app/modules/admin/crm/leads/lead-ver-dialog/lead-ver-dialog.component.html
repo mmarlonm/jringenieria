@@ -231,6 +231,10 @@
           <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-4 mr-1.5 text-red-500"></mat-icon>
           <span>Descartado</span>
         </button>
+        <button *ngIf="lead.estatus === 'Nuevo'" mat-stroked-button (click)="calificarLead()" [disabled]="procesandoAccion" class="btn-calificar text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800" matTooltip="Calificar e ISO 7.4 y pasar a Calificados">
+          <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4 mr-1.5 text-emerald-600"></mat-icon>
+          <span>Calificar ISO</span>
+        </button>
         <button mat-flat-button color="primary" (click)="convertirARequerimiento()" [disabled]="procesandoAccion" class="btn-convertir-req bg-blue-600 hover:bg-blue-700 text-white">
           <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1.5"></mat-icon>
           <span>Convertir en Requerimiento</span>

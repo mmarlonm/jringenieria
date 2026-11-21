@@ -296,11 +296,15 @@
                   <mat-icon svgIcon="heroicons_outline:x-circle" class="icon-size-4 mr-1 text-red-500"></mat-icon>
                   <span>Descartado</span>
                 </button>
-                <button mat-flat-button color="primary" class="text-xs py-1 bg-blue-600 hover:bg-blue-700 text-white font-medium" (click)="convertirARequerimiento(lead)" matTooltip="Crear Requerimiento formal y pasar directo">
-                  <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1"></mat-icon>
-                  <span>Convertir en Requerimiento</span>
+                <button mat-stroked-button class="btn-calificar-lead text-xs py-1 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800" (click)="openConvertDialog(lead)" matTooltip="Calificar e ISO 7.4 y pasar a Calificados">
+                  <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4 mr-1 text-emerald-600"></mat-icon>
+                  <span>Calificar ISO</span>
                 </button>
               </div>
+              <button mat-flat-button color="primary" class="w-full text-xs py-1 bg-blue-600 hover:bg-blue-700 text-white font-medium" (click)="convertirARequerimiento(lead)" matTooltip="Crear Requerimiento formal y pasar directo">
+                <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1"></mat-icon>
+                <span>Convertir en Requerimiento</span>
+              </button>
               <div class="flex items-center justify-end gap-1">
                 <button mat-button class="text-[11px] text-slate-500 py-0.5 px-2 h-7" (click)="openVerDialog(lead)">
                   <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-3.5 mr-1"></mat-icon>
@@ -566,6 +570,9 @@
                   <mat-icon svgIcon="heroicons_outline:chat-bubble-bottom-center-text" class="text-indigo-600"></mat-icon>
                 </button>
                 <ng-container *ngIf="lead.estatus === 'Nuevo'">
+                  <button mat-icon-button class="btn-calificar-tabla" color="accent" matTooltip="Calificar e ISO 7.4 y pasar a Calificados" (click)="openConvertDialog(lead)">
+                    <mat-icon svgIcon="heroicons_outline:check-badge" class="text-green-500"></mat-icon>
+                  </button>
                   <button mat-icon-button color="primary" matTooltip="Convertir en Requerimiento y pasar directo" (click)="convertirARequerimiento(lead)">
                     <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="text-blue-600"></mat-icon>
                   </button>

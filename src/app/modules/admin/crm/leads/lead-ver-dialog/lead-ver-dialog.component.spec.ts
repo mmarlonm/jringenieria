@@ -62,7 +62,7 @@ describe('LeadVerDialogComponent', () => {
   }
 
   beforeEach(() => {
-    leadsMock = jasmine.createSpyObj('LeadsService', ['getArchivosLead', 'getSeguimientosLead', 'descargarArchivoLead', 'convertirARequerimiento', 'discardLead']);
+    leadsMock = jasmine.createSpyObj('LeadsService', ['getArchivosLead', 'getSeguimientosLead', 'descargarArchivoLead', 'convertirARequerimiento', 'discardLead', 'convertLead']);
     leadsMock.getArchivosLead.and.returnValue(of([archivo]));
     leadsMock.getSeguimientosLead.and.returnValue(of([seguimiento]));
     leadsMock.descargarArchivoLead.and.returnValue('http://api/Leads/5/archivos/1/descargar');
@@ -219,12 +219,30 @@ describe('LeadVerDialogComponent', () => {
     expect(clic).toHaveBeenCalled();
   });
 
-  it('muestra botones Convertir en Requerimiento y Descartado si no tiene requerimiento y no esta descartado', () => {
+  it('muestra botones Convertir en Requerimiento, Calificar ISO y Descartado si es Nuevo y no tiene requerimiento', () => {
     abrir(leadFicticio({ estatus: 'Nuevo', requerimientoFolio: undefined }));
 
     expect(el().querySelector('.btn-convertir-req')).not.toBeNull();
+    expect(el().querySelector('.btn-calificar')).not.toBeNull();
     expect(el().querySelector('.btn-descartar')).not.toBeNull();
     expect(el().querySelector('.btn-ir-req')).toBeNull();
+  });
+
+  it('calificarLead abre el dialogo de calificacion ISO y recarga al confirmar', () => {
+    abrir(leadFicticio({ estatus: 'Nuevo', requerimientoFolio: undefined }));
+    (fixture.componentInstance as any).dialog = matDialogMock;
+    leadsMock.convertLead.and.returnValue(of(leadFicticio({ estatus: 'Oportunidad' })));
+    matDialogMock.open.and.returnValue({
+      afterClosed: () => of({ action: 'convert', data: { tipoCliente: 'Industrial', tipoNecesidad: 'Proyectos' } })
+    } as any);
+
+    (el().querySelector('.btn-calificar') as HTMLButtonElement).click();
+
+    expect(matDialogMock.open).toHaveBeenCalledWith(
+      jasmine.any(Function),
+      jasmine.objectContaining({ data: jasmine.objectContaining({ action: 'convert' }) })
+    );
+    expect(leadsMock.convertLead).toHaveBeenCalled();
   });
 
   it('muestra boton Ver Requerimiento cuando el lead ya tiene requerimientoFolio asignado', () => {

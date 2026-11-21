@@ -196,6 +196,41 @@ export class LeadVerDialogComponent implements OnInit {
     });
   }
 
+  calificarLead(): void {
+    const dialogRef = this.dialog.open(LeadDialogComponent, {
+      width: '650px',
+      data: { action: 'convert', lead: this.lead }
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.action === 'convert') {
+        this.procesandoAccion = true;
+        this.cdr.markForCheck();
+        this.leadsService.convertLead(this.lead.id, result.data).subscribe({
+          next: (leadActualizado) => {
+            this.procesandoAccion = false;
+            this.lead = leadActualizado;
+            this.cdr.markForCheck();
+            Swal.fire({
+              icon: 'success',
+              title: 'Lead calificado',
+              text: 'El prospecto fue calificado y pasó a Oportunidad.',
+              timer: 1800,
+              showConfirmButton: false
+            });
+            this.dialogRef.close({ accion: 'calificado', lead: leadActualizado });
+          },
+          error: (err) => {
+            this.procesandoAccion = false;
+            this.cdr.markForCheck();
+            const msg = err?.error?.message || err?.error?.mensaje || 'No se pudo calificar el lead.';
+            Swal.fire('Error', msg, 'error');
+          }
+        });
+      }
+    });
+  }
+
   irARequerimiento(folio?: string): void {
     const fol = folio || this.lead.requerimientoFolio;
     this.dialogRef.close({ accion: 'navegar', folio: fol });
