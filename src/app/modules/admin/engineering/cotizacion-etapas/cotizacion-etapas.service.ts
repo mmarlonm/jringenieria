@@ -9,7 +9,8 @@ import {
     CotizacionEtapasArchivoDto,
     CrearCasoDto,
     GuardarEtapaDto,
-    CambiarEstatusDto
+    CambiarEstatusDto,
+    AutorizacionClienteDto
 } from './cotizacion-etapas.models';
 
 @Injectable({
@@ -41,6 +42,14 @@ export class CotizacionEtapasService {
 
     cambiarEstatus(id: number, etapa: number, dto: CambiarEstatusDto): Observable<CotizacionEtapasDetalleDto> {
         return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/etapas/${etapa}/estatus`, dto);
+    }
+
+    enviarAutorizacion(id: number, etapa: number): Observable<CotizacionEtapasDetalleDto> {
+        return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/etapas/${etapa}/enviar-autorizacion`, {});
+    }
+
+    autorizacionCliente(id: number, dto: AutorizacionClienteDto): Observable<CotizacionEtapasDetalleDto> {
+        return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/autorizacion-cliente`, dto);
     }
 
     iniciarRevision(id: number, etapa: number): Observable<CotizacionEtapasDetalleDto> {

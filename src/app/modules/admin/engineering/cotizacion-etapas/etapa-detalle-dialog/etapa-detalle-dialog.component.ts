@@ -26,10 +26,12 @@ import {
     ESTATUS_ETAPA,
     INFORMACION,
     GuardarEtapaDto,
-    CambiarEstatusDto
+    CambiarEstatusDto,
+    AutorizacionClienteDto
 } from '../cotizacion-etapas.models';
 import { EtapaConfig, obtenerEtapaConfig } from '../etapas.config';
 import { puedeAutorizar } from '../etapa-permisos.utils';
+import { fechaLocalISO } from '../cotizacion-etapas.utils';
 import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
 
 export interface EtapaDetalleDialogData {
@@ -101,6 +103,17 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     modalReactivarAbierto = false;
     modalEliminarAbierto = false;
 
+    // Modales de autorización del cliente (Etapa 5)
+    modalClienteAutorizoAbierto = false;
+    clienteFecha: string = '';
+    clienteReferencia: string = '';
+    clienteObservaciones: string = '';
+
+    modalClienteNoAutorizoAbierto = false;
+    clienteNoAutorizoReferencia: string = '';
+    clienteNoAutorizoObservaciones: string = '';
+    hoyISO: string = '';
+
     private readonly _unsubscribeAll = new Subject<void>();
 
     constructor(
@@ -129,6 +142,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.hoyISO = fechaLocalISO(new Date());
         this._cargarCatalogos();
         this.cargarDetalle();
     }
@@ -198,6 +212,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
             case ESTATUS_ETAPA.Autorizada: return 'Autorizada';
             case ESTATUS_ETAPA.Rechazada: return 'Rechazada';
             case ESTATUS_ETAPA.NoAplica: return 'No aplica';
+            case ESTATUS_ETAPA.AutorizadaInterna: return 'Autorizada por JR · pendiente del cliente';
             default: return '-';
         }
     }
@@ -249,8 +264,51 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         if (!this.detalle || !this.etapaActualDto) return true;
         if (this.detalle.cancelado) return true;
         if (this.detalle.etapaActual !== this.etapaNumero) return true;
-        if (this.etapaActualDto.estatus === ESTATUS_ETAPA.Autorizada || this.etapaActualDto.estatus === ESTATUS_ETAPA.NoAplica) return true;
+        if (this.etapaActualDto.estatus === ESTATUS_ETAPA.Autorizada ||
+            this.etapaActualDto.estatus === ESTATUS_ETAPA.NoAplica ||
+            this.etapaActualDto.estatus === ESTATUS_ETAPA.AutorizadaInterna) return true;
         return false;
+    }
+
+    get etapa5PendienteDelCliente(): boolean {
+        return this.etapaNumero === 5 &&
+            this.detalle?.etapaActual === 5 &&
+            this.etapaActualDto?.estatus === ESTATUS_ETAPA.AutorizadaInterna &&
+            !this.detalle?.cancelado;
+    }
+
+    get puedeRegistrarCliente(): boolean {
+        if (!this.etapa5PendienteDelCliente) return false;
+        if (this.esAdmin) return true;
+        if (this.usuarioActualId == null) return false;
+        if (this.etapaActualDto?.autorizaUsuarioId === this.usuarioActualId) return true;
+        const ult = this.ultimaRevision;
+        if (ult?.elaboradoPorUsuarioId === this.usuarioActualId) return true;
+        return false;
+    }
+
+    /**
+     * La revisión de la etapa 5 fue autorizada por JR: pendiente del cliente (6) o ya con respuesta del cliente.
+     * No basta con que tenga FechaAutorizacion: el API también la guarda cuando el autorizador RECHAZA.
+     */
+    revisionAutorizadaPorJr(rev: CotizacionEtapasRevisionDto): boolean {
+        if (this.etapaNumero !== 5) return false;
+        return rev.resultado === ESTATUS_ETAPA.AutorizadaInterna
+            || rev.resultado === ESTATUS_ETAPA.Autorizada
+            || !!rev.clienteResultado;
+    }
+
+    get puedeSubirArchivoActual(): boolean {
+        if (this.etapa5PendienteDelCliente) {
+            return this.puedeRegistrarCliente && this.revisionSeleccionadaArchivos === this.ultimaRevision?.numero;
+        }
+        return !this.revisionActualEstaCongelada() && this.puedeOperarAcciones;
+    }
+
+    get puedeEliminarArchivoActual(): boolean {
+        const rev = this.etapaActualDto?.revisiones?.find((r) => r.numero === this.revisionSeleccionadaArchivos);
+        if (rev?.resultado === ESTATUS_ETAPA.AutorizadaInterna || this.etapa5PendienteDelCliente) return false;
+        return !this.revisionActualEstaCongelada() && this.puedeOperarAcciones;
     }
 
     get ultimaRevisionRechazada(): boolean {
@@ -396,6 +454,26 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     // --- ACCIONES DE ESTATUS ---
+    enviarAutorizacion(): void {
+        if (this.guardando || !this.etapaActualDto?.autorizaUsuarioId || this.form.dirty) return;
+        this.guardando = true;
+        this.errorMsg = null;
+
+        this._service.enviarAutorizacion(this.idSeguimiento, this.etapaNumero)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: () => {
+                    this.guardando = false;
+                    this.huboCambios = true;
+                    this.cargarDetalle();
+                },
+                error: (err) => {
+                    this.guardando = false;
+                    this.errorMsg = err?.error?.mensaje || 'Error al enviar a autorizar.';
+                }
+            });
+    }
+
     ponerEnProceso(): void {
         if (this.guardando) return;
         this.guardando = true;
@@ -483,6 +561,94 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                 error: (err) => {
                     this.guardando = false;
                     this.errorMsg = err?.error?.mensaje || 'Error al rechazar la etapa.';
+                }
+            });
+    }
+
+    abrirModalClienteAutorizo(): void {
+        this.errorMsg = null;
+        this.clienteFecha = fechaLocalISO(new Date());
+        this.clienteReferencia = '';
+        this.clienteObservaciones = '';
+        this.modalClienteAutorizoAbierto = true;
+    }
+
+    confirmarClienteAutorizo(): void {
+        if (this.guardando) return;
+        this.errorMsg = null;
+
+        if (!this.clienteFecha) {
+            this.errorMsg = 'La fecha de autorización es obligatoria.';
+            return;
+        }
+
+        const hoy = fechaLocalISO(new Date());
+        if (this.clienteFecha > hoy) {
+            this.errorMsg = 'La fecha de autorización no puede ser futura.';
+            return;
+        }
+
+        this.guardando = true;
+        const dto: AutorizacionClienteDto = {
+            resultado: 3,
+            fecha: this.clienteFecha,
+            referencia: this.clienteReferencia?.trim() || null,
+            observaciones: this.clienteObservaciones?.trim() || null
+        };
+
+        this._service.autorizacionCliente(this.idSeguimiento, dto)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: () => {
+                    this.guardando = false;
+                    this.huboCambios = true;
+                    this.modalClienteAutorizoAbierto = false;
+                    this.cargarDetalle();
+                },
+                error: (err) => {
+                    this.guardando = false;
+                    this.errorMsg = err?.error?.mensaje || 'Error al registrar la autorización del cliente.';
+                }
+            });
+    }
+
+    abrirModalClienteNoAutorizo(): void {
+        this.errorMsg = null;
+        this.clienteNoAutorizoReferencia = '';
+        this.clienteNoAutorizoObservaciones = '';
+        this.modalClienteNoAutorizoAbierto = true;
+    }
+
+    confirmarClienteNoAutorizo(): void {
+        if (this.guardando) return;
+        this.errorMsg = null;
+
+        const obs = this.clienteNoAutorizoObservaciones?.trim();
+        if (!obs) {
+            this.errorMsg = 'Las observaciones son obligatorias al registrar que no autorizó.';
+            return;
+        }
+
+        this.guardando = true;
+        const dto: AutorizacionClienteDto = {
+            resultado: 4,
+            fecha: null,
+            referencia: this.clienteNoAutorizoReferencia?.trim() || null,
+            observaciones: obs
+        };
+
+        this._service.autorizacionCliente(this.idSeguimiento, dto)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: () => {
+                    this.guardando = false;
+                    this.huboCambios = true;
+                    this.modalClienteNoAutorizoAbierto = false;
+                    this.cargarDetalle();
+                },
+                error: (err) => {
+                    this.guardando = false;
+                    this.errorMsg = err?.error?.mensaje || 'Error al registrar la no autorización del cliente.';
                 }
             });
     }
@@ -687,7 +853,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
 
     revisionActualEstaCongelada(): boolean {
         const rev = this.etapaActualDto?.revisiones?.find((r) => r.numero === this.revisionSeleccionadaArchivos);
-        return !rev || rev.resultado === ESTATUS_ETAPA.Autorizada || rev.historica;
+        return !rev || rev.resultado === ESTATUS_ETAPA.Autorizada || rev.resultado === ESTATUS_ETAPA.AutorizadaInterna || rev.historica;
     }
 
     cerrar(): void {

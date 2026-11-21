@@ -5,7 +5,7 @@ import { CotizacionEtapaDto } from './cotizacion-etapas.models';
  * Regla:
  * - Los administradores siempre pueden autorizar.
  * - Si no hay etapa definida, false.
- * - Si no hay un autorizador designado específicamente, cualquier usuario con acceso a la vista puede autorizar.
+ * - Si no hay un autorizador designado específicamente, false (solo administradores).
  * - Si hay un autorizador designado, solo ese usuario (o un administrador) puede autorizar.
  */
 export function puedeAutorizar(
@@ -22,7 +22,7 @@ export function puedeAutorizar(
     }
 
     if (!etapa.autorizaUsuarioId) {
-        return true;
+        return false;
     }
 
     return etapa.autorizaUsuarioId === usuarioActualId;
