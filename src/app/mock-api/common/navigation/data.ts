@@ -272,6 +272,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             // Elementos directos
             { id: 'comercializacion.leads', title: 'Leads e Inbox (ISO 9051)', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' },
             { id: 'comercializacion.requerimientos', title: 'Requerimientos (SGC-PRO-COM-02)', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' },
+            { id: 'dashboards.quote-products', title: 'Cotizaciones', type: 'basic', icon: 'heroicons_outline:banknotes', link: '/dashboards/quote-products' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
             { id: 'dashboards.analytics', title: 'Mapa de Prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },
@@ -298,7 +299,6 @@ export const defaultNavigation: FuseNavigationItem[] = [
                 children: [
                     { id: 'dashboards.sales', title: 'Ventas', type: 'basic', icon: 'heroicons_outline:shopping-bag', link: '/dashboards/sales' }, // Conservado
                     { id: 'dashboards.transfer-management', title: 'Gestión de Traspasos', type: 'basic', icon: 'heroicons_outline:arrows-right-left', link: '/dashboards/transfer-management' },
-                    { id: 'dashboards.quote-products', title: 'Cotizaciones', type: 'basic', icon: 'heroicons_outline:banknotes', link: '/dashboards/quote-products' },
                     { id: 'comercializacion.control-entregas', title: 'Control de Entregas', type: 'basic', icon: 'heroicons_outline:truck', link: '/administration/control-entregas' }
                 ]
             },
