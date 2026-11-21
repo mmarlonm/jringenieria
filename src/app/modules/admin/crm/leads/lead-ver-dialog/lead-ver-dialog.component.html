@@ -239,7 +239,7 @@
           <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4 mr-1.5 text-emerald-600"></mat-icon>
           <span>Calificar ISO</span>
         </button>
-        <button mat-flat-button color="primary" (click)="convertirARequerimiento()" [disabled]="procesandoAccion" class="btn-convertir-req bg-blue-600 hover:bg-blue-700 text-white">
+        <button *ngIf="lead.estatus === 'Oportunidad'" mat-flat-button color="primary" (click)="convertirARequerimiento()" [disabled]="procesandoAccion" class="btn-convertir-req bg-blue-600 hover:bg-blue-700 text-white">
           <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1.5"></mat-icon>
           <span>Convertir en Requerimiento</span>
         </button>

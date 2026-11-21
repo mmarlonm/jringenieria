@@ -219,10 +219,10 @@ describe('LeadVerDialogComponent', () => {
     expect(clic).toHaveBeenCalled();
   });
 
-  it('muestra botones Convertir en Requerimiento, Calificar ISO y Descartado si es Nuevo y no tiene requerimiento', () => {
+  it('muestra botones Calificar ISO y Descartado si es Nuevo y no tiene requerimiento, sin Convertir', () => {
     abrir(leadFicticio({ estatus: 'Nuevo', requerimientoFolio: undefined }));
 
-    expect(el().querySelector('.btn-convertir-req')).not.toBeNull();
+    expect(el().querySelector('.btn-convertir-req')).toBeNull();
     expect(el().querySelector('.btn-calificar')).not.toBeNull();
     expect(el().querySelector('.btn-descartar')).not.toBeNull();
     expect(el().querySelector('.btn-ir-req')).toBeNull();

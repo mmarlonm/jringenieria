@@ -123,7 +123,7 @@ export class LeadVerDialogComponent implements OnInit {
 
     Swal.fire({
       title: '¿Convertir en Requerimiento?',
-      text: `Se creará el Requerimiento formal para "${this.lead.empresa || this.lead.nombreContacto}" y se calificará como Oportunidad para medir conversiones.`,
+      text: 'Se creará el Requerimiento formal con los datos del lead calificado.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, convertir',

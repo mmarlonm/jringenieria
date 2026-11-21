@@ -1,5 +1,5 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -88,18 +88,16 @@ describe('LeadsComponent: ver detalle', () => {
     expect(snackBar.open).toHaveBeenCalledWith('Lead calificado y canalizado exitosamente a Oportunidad', 'OK', jasmine.any(Object));
   });
 
-  it('La_tarjeta_de_la_bandeja_muestra_la_campana_si_existe', () => {
-    const leadConCampana: Lead = {
-      id: 6, nombreContacto: 'Pedro Gomez', empresa: 'Empresa Alfa', telefono: '5550001122', email: 'p@a.com',
-      fuenteLead: 'Web', necesidadInicial: 'Prueba', sucursalQueRecibe: 'Pachuca', estatus: 'Nuevo',
-      idUsuarioAsignado: 3, fechaRegistro: '2026-11-10T10:00:00', campana: 'Expo Eléctrica'
-    };
-    const leadsMock = jasmine.createSpyObj<LeadsService>('LeadsService', ['getLeads', 'getIndicadoresLeads']);
-    leadsMock.getLeads.and.returnValue(of([leadConCampana]));
+  function montarLeadsComponent(leads: Lead[]): ComponentFixture<LeadsComponent> {
+    TestBed.resetTestingModule();
+    const leadsMock = jasmine.createSpyObj<LeadsService>('LeadsService', ['getLeads', 'getIndicadoresLeads', 'convertirARequerimiento']);
+    leadsMock.getLeads.and.returnValue(of(leads));
     leadsMock.getIndicadoresLeads.and.returnValue(of({
-      total: 1, nuevos: 1, calificados: 0, descartados: 0, tasaConversion: 0, tiempoPromedioHoras: 0
+      total: leads.length, nuevos: leads.filter(l => l.estatus === 'Nuevo').length,
+      calificados: leads.filter(l => l.estatus === 'Oportunidad').length,
+      descartados: leads.filter(l => l.estatus === 'Descartado').length,
+      tasaConversion: 0, tiempoPromedioHoras: 0
     } as any));
-
     const usersMock = jasmine.createSpyObj('UsersService', ['getUsers', 'getCurrentUser']);
     usersMock.getUsers.and.returnValue(of([]));
 
@@ -114,9 +112,92 @@ describe('LeadsComponent: ver detalle', () => {
       ]
     });
 
-    const fixture = TestBed.createComponent(LeadsComponent);
-    fixture.detectChanges();
+    const fix = TestBed.createComponent(LeadsComponent);
+    fix.detectChanges();
+    return fix;
+  }
 
-    expect(fixture.nativeElement.textContent).toContain('Expo Eléctrica');
+  it('La_tarjeta_de_la_bandeja_muestra_la_campana_si_existe', () => {
+    const leadConCampana: Lead = {
+      id: 6, nombreContacto: 'Pedro Gomez', empresa: 'Empresa Alfa', telefono: '5550001122', email: 'p@a.com',
+      fuenteLead: 'Web', necesidadInicial: 'Prueba', sucursalQueRecibe: 'Pachuca', estatus: 'Nuevo',
+      idUsuarioAsignado: 3, fechaRegistro: '2026-11-10T10:00:00', campana: 'Expo Eléctrica'
+    };
+    const fix = montarLeadsComponent([leadConCampana]);
+    expect(fix.nativeElement.textContent).toContain('Expo Eléctrica');
+  });
+
+  it('Un_lead_nuevo_no_ofrece_Convertir_en_Requerimiento_en_tarjeta_tabla_ni_detalle', () => {
+    const leadNuevo: Lead = {
+      id: 7, nombreContacto: 'Nuevo Contacto', empresa: 'Empresa Nueva', telefono: '5550001122', email: 'n@n.com',
+      fuenteLead: 'Web', necesidadInicial: 'Prueba', sucursalQueRecibe: 'Pachuca', estatus: 'Nuevo',
+      idUsuarioAsignado: 3, fechaRegistro: '2026-11-10T10:00:00'
+    };
+    const fix = montarLeadsComponent([leadNuevo]);
+    const kanbanColNuevo = fix.nativeElement.querySelector('.kanban-col');
+    expect(kanbanColNuevo.textContent).not.toContain('Convertir en Requerimiento');
+
+    fix.componentInstance.viewMode = 'list';
+    fix.detectChanges();
+    const tabla = fix.nativeElement.querySelector('table');
+    expect(tabla.textContent).not.toContain('Convertir en Requerimiento');
+    expect(tabla.querySelector('button[matTooltip*="Convertir"]')).toBeNull();
+  });
+
+  it('Un_lead_nuevo_ofrece_Calificar_ISO_y_Descartado', () => {
+    const leadNuevo: Lead = {
+      id: 7, nombreContacto: 'Nuevo Contacto', empresa: 'Empresa Nueva', telefono: '5550001122', email: 'n@n.com',
+      fuenteLead: 'Web', necesidadInicial: 'Prueba', sucursalQueRecibe: 'Pachuca', estatus: 'Nuevo',
+      idUsuarioAsignado: 3, fechaRegistro: '2026-11-10T10:00:00'
+    };
+    const fix = montarLeadsComponent([leadNuevo]);
+    const kanbanColNuevo = fix.nativeElement.querySelector('.kanban-col');
+    expect(kanbanColNuevo.querySelector('.btn-calificar-lead')).not.toBeNull();
+    expect(kanbanColNuevo.textContent).toContain('Calificar ISO');
+    expect(kanbanColNuevo.textContent).toContain('Descartado');
+
+    fix.componentInstance.viewMode = 'list';
+    fix.detectChanges();
+    const tabla = fix.nativeElement.querySelector('table');
+    expect(tabla.querySelector('.btn-calificar-tabla')).not.toBeNull();
+    expect(tabla.querySelector('button[matTooltip*="Descartar"]')).not.toBeNull();
+  });
+
+  it('Un_lead_calificado_sin_requerimiento_ofrece_Convertir_en_las_tres_superficies_y_no_Calificar', () => {
+    const leadCalificado: Lead = {
+      id: 8, nombreContacto: 'Calificado Contacto', empresa: 'Empresa Calificada', telefono: '5550001122', email: 'c@c.com',
+      fuenteLead: 'Web', necesidadInicial: 'Prueba', sucursalQueRecibe: 'Pachuca', estatus: 'Oportunidad',
+      idUsuarioAsignado: 3, fechaRegistro: '2026-11-10T10:00:00', requerimientoFolio: undefined
+    };
+    const fix = montarLeadsComponent([leadCalificado]);
+    const kanbanCols = fix.nativeElement.querySelectorAll('.kanban-col');
+    const kanbanColOportunidad = kanbanCols[1]; // Columna 2: Oportunidad
+    expect(kanbanColOportunidad.textContent).toContain('Convertir en Requerimiento');
+    expect(kanbanColOportunidad.querySelector('.btn-calificar-lead')).toBeNull();
+
+    fix.componentInstance.viewMode = 'list';
+    fix.detectChanges();
+    const tabla = fix.nativeElement.querySelector('table');
+    expect(tabla.querySelector('button[matTooltip*="Convertir"]')).not.toBeNull();
+    expect(tabla.querySelector('.btn-calificar-tabla')).toBeNull();
+  });
+
+  it('Un_lead_calificado_con_requerimiento_muestra_el_enlace_y_no_Convertir', () => {
+    const leadConReq: Lead = {
+      id: 9, nombreContacto: 'Con Req', empresa: 'Empresa Req', telefono: '5550001122', email: 'r@r.com',
+      fuenteLead: 'Web', necesidadInicial: 'Prueba', sucursalQueRecibe: 'Pachuca', estatus: 'Oportunidad',
+      idUsuarioAsignado: 3, fechaRegistro: '2026-11-10T10:00:00', requerimientoFolio: 'REQ-2026-0005'
+    };
+    const fix = montarLeadsComponent([leadConReq]);
+    const kanbanCols = fix.nativeElement.querySelectorAll('.kanban-col');
+    const kanbanColOportunidad = kanbanCols[1];
+    expect(kanbanColOportunidad.textContent).toContain('Requerimiento: REQ-2026-0005');
+    expect(kanbanColOportunidad.textContent).not.toContain('Convertir en Requerimiento');
+
+    fix.componentInstance.viewMode = 'list';
+    fix.detectChanges();
+    const tabla = fix.nativeElement.querySelector('table');
+    expect(tabla.querySelector('mat-icon[svgIcon="heroicons_outline:arrow-top-right-on-square"]')).not.toBeNull();
+    expect(tabla.querySelector('button[matTooltip*="Convertir en Requerimiento"]')).toBeNull();
   });
 });

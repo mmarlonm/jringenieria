@@ -304,10 +304,6 @@
                   <span>Calificar ISO</span>
                 </button>
               </div>
-              <button mat-flat-button color="primary" class="w-full text-xs py-1 bg-blue-600 hover:bg-blue-700 text-white font-medium" (click)="convertirARequerimiento(lead)" matTooltip="Crear Requerimiento formal y pasar directo">
-                <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1"></mat-icon>
-                <span>Convertir en Requerimiento</span>
-              </button>
               <div class="flex items-center justify-end gap-1">
                 <button mat-button class="text-[11px] text-slate-500 py-0.5 px-2 h-7" (click)="openVerDialog(lead)">
                   <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-3.5 mr-1"></mat-icon>
@@ -575,9 +571,6 @@
                 <ng-container *ngIf="lead.estatus === 'Nuevo'">
                   <button mat-icon-button class="btn-calificar-tabla" color="accent" matTooltip="Calificar e ISO 7.4 y pasar a Calificados" (click)="openConvertDialog(lead)">
                     <mat-icon svgIcon="heroicons_outline:check-badge" class="text-green-500"></mat-icon>
-                  </button>
-                  <button mat-icon-button color="primary" matTooltip="Convertir en Requerimiento y pasar directo" (click)="convertirARequerimiento(lead)">
-                    <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="text-blue-600"></mat-icon>
                   </button>
                   <button mat-icon-button color="warn" matTooltip="Descartar Lead (si no está a nuestro alcance)" (click)="openDiscardDialog(lead)">
                     <mat-icon svgIcon="heroicons_outline:x-circle" class="text-red-500"></mat-icon>
