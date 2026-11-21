@@ -79,6 +79,10 @@ export class RequerimientoVerDialogComponent implements OnInit {
     return this.requerimiento.estatus === 'Aprobado para cotización' || !!this.requerimiento.seguimientoProyectoId;
   }
 
+  get esNoViable(): boolean {
+    return this.requerimiento?.estatus === 'No Viable';
+  }
+
   get tieneFaltantes(): boolean {
     if (!this.requerimiento) return false;
     const r = this.requerimiento;

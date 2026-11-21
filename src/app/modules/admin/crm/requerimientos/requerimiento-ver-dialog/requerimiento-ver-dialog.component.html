@@ -57,9 +57,9 @@
 
     <!-- Contenido del Requerimiento -->
     <div *ngIf="!cargando && requerimiento" class="space-y-6">
-      <!-- Vínculo con Ingeniería si está aprobado -->
+      <!-- Vínculo con Ingeniería si está aprobado con caso -->
       <div *ngIf="requerimiento.seguimientoProyectoId"
-           class="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 flex items-center justify-between">
+           class="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 flex items-center justify-between banner-aprobado-ingenieria">
         <div class="flex items-center gap-3">
           <mat-icon svgIcon="heroicons_outline:check-circle" class="icon-size-5 text-purple-600 dark:text-purple-400"></mat-icon>
           <div>
@@ -67,7 +67,7 @@
               Aprobado para Cotización en Ingeniería
             </div>
             <div class="text-sm text-purple-700 dark:text-purple-300">
-              Folio de Solicitud de cliente:
+              Caso #{{ requerimiento.seguimientoProyectoId }} en Ingeniería
               <a href="#/engineering/solicitud-cliente"
                  class="font-mono font-bold underline hover:text-purple-900 ml-1">
                 #{{ requerimiento.seguimientoProyectoId }}
@@ -78,6 +78,26 @@
         <a href="#/engineering/solicitud-cliente"
            mat-stroked-button color="primary">
           Ver en Solicitud de cliente
+        </a>
+      </div>
+
+      <!-- Vínculo si está aprobado directo para cotización -->
+      <div *ngIf="estaAprobado && !requerimiento.seguimientoProyectoId"
+           class="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 flex items-center justify-between banner-aprobado-cotizacion">
+        <div class="flex items-center gap-3">
+          <mat-icon svgIcon="heroicons_outline:check-circle" class="icon-size-5 text-purple-600 dark:text-purple-400"></mat-icon>
+          <div>
+            <div class="text-xs font-semibold text-purple-900 dark:text-purple-200 uppercase tracking-wider">
+              Aprobado para Cotización
+            </div>
+            <div class="text-sm text-purple-700 dark:text-purple-300">
+              Pasó directo a cotización (no requiere caso en Ingeniería).
+            </div>
+          </div>
+        </div>
+        <a href="#/dashboards/quote-products"
+           mat-stroked-button color="primary">
+          Ir a Cotizaciones
         </a>
       </div>
 
@@ -153,7 +173,7 @@
       </div>
 
       <!-- Clasificación SGC e Información Faltante (si calificado) -->
-      <div *ngIf="requerimiento.estatus !== 'Pendiente'" class="bg-gray-50/70 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800 space-y-4">
+      <div *ngIf="requerimiento.estatus !== 'Pendiente' || requerimiento.cantidades || requerimiento.ubicacionExacta || requerimiento.marcaModelo" class="bg-gray-50/70 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800 space-y-4">
         <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
           <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4"></mat-icon>
           Clasificación SGC y Revisión
@@ -170,6 +190,21 @@
           <div>
             <span class="block text-xs text-gray-400">Ruta de atención</span>
             <span class="font-medium text-gray-800 dark:text-gray-200">{{ requerimiento.rutaAtencion || '-' }}</span>
+          </div>
+        </div>
+        <div *ngIf="requerimiento.cantidades || requerimiento.ubicacionExacta || requerimiento.marcaModelo"
+             class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div *ngIf="requerimiento.cantidades">
+            <span class="block text-xs text-gray-400">Cantidades</span>
+            <span class="font-medium text-gray-800 dark:text-gray-200 campo-cantidades">{{ requerimiento.cantidades }}</span>
+          </div>
+          <div *ngIf="requerimiento.ubicacionExacta">
+            <span class="block text-xs text-gray-400">Ubicación exacta</span>
+            <span class="font-medium text-gray-800 dark:text-gray-200 campo-ubicacion">{{ requerimiento.ubicacionExacta }}</span>
+          </div>
+          <div *ngIf="requerimiento.marcaModelo">
+            <span class="block text-xs text-gray-400">Marca o modelo</span>
+            <span class="font-medium text-gray-800 dark:text-gray-200 campo-marca-modelo">{{ requerimiento.marcaModelo }}</span>
           </div>
         </div>
         <div *ngIf="requerimiento.observacionesRiesgo">
@@ -249,7 +284,7 @@
       Cerrar
     </button>
     <div class="flex items-center gap-2">
-      <button *ngIf="puedeCalificar && !estaAprobado"
+      <button *ngIf="puedeCalificar && !estaAprobado && !esNoViable"
               mat-flat-button color="primary"
               data-testid="btn-calificar"
               (click)="calificar()">

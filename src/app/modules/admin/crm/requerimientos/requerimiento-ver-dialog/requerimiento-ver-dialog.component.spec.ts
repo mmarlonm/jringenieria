@@ -282,4 +282,55 @@ describe('RequerimientoVerDialogComponent', () => {
     expect(aviso).toHaveBeenCalled();
     expect(String(aviso.calls.mostRecent().args[0])).toContain('No se pudo descargar');
   });
+
+  it('El_ver_muestra_los_tres_datos_y_la_ruta', () => {
+    // Caso 1: Aprobado directo a cotización sin caso
+    const reqDirecto = mockRequerimiento({
+      estatus: 'Aprobado para cotización',
+      seguimientoProyectoId: undefined,
+      cantidades: '100 lámparas LED',
+      ubicacionExacta: 'Nave Industrial 4',
+      marcaModelo: 'Philips Master'
+    });
+    configurar({ id: 10 }, of(reqDirecto));
+
+    let text = fixture.nativeElement.textContent;
+    expect(text).toContain('100 lámparas LED');
+    expect(text).toContain('Nave Industrial 4');
+    expect(text).toContain('Philips Master');
+    expect(text).toContain('Pasó directo a cotización');
+
+    // Caso 2: Con caso en Ingeniería
+    fixture.destroy();
+    TestBed.resetTestingModule();
+    const reqIngenieria = mockRequerimiento({
+      estatus: 'Aprobado para cotización',
+      seguimientoProyectoId: 77
+    });
+    configurar({ id: 10 }, of(reqIngenieria));
+
+    text = fixture.nativeElement.textContent;
+    expect(text).toContain('Caso #77 en Ingeniería');
+  });
+
+  it('El_ver_no_ofrece_Calificar_si_esta_aprobado_o_no_viable', () => {
+    // 1. Aprobado para cotización
+    configurar({ id: 10, puedeCalificar: true }, of(mockRequerimiento({ estatus: 'Aprobado para cotización' })));
+    let btnCalificar = fixture.nativeElement.querySelector('[data-testid="btn-calificar"]');
+    expect(btnCalificar).toBeNull();
+
+    // 2. Con seguimientoProyectoId (aprobado con caso)
+    fixture.destroy();
+    TestBed.resetTestingModule();
+    configurar({ id: 10, puedeCalificar: true }, of(mockRequerimiento({ seguimientoProyectoId: 42 })));
+    btnCalificar = fixture.nativeElement.querySelector('[data-testid="btn-calificar"]');
+    expect(btnCalificar).toBeNull();
+
+    // 3. No Viable
+    fixture.destroy();
+    TestBed.resetTestingModule();
+    configurar({ id: 10, puedeCalificar: true }, of(mockRequerimiento({ estatus: 'No Viable' })));
+    btnCalificar = fixture.nativeElement.querySelector('[data-testid="btn-calificar"]');
+    expect(btnCalificar).toBeNull();
+  });
 });

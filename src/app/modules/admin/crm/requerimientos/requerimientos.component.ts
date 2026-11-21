@@ -191,6 +191,12 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     const item = this.requerimientos.find(r => r.id === itemId);
     if (!item || item.estatus === targetEstatus) return;
 
+    if (item.estatus === 'No Viable') {
+      Swal.fire('Atención', 'Un requerimiento no viable ya no avanza.', 'warning');
+      this.loadRequerimientos();
+      return;
+    }
+
     if (item.estatus === 'Aprobado para cotización' || targetEstatus === 'Aprobado para cotización') {
       this.loadRequerimientos();
       return;

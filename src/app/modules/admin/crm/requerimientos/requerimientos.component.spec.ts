@@ -179,5 +179,53 @@ describe('RequerimientosComponent - Aprobados', () => {
     expect(swalSpy).toHaveBeenCalledWith('Error', jasmine.stringMatching('Falta capturar: Cantidades'), 'error');
     expect(reloadSpy).toHaveBeenCalled();
   });
+
+  it('Las_tarjetas_de_aprobados_y_no_viables_solo_tienen_Ver_en_tablero_y_lista', () => {
+    // 1. En Kanban: Columna No Viable
+    const colNoViable = fixture.nativeElement.querySelector('#kanban-no-viable');
+    const tarjetaNoViable = colNoViable.querySelector('[data-id="5"]');
+    expect(tarjetaNoViable).toBeTruthy();
+    const btnsNoViable = tarjetaNoViable.querySelectorAll('button[mat-icon-button]');
+    expect(btnsNoViable.length).toBe(1);
+    expect(btnsNoViable[0].getAttribute('mattooltip')).toBe('Ver requerimiento');
+
+    // 2. En Kanban: Columna Aprobados
+    const colAprobados = fixture.nativeElement.querySelector('#kanban-aprobados');
+    const tarjetaAprobada = colAprobados.querySelector('[data-id="3"]');
+    expect(tarjetaAprobada).toBeTruthy();
+    const btnsAprobada = tarjetaAprobada.querySelectorAll('button[mat-icon-button]');
+    expect(btnsAprobada.length).toBe(1);
+    expect(btnsAprobada[0].getAttribute('mattooltip')).toBe('Ver requerimiento');
+
+    // 3. En Vista Lista
+    component.viewMode = 'list';
+    fixture.detectChanges();
+
+    const filas = Array.from(fixture.nativeElement.querySelectorAll('tr[mat-row]')) as HTMLElement[];
+    const filaAprobado = filas.find(f => f.textContent?.includes('REQ-2026-0003'))!;
+    expect(filaAprobado).toBeTruthy();
+    const btnsFilaAprobado = filaAprobado.querySelectorAll('td[mat-cell]:last-child button');
+    expect(btnsFilaAprobado.length).toBe(1);
+    expect(btnsFilaAprobado[0].getAttribute('mattooltip')).toBe('Ver requerimiento');
+
+    const filaNoViable = filas.find(f => f.textContent?.includes('REQ-2026-0005'))!;
+    expect(filaNoViable).toBeTruthy();
+    const btnsFilaNoViable = filaNoViable.querySelectorAll('td[mat-cell]:last-child button');
+    expect(btnsFilaNoViable.length).toBe(1);
+    expect(btnsFilaNoViable[0].getAttribute('mattooltip')).toBe('Ver requerimiento');
+  });
+
+  it('No_se_arrastra_desde_No_Viable', () => {
+    const swalSpy = spyOn(Swal, 'fire');
+    const reloadSpy = spyOn(component, 'loadRequerimientos');
+    const reqService = TestBed.inject(RequerimientosService);
+    const spyCalificar = spyOn(reqService, 'calificarRequerimiento');
+
+    (component as any).onCardMoved(5, 'Calificado Comercial', {});
+
+    expect(swalSpy).toHaveBeenCalledWith('Atención', 'Un requerimiento no viable ya no avanza.', 'warning');
+    expect(reloadSpy).toHaveBeenCalled();
+    expect(spyCalificar).not.toHaveBeenCalled();
+  });
 });
 
