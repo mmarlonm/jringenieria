@@ -306,7 +306,7 @@ export class LeadsComponent implements OnInit {
   convertirARequerimiento(lead: Lead): void {
     Swal.fire({
       title: '¿Convertir en Requerimiento?',
-      text: `Se creará el Requerimiento formal para "${lead.empresa || lead.nombreContacto}" y se calificará como Oportunidad para medir conversiones.`,
+      text: 'Se creará el Requerimiento formal con los datos del lead calificado.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, convertir',

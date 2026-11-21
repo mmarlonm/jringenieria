@@ -365,9 +365,6 @@
                             <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
                                 <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4.5 text-gray-500"></mat-icon>
                             </button>
-                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver Calificacion" (click)="openCalificarDialog(r)">
-                                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-red-500"></mat-icon>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -410,9 +407,6 @@
                         <div class="flex items-center space-x-1">
                             <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
                                 <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4.5 text-gray-500"></mat-icon>
-                            </button>
-                            <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver Calificación / Aprobación" (click)="openCalificarDialog(r)">
-                                <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4.5 text-purple-600"></mat-icon>
                             </button>
                         </div>
                     </div>
@@ -509,10 +503,10 @@
                         <button mat-icon-button matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-5 text-gray-500"></mat-icon>
                         </button>
-                        <button mat-icon-button color="primary" matTooltip="Calificar / Checklist SGC" (click)="openCalificarDialog(r)">
+                        <button *ngIf="r.estatus !== 'Aprobado para cotización' && r.estatus !== 'No Viable'" mat-icon-button color="primary" matTooltip="Calificar / Checklist SGC" (click)="openCalificarDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-5"></mat-icon>
                         </button>
-                        <button *ngIf="r.estatus !== 'Aprobado para cotización' && !r.seguimientoProyectoId" mat-icon-button (click)="openEditDialog(r)">
+                        <button *ngIf="r.estatus !== 'Aprobado para cotización' && r.estatus !== 'No Viable' && !r.seguimientoProyectoId" mat-icon-button (click)="openEditDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:pencil" class="icon-size-5"></mat-icon>
                         </button>
                     </div>

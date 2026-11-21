@@ -5,6 +5,7 @@ import {
     horizontalNavigation
 } from './data';
 import { FuseNavigationItem } from '@fuse/components/navigation';
+import { filtrarMenuPorVistas } from './navigation-filter';
 
 describe('Navigation Data (mock-api)', () => {
     const variantes: { nombre: string; nav: FuseNavigationItem[] }[] = [
@@ -106,5 +107,36 @@ describe('Navigation Data (mock-api)', () => {
                 expect(serv?.link).toBe('/dashboards/reporte-encuestas/servicios');
             });
         });
+    });
+
+    it('Cotizaciones_va_justo_debajo_de_Requerimientos_en_Comercializacion', () => {
+        const comercializacion = defaultNavigation.find((i) => i.id === 'comercializacion');
+        expect(comercializacion).toBeDefined('Debe existir comercializacion en defaultNavigation');
+        const hijos = comercializacion?.children ?? [];
+
+        const idxReq = hijos.findIndex((h) => h.id === 'comercializacion.requerimientos');
+        const idxCot = hijos.findIndex((h) => h.id === 'dashboards.quote-products');
+
+        expect(idxReq).toBeGreaterThanOrEqual(0, 'Debe existir comercializacion.requerimientos');
+        expect(idxCot).toBe(idxReq + 1, 'Cotizaciones debe estar justo debajo de Requerimientos');
+
+        const itemCot = hijos[idxCot];
+        expect(itemCot.id).toBe('dashboards.quote-products');
+        expect(itemCot.title).toBe('Cotizaciones');
+        expect(itemCot.link).toBe('/dashboards/quote-products');
+
+        // Ya no está en comercializacion.gestion
+        const gestion = hijos.find((h) => h.id === 'comercializacion.gestion');
+        expect(gestion).toBeDefined();
+        const enGestion = gestion?.children?.find((h) => h.id === 'dashboards.quote-products');
+        expect(enGestion).toBeUndefined('No debe estar en comercializacion.gestion');
+    });
+
+    it('Quien_tiene_la_vista_de_cotizaciones_la_sigue_viendo', () => {
+        const menu = filtrarMenuPorVistas(defaultNavigation, ['dashboards.quote-products']);
+        const ids = (items: FuseNavigationItem[] | undefined): string[] =>
+            (items ?? []).flatMap((i) => [i.id as string, ...ids(i.children)]);
+
+        expect(ids(menu)).toContain('dashboards.quote-products');
     });
 });

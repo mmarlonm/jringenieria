@@ -191,6 +191,12 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
     const item = this.requerimientos.find(r => r.id === itemId);
     if (!item || item.estatus === targetEstatus) return;
 
+    if (item.estatus === 'No Viable') {
+      Swal.fire('Atención', 'Un requerimiento no viable ya no avanza.', 'warning');
+      this.loadRequerimientos();
+      return;
+    }
+
     if (item.estatus === 'Aprobado para cotización' || targetEstatus === 'Aprobado para cotización') {
       this.loadRequerimientos();
       return;
@@ -320,7 +326,10 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
       faltaMarcaModelo: item.faltaMarcaModelo,
       faltaVisita: item.faltaVisita,
       faltaOtros: item.faltaOtros,
-      faltaOtrosDescripcion: item.faltaOtrosDescripcion || ''
+      faltaOtrosDescripcion: item.faltaOtrosDescripcion || '',
+      cantidades: item.cantidades ?? null,
+      ubicacionExacta: item.ubicacionExacta ?? null,
+      marcaModelo: item.marcaModelo ?? null
     };
 
     this.reqService.calificarRequerimiento(item.id, dto).subscribe({
@@ -332,7 +341,8 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
       },
       error: (err) => {
         this.loadRequerimientos();
-        Swal.fire('Error', 'No se pudo actualizar el estatus: ' + err.message, 'error');
+        const msg = err?.error?.mensaje || err.message;
+        Swal.fire('Error', 'No se pudo actualizar el estatus: ' + msg, 'error');
       }
     });
   }
@@ -380,6 +390,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
           width: '880px',
           maxWidth: '95vw',
           autoFocus: false,
+          disableClose: true,
           data: {
             requerimiento: reqFull,
             currentUser: { id: this.reqService.usuarioActualId() },

@@ -98,6 +98,10 @@
           <span class="block text-xs text-gray-400">Fuente</span>
           <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.fuenteLead || '-' }}</span>
         </div>
+        <div *ngIf="lead.campana" class="campo-campana">
+          <span class="block text-xs text-gray-400">Campaña</span>
+          <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.campana }}</span>
+        </div>
         <div>
           <span class="block text-xs text-gray-400">Sucursal que recibe</span>
           <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.sucursalQueRecibe || '-' }}</span>
@@ -235,7 +239,7 @@
           <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-4 mr-1.5 text-emerald-600"></mat-icon>
           <span>Calificar ISO</span>
         </button>
-        <button mat-flat-button color="primary" (click)="convertirARequerimiento()" [disabled]="procesandoAccion" class="btn-convertir-req bg-blue-600 hover:bg-blue-700 text-white">
+        <button *ngIf="lead.estatus === 'Oportunidad'" mat-flat-button color="primary" (click)="convertirARequerimiento()" [disabled]="procesandoAccion" class="btn-convertir-req bg-blue-600 hover:bg-blue-700 text-white">
           <mat-icon svgIcon="heroicons_outline:arrow-right-circle" class="icon-size-4 mr-1.5"></mat-icon>
           <span>Convertir en Requerimiento</span>
         </button>

@@ -37,6 +37,10 @@ export interface Requerimiento {
   faltaOtros: boolean;
   faltaOtrosDescripcion?: string;
 
+  cantidades?: string | null;
+  ubicacionExacta?: string | null;
+  marcaModelo?: string | null;
+
   usuarioAsignadoId?: number;
   usuarioAsignadoNombre?: string;
   usuarioCreadorId?: number;
@@ -137,9 +141,10 @@ export interface AprobarRequerimientoDatos {
 }
 
 export interface AprobarRequerimientoResultadoDto {
-  idSeguimiento: number;
+  idSeguimiento?: number | null;
   folio: string;
   estatus: string;
+  destino?: 'cotizacion' | 'ingenieria';
 }
 
 export interface CalificarRequerimientoDto {
@@ -164,6 +169,40 @@ export interface CalificarRequerimientoDto {
   faltaVisita: boolean;
   faltaOtros: boolean;
   faltaOtrosDescripcion?: string;
+
+  cantidades?: string | null;
+  ubicacionExacta?: string | null;
+  marcaModelo?: string | null;
+}
+
+export interface GuardarBorradorDto {
+  naturaleza?: string | null;
+  rutaAtencion?: string | null;
+  viabilidad?: string | null;
+  observacionesRiesgo?: string | null;
+  motivoDescarte?: string | null;
+
+  faltaPlano?: boolean;
+  faltaFotografia?: boolean;
+  faltaCantidad?: boolean;
+  faltaUbicacion?: boolean;
+  faltaDatosElectricos?: boolean;
+  faltaCapacidad?: boolean;
+  faltaFechaEjecucion?: boolean;
+  faltaCondicionesSitio?: boolean;
+  faltaNormativa?: boolean;
+  faltaEvidenciaFalla?: boolean;
+  faltaMarcaModelo?: boolean;
+  faltaVisita?: boolean;
+  faltaOtros?: boolean;
+  faltaOtrosDescripcion?: string | null;
+
+  cantidades?: string | null;
+  ubicacionExacta?: string | null;
+  marcaModelo?: string | null;
+
+  tipoProyecto?: string | null;
+  titulo?: string | null;
 }
 
 @Injectable({
@@ -207,6 +246,10 @@ export class RequerimientosService {
 
   calificarRequerimiento(id: number, dto: CalificarRequerimientoDto): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/calificar`, dto);
+  }
+
+  guardarBorrador(id: number, dto: GuardarBorradorDto): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/borrador`, dto);
   }
 
   /** Tipo de proyecto y titulo se capturan al aprobar (ya no en el requerimiento); si no se mandan, el API usa los guardados. */
