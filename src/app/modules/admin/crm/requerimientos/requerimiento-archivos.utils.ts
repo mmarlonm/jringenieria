@@ -12,28 +12,32 @@ export interface ItemChecklist {
     etiqueta: string;
     /** Categoría con la que se guardan sus documentos; el servidor la usa como nombre de carpeta (solo letras, números, - y _). */
     categoria: string;
+    campoTexto?: 'cantidades' | 'ubicacionExacta' | 'marcaModelo';
+    etiquetaTexto?: string;
 }
 
-const OPCIONES: [string, string][] = [
+const OPCIONES: [string, string, ('cantidades' | 'ubicacionExacta' | 'marcaModelo')?, string?][] = [
     ['faltaPlano', 'Plano eléctrico'],
     ['faltaFotografia', 'Fotografías del sitio'],
-    ['faltaCantidad', 'Cantidades definidas'],
-    ['faltaUbicacion', 'Ubicación exacta'],
+    ['faltaCantidad', 'Cantidades definidas', 'cantidades', 'Cantidades'],
+    ['faltaUbicacion', 'Ubicación exacta', 'ubicacionExacta', 'Ubicación exacta'],
     ['faltaDatosElectricos', 'Datos eléctricos'],
     ['faltaCapacidad', 'Capacidad / carga'],
     ['faltaFechaEjecucion', 'Fecha de ejecución'],
     ['faltaCondicionesSitio', 'Condiciones de sitio'],
     ['faltaNormativa', 'Requisitos normativos'],
     ['faltaEvidenciaFalla', 'Evidencia de fallas'],
-    ['faltaMarcaModelo', 'Marca o modelo específico'],
+    ['faltaMarcaModelo', 'Marca o modelo específico', 'marcaModelo', 'Marca o modelo'],
     ['faltaVisita', 'Visita / levantamiento previo'],
     ['faltaOtros', 'Otros elementos'],
 ];
 
-export const CHECKLIST: ItemChecklist[] = OPCIONES.map(([control, etiqueta]) => ({
+export const CHECKLIST: ItemChecklist[] = OPCIONES.map(([control, etiqueta, campoTexto, etiquetaTexto]) => ({
     control,
     etiqueta,
     categoria: `Checklist-${control}`,
+    campoTexto,
+    etiquetaTexto
 }));
 
 /** Nombre legible de la categoría de un archivo. */

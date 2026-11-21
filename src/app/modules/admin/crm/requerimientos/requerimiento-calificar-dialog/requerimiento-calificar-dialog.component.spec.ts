@@ -376,4 +376,119 @@ describe('RequerimientoCalificarDialogComponent', () => {
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith(false);
   });
+
+  it('Los_tres_datos_se_escriben_en_la_fila_de_su_casilla', () => {
+    abrir(true, {
+      cantidades: '10 piezas',
+      ubicacionExacta: 'Nave 1',
+      marcaModelo: 'Siemens S7'
+    });
+    pestana('Información faltante').click();
+    fixture.detectChanges();
+
+    const inputCantidades = fixture.nativeElement.querySelector('input[formControlName="cantidades"]');
+    const inputUbicacion = fixture.nativeElement.querySelector('input[formControlName="ubicacionExacta"]');
+    const inputMarca = fixture.nativeElement.querySelector('input[formControlName="marcaModelo"]');
+
+    expect(inputCantidades).not.toBeNull();
+    expect(inputUbicacion).not.toBeNull();
+    expect(inputMarca).not.toBeNull();
+    expect(inputCantidades.value).toBe('10 piezas');
+    expect(inputUbicacion.value).toBe('Nave 1');
+    expect(inputMarca.value).toBe('Siemens S7');
+  });
+
+  it('Marcar_falta_apaga_el_texto_y_conserva_lo_escrito', () => {
+    abrir(true, {
+      cantidades: '10 piezas',
+      faltaCantidad: false
+    });
+    pestana('Información faltante').click();
+    fixture.detectChanges();
+
+    const form = fixture.componentInstance.calificarForm;
+    const inputCant = fixture.nativeElement.querySelector('input[formControlName="cantidades"]');
+    expect(form.get('cantidades')?.disabled).toBeFalse();
+
+    form.get('faltaCantidad')?.setValue(true);
+    fixture.detectChanges();
+
+    expect(form.get('cantidades')?.disabled).toBeTrue();
+    expect(form.get('cantidades')?.value).toBe('10 piezas');
+    expect(inputCant.disabled).toBeTrue();
+
+    form.get('faltaCantidad')?.setValue(false);
+    fixture.detectChanges();
+
+    expect(form.get('cantidades')?.disabled).toBeFalse();
+    expect(form.get('cantidades')?.value).toBe('10 piezas');
+  });
+
+  it('Calificado_exige_el_texto_de_lo_que_no_esta_marcado_como_faltante', () => {
+    abrir(true, {
+      estatus: 'Calificado Comercial',
+      faltaCantidad: false, cantidades: '',
+      faltaUbicacion: false, ubicacionExacta: 'Lugar X',
+      faltaMarcaModelo: false, marcaModelo: 'Marca Y'
+    });
+    pestana('Información faltante').click();
+    fixture.detectChanges();
+
+    const form = fixture.componentInstance.calificarForm;
+    expect(form.invalid).toBeTrue();
+
+    const btnGuardar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(btnGuardar.disabled).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Escríbelo o márcalo como faltante');
+
+    form.get('cantidades')?.setValue('5 tableros');
+    fixture.detectChanges();
+    expect(form.valid).toBeTrue();
+    expect(btnGuardar.disabled).toBeFalse();
+  });
+
+  it('Pendiente_no_exige_los_textos', () => {
+    abrir(true, {
+      estatus: 'Pendiente',
+      faltaCantidad: false, cantidades: '',
+      faltaUbicacion: false, ubicacionExacta: '',
+      faltaMarcaModelo: false, marcaModelo: ''
+    });
+    fixture.detectChanges();
+
+    const form = fixture.componentInstance.calificarForm;
+    expect(form.valid).toBeTrue();
+    const btnGuardar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(btnGuardar.disabled).toBeFalse();
+  });
+
+  it('Guardar_calificacion_manda_los_tres_textos_recortados', () => {
+    let dtoEnviado: any = null;
+    abrir(true, {
+      estatus: 'Calificado Comercial',
+      faltaCantidad: false,
+      faltaUbicacion: false,
+      faltaMarcaModelo: false
+    }, {
+      calificarRequerimiento: (id: number, dto: any) => {
+        dtoEnviado = dto;
+        return of(null);
+      }
+    });
+
+    const form = fixture.componentInstance.calificarForm;
+    form.patchValue({
+      cantidades: '   10 piezas   ',
+      ubicacionExacta: '   Nave 2   ',
+      marcaModelo: '   Modelo Z   '
+    });
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSubmit();
+
+    expect(dtoEnviado).not.toBeNull();
+    expect(dtoEnviado.cantidades).toBe('10 piezas');
+    expect(dtoEnviado.ubicacionExacta).toBe('Nave 2');
+    expect(dtoEnviado.marcaModelo).toBe('Modelo Z');
+  });
 });

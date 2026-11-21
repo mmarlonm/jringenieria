@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import Swal from 'sweetalert2';
 import { RequerimientosComponent } from './requerimientos.component';
 import { Requerimiento, RequerimientosService } from './requerimientos.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
@@ -67,7 +68,8 @@ describe('RequerimientosComponent - Aprobados', () => {
               distribucionPorTipo: []
             }),
             usuarioActualId: () => 18,
-            puedeCalificar: () => true
+            puedeCalificar: () => true,
+            calificarRequerimiento: () => of({})
           }
         },
         {
@@ -139,6 +141,43 @@ describe('RequerimientosComponent - Aprobados', () => {
     fixture.detectChanges();
 
     expect(ojosDe(fixture.nativeElement).length).toBe(mockRequerimientos.length);
+  });
+
+  it('El_arrastre_manda_tambien_los_tres_textos', () => {
+    const reqConTextos: Requerimiento = {
+      ...mockRequerimientos[0],
+      cantidades: '10 unidades',
+      ubicacionExacta: 'Nave Central',
+      marcaModelo: 'ABB'
+    };
+    component.requerimientos = [reqConTextos];
+    const reqService = TestBed.inject(RequerimientosService);
+    let dtoEnviado: any = null;
+    spyOn(reqService, 'calificarRequerimiento').and.callFake((id, dto) => {
+      dtoEnviado = dto;
+      return of({} as any);
+    });
+
+    (component as any).onCardMoved(1, 'Calificado Comercial', {});
+
+    expect(dtoEnviado).not.toBeNull();
+    expect(dtoEnviado.cantidades).toBe('10 unidades');
+    expect(dtoEnviado.ubicacionExacta).toBe('Nave Central');
+    expect(dtoEnviado.marcaModelo).toBe('ABB');
+  });
+
+  it('Un_rechazo_del_API_al_arrastrar_muestra_su_mensaje_y_recarga', () => {
+    const swalSpy = spyOn(Swal, 'fire');
+    const reqService = TestBed.inject(RequerimientosService);
+    spyOn(reqService, 'calificarRequerimiento').and.returnValue(
+      throwError(() => ({ error: { mensaje: 'Falta capturar: Cantidades' } }))
+    );
+    const reloadSpy = spyOn(component, 'loadRequerimientos');
+
+    (component as any).onCardMoved(1, 'Calificado Comercial', {});
+
+    expect(swalSpy).toHaveBeenCalledWith('Error', jasmine.stringMatching('Falta capturar: Cantidades'), 'error');
+    expect(reloadSpy).toHaveBeenCalled();
   });
 });
 

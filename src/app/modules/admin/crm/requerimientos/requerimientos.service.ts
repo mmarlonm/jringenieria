@@ -37,6 +37,10 @@ export interface Requerimiento {
   faltaOtros: boolean;
   faltaOtrosDescripcion?: string;
 
+  cantidades?: string | null;
+  ubicacionExacta?: string | null;
+  marcaModelo?: string | null;
+
   usuarioAsignadoId?: number;
   usuarioAsignadoNombre?: string;
   usuarioCreadorId?: number;
@@ -137,9 +141,10 @@ export interface AprobarRequerimientoDatos {
 }
 
 export interface AprobarRequerimientoResultadoDto {
-  idSeguimiento: number;
+  idSeguimiento?: number | null;
   folio: string;
   estatus: string;
+  destino?: 'cotizacion' | 'ingenieria';
 }
 
 export interface CalificarRequerimientoDto {
@@ -164,6 +169,10 @@ export interface CalificarRequerimientoDto {
   faltaVisita: boolean;
   faltaOtros: boolean;
   faltaOtrosDescripcion?: string;
+
+  cantidades?: string | null;
+  ubicacionExacta?: string | null;
+  marcaModelo?: string | null;
 }
 
 @Injectable({

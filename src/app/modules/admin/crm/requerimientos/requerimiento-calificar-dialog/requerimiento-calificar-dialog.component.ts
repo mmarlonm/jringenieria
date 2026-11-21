@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +19,27 @@ import {
 import Swal from 'sweetalert2';
 
 type Pestana = 'clasificacion' | 'checklist' | 'seguimiento' | 'archivos' | 'aprobacion';
+
+export function validarTextosCalificacion(group: AbstractControl): ValidationErrors | null {
+  const estatus = group.get('estatus')?.value;
+  const esCalificado = estatus === 'Calificado Comercial' || estatus === 'Calificado Técnico';
+  if (!esCalificado) return null;
+
+  const raw = (group as FormGroup).getRawValue ? (group as FormGroup).getRawValue() : group.value;
+  const faltaCant = raw.faltaCantidad;
+  const cant = raw.cantidades;
+  const faltaUbic = raw.faltaUbicacion;
+  const ubic = raw.ubicacionExacta;
+  const faltaMarca = raw.faltaMarcaModelo;
+  const marca = raw.marcaModelo;
+
+  const faltantes: string[] = [];
+  if (!faltaCant && !(cant && String(cant).trim())) faltantes.push('cantidades');
+  if (!faltaUbic && !(ubic && String(ubic).trim())) faltantes.push('ubicacionExacta');
+  if (!faltaMarca && !(marca && String(marca).trim())) faltantes.push('marcaModelo');
+
+  return faltantes.length > 0 ? { textosCalificacionRequeridos: true, camposFaltantes: faltantes } : null;
+}
 
 @Component({
   selector: 'app-requerimiento-calificar-dialog',
@@ -123,10 +144,34 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       faltaMarcaModelo: [this.requerimiento.faltaMarcaModelo || false],
       faltaVisita: [this.requerimiento.faltaVisita || false],
       faltaOtros: [this.requerimiento.faltaOtros || false],
-      faltaOtrosDescripcion: [this.requerimiento.faltaOtrosDescripcion || '']
-    });
+      faltaOtrosDescripcion: [this.requerimiento.faltaOtrosDescripcion || ''],
+
+      // Tres campos de texto de calificación
+      cantidades: [{ value: this.requerimiento.cantidades || '', disabled: !this.puedeCalificar || !!this.requerimiento.faltaCantidad }, [Validators.maxLength(500)]],
+      ubicacionExacta: [{ value: this.requerimiento.ubicacionExacta || '', disabled: !this.puedeCalificar || !!this.requerimiento.faltaUbicacion }, [Validators.maxLength(500)]],
+      marcaModelo: [{ value: this.requerimiento.marcaModelo || '', disabled: !this.puedeCalificar || !!this.requerimiento.faltaMarcaModelo }, [Validators.maxLength(200)]]
+    }, { validators: [validarTextosCalificacion] });
 
     if (!this.puedeCalificar) this.calificarForm.disable();
+
+    this.calificarForm.get('faltaCantidad')?.valueChanges.subscribe(falta => {
+      const c = this.calificarForm.get('cantidades');
+      if (falta) c?.disable({ emitEvent: false });
+      else if (this.puedeCalificar) c?.enable({ emitEvent: false });
+      this.calificarForm.updateValueAndValidity();
+    });
+    this.calificarForm.get('faltaUbicacion')?.valueChanges.subscribe(falta => {
+      const c = this.calificarForm.get('ubicacionExacta');
+      if (falta) c?.disable({ emitEvent: false });
+      else if (this.puedeCalificar) c?.enable({ emitEvent: false });
+      this.calificarForm.updateValueAndValidity();
+    });
+    this.calificarForm.get('faltaMarcaModelo')?.valueChanges.subscribe(falta => {
+      const c = this.calificarForm.get('marcaModelo');
+      if (falta) c?.disable({ emitEvent: false });
+      else if (this.puedeCalificar) c?.enable({ emitEvent: false });
+      this.calificarForm.updateValueAndValidity();
+    });
   }
 
   ngOnInit(): void {
@@ -294,13 +339,26 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     });
   }
 
+  // ------------------------------------------------------------------ validación de textos
+
+  actualizarValidacionTextos(): void {
+    this.calificarForm.updateValueAndValidity();
+  }
+
   // ------------------------------------------------------------------ guardar
 
   onSubmit(): void {
     if (!this.puedeCalificar || this.calificarForm.invalid || this.guardando) return;
 
     this.guardando = true;
-    this.reqService.calificarRequerimiento(this.requerimiento.id, this.calificarForm.value).subscribe({
+    const raw = this.calificarForm.getRawValue();
+    const dto = {
+      ...raw,
+      cantidades: (raw.cantidades ?? '').trim(),
+      ubicacionExacta: (raw.ubicacionExacta ?? '').trim(),
+      marcaModelo: (raw.marcaModelo ?? '').trim()
+    };
+    this.reqService.calificarRequerimiento(this.requerimiento.id, dto).subscribe({
       next: () => this.dialogRef.close(true),
       error: (err) => {
         this.guardando = false;

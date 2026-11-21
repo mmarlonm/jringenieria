@@ -320,7 +320,10 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
       faltaMarcaModelo: item.faltaMarcaModelo,
       faltaVisita: item.faltaVisita,
       faltaOtros: item.faltaOtros,
-      faltaOtrosDescripcion: item.faltaOtrosDescripcion || ''
+      faltaOtrosDescripcion: item.faltaOtrosDescripcion || '',
+      cantidades: item.cantidades ?? null,
+      ubicacionExacta: item.ubicacionExacta ?? null,
+      marcaModelo: item.marcaModelo ?? null
     };
 
     this.reqService.calificarRequerimiento(item.id, dto).subscribe({
@@ -332,7 +335,8 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
       },
       error: (err) => {
         this.loadRequerimientos();
-        Swal.fire('Error', 'No se pudo actualizar el estatus: ' + err.message, 'error');
+        const msg = err?.error?.mensaje || err.message;
+        Swal.fire('Error', 'No se pudo actualizar el estatus: ' + msg, 'error');
       }
     });
   }
