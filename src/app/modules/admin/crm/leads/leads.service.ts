@@ -23,6 +23,7 @@ export interface Lead {
   usuarioAsignadoNombre?: string;
   requerimientoId?: number;
   requerimientoFolio?: string;
+  campana?: string | null;
   fechaRegistro: string;
   fechaCalificacion?: string;
   fechaActualizacion?: string;
@@ -74,6 +75,7 @@ export interface CreateLeadDto {
   telefono?: string;
   email?: string;
   fuenteLead: string;
+  campana?: string | null;
   necesidadInicial: string;
   sucursalQueRecibe: string;
   idUsuarioAsignado: number;
@@ -86,6 +88,7 @@ export interface UpdateLeadDto {
   telefono?: string;
   email?: string;
   fuenteLead: string;
+  campana?: string | null;
   necesidadInicial: string;
   sucursalQueRecibe: string;
   idUsuarioAsignado: number;

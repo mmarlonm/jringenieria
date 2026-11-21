@@ -63,14 +63,20 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Campaña</mat-label>
+        <input matInput formControlName="campana" maxlength="150" placeholder="Ej. Campaña Facebook, Expo..." autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('campana')?.hasError('maxlength')">Máximo 150 caracteres</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Sucursal que Recibe</mat-label>
         <mat-select formControlName="sucursalQueRecibe">
           <mat-option *ngFor="let s of sucursales" [value]="s">{{ s }}</mat-option>
         </mat-select>
       </mat-form-field>
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Usuario Asignado (Seguimiento)</mat-label>
         <mat-select formControlName="idUsuarioAsignado">
@@ -78,7 +84,9 @@
         </mat-select>
         <mat-error *ngIf="leadForm.get('idUsuarioAsignado')?.hasError('required')">Debe asignar un usuario</mat-error>
       </mat-form-field>
+    </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Fecha de Registro / Contacto</mat-label>
         <input matInput [matDatepicker]="pickerLeadCreateFecha" formControlName="fechaRegistro" required>
@@ -206,14 +214,20 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Campaña</mat-label>
+        <input matInput formControlName="campana" maxlength="150" placeholder="Ej. Campaña Facebook, Expo..." autocomplete="off" />
+        <mat-error *ngIf="leadForm.get('campana')?.hasError('maxlength')">Máximo 150 caracteres</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <mat-form-field appearance="outline" class="w-full">
         <mat-label>Sucursal que Recibe</mat-label>
         <mat-select formControlName="sucursalQueRecibe">
           <mat-option *ngFor="let s of sucursales" [value]="s">{{ s }}</mat-option>
         </mat-select>
       </mat-form-field>
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Usuario Asignado</mat-label>
         <mat-select formControlName="idUsuarioAsignado">
@@ -221,7 +235,9 @@
         </mat-select>
         <mat-error *ngIf="leadForm.get('idUsuarioAsignado')?.hasError('required')">Debe asignar un usuario</mat-error>
       </mat-form-field>
+    </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <mat-form-field appearance="outline" class="w-full">
         <mat-label>Fecha de Registro / Contacto</mat-label>
         <input matInput [matDatepicker]="pickerLeadEditFecha" formControlName="fechaRegistro" required>

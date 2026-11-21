@@ -1,7 +1,10 @@
 import { ChangeDetectorRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatIconTestingModule } from '@angular/material/icon/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { LeadVerDialogComponent } from './lead-ver-dialog/lead-ver-dialog.component';
@@ -83,5 +86,37 @@ describe('LeadsComponent: ver detalle', () => {
     expect(dialog.open).toHaveBeenCalled();
     expect(leadsService.convertLead).toHaveBeenCalledWith(5, dtoMock);
     expect(snackBar.open).toHaveBeenCalledWith('Lead calificado y canalizado exitosamente a Oportunidad', 'OK', jasmine.any(Object));
+  });
+
+  it('La_tarjeta_de_la_bandeja_muestra_la_campana_si_existe', () => {
+    const leadConCampana: Lead = {
+      id: 6, nombreContacto: 'Pedro Gomez', empresa: 'Empresa Alfa', telefono: '5550001122', email: 'p@a.com',
+      fuenteLead: 'Web', necesidadInicial: 'Prueba', sucursalQueRecibe: 'Pachuca', estatus: 'Nuevo',
+      idUsuarioAsignado: 3, fechaRegistro: '2026-11-10T10:00:00', campana: 'Expo Eléctrica'
+    };
+    const leadsMock = jasmine.createSpyObj<LeadsService>('LeadsService', ['getLeads', 'getIndicadoresLeads']);
+    leadsMock.getLeads.and.returnValue(of([leadConCampana]));
+    leadsMock.getIndicadoresLeads.and.returnValue(of({
+      total: 1, nuevos: 1, calificados: 0, descartados: 0, tasaConversion: 0, tiempoPromedioHoras: 0
+    } as any));
+
+    const usersMock = jasmine.createSpyObj('UsersService', ['getUsers', 'getCurrentUser']);
+    usersMock.getUsers.and.returnValue(of([]));
+
+    TestBed.configureTestingModule({
+      imports: [LeadsComponent, NoopAnimationsModule, MatIconTestingModule],
+      providers: [
+        { provide: LeadsService, useValue: leadsMock },
+        { provide: UsersService, useValue: usersMock },
+        { provide: MatDialog, useValue: jasmine.createSpyObj('MatDialog', ['open']) },
+        { provide: MatSnackBar, useValue: jasmine.createSpyObj('MatSnackBar', ['open']) },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) }
+      ]
+    });
+
+    const fixture = TestBed.createComponent(LeadsComponent);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Expo Eléctrica');
   });
 });

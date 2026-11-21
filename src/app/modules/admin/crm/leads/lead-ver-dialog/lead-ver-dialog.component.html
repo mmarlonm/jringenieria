@@ -98,6 +98,10 @@
           <span class="block text-xs text-gray-400">Fuente</span>
           <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.fuenteLead || '-' }}</span>
         </div>
+        <div *ngIf="lead.campana" class="campo-campana">
+          <span class="block text-xs text-gray-400">Campaña</span>
+          <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.campana }}</span>
+        </div>
         <div>
           <span class="block text-xs text-gray-400">Sucursal que recibe</span>
           <span class="font-medium text-gray-800 dark:text-gray-200">{{ lead.sucursalQueRecibe || '-' }}</span>

@@ -262,4 +262,14 @@ describe('LeadVerDialogComponent', () => {
     expect(dialogRef.close).toHaveBeenCalledWith({ accion: 'navegar', folio: 'REQ-2026-0099' });
     expect(routerMock.navigate).toHaveBeenCalledWith(['/crm/requerimientos'], { queryParams: { folio: 'REQ-2026-0099' } });
   });
+
+  it('El_detalle_muestra_la_campana_solo_si_existe', () => {
+    abrir(leadFicticio({ campana: 'Campaña Digital 2026' }));
+    expect(el().textContent).toContain('Campaña Digital 2026');
+
+    TestBed.resetTestingModule();
+    abrir(leadFicticio({ campana: undefined }));
+    expect(el().querySelector('.campo-campana')).toBeNull();
+    expect(el().textContent).not.toContain('Campaña Digital 2026');
+  });
 });

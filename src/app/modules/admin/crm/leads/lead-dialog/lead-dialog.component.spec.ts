@@ -100,4 +100,64 @@ describe('LeadDialogComponent: proceso comercial', () => {
     form.get('email')?.setValue('correo@valido.com');
     expect(form.get('email')?.valid).toBeTrue();
   });
+
+  it('La_lista_de_fuentes_es_exactamente_WhatsApp_Web_Correo_Llamada_Mostrador_Feria_Recomendacion', () => {
+    abrir({ action: 'create', users: [] });
+    expect(fixture.componentInstance.fuentes).toEqual([
+      'WhatsApp', 'Web', 'Correo', 'Llamada', 'Mostrador', 'Feria', 'Recomendación'
+    ]);
+  });
+
+  it('El_formulario_manda_la_campana_recortada_y_null_si_va_vacia', () => {
+    // En create
+    abrir({ action: 'create', users: [] });
+    let dialogRef = TestBed.inject(MatDialogRef);
+    let form = fixture.componentInstance.leadForm;
+    form.patchValue({
+      nombreContacto: 'Juan Perez',
+      empresa: 'Empresa Test',
+      fuenteLead: 'WhatsApp',
+      campana: '  Campaña Verano  ',
+      necesidadInicial: 'Consulta',
+      sucursalQueRecibe: 'Pachuca',
+      idUsuarioAsignado: 1
+    });
+    fixture.componentInstance.onSubmit();
+    expect(dialogRef.close).toHaveBeenCalledWith(jasmine.objectContaining({
+      action: 'create',
+      data: jasmine.objectContaining({ campana: 'Campaña Verano' })
+    }));
+
+    // Campaña vacía en create manda null
+    form.patchValue({ campana: '   ' });
+    fixture.componentInstance.onSubmit();
+    expect(dialogRef.close).toHaveBeenCalledWith(jasmine.objectContaining({
+      action: 'create',
+      data: jasmine.objectContaining({ campana: null })
+    }));
+
+    // En edit
+    TestBed.resetTestingModule();
+    abrir({ action: 'edit', lead: leadFicticio, users: [] });
+    dialogRef = TestBed.inject(MatDialogRef);
+    form = fixture.componentInstance.leadForm;
+    form.patchValue({ campana: '  Campaña Buen Fin  ' });
+    fixture.componentInstance.onSubmit();
+    expect(dialogRef.close).toHaveBeenCalledWith(jasmine.objectContaining({
+      action: 'edit',
+      data: jasmine.objectContaining({ campana: 'Campaña Buen Fin' })
+    }));
+
+    form.patchValue({ campana: '' });
+    fixture.componentInstance.onSubmit();
+    expect(dialogRef.close).toHaveBeenCalledWith(jasmine.objectContaining({
+      action: 'edit',
+      data: jasmine.objectContaining({ campana: null })
+    }));
+  });
+
+  it('Editar_precarga_la_campana', () => {
+    abrir({ action: 'edit', lead: { ...leadFicticio, campana: 'Campaña Precargada' }, users: [] });
+    expect(fixture.componentInstance.leadForm.get('campana')?.value).toBe('Campaña Precargada');
+  });
 });

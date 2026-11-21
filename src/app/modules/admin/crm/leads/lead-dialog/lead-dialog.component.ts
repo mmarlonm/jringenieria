@@ -56,7 +56,7 @@ export class LeadDialogComponent implements OnInit {
   subiendoArchivos: boolean = false;
   cargandoArchivos: boolean = false;
 
-  fuentes = ['WhatsApp', 'Web', 'Correo', 'Llamada', 'Feria', 'Recomendación'];
+  fuentes = ['WhatsApp', 'Web', 'Correo', 'Llamada', 'Mostrador', 'Feria', 'Recomendación'];
   sucursales = ['Pachuca', 'Puebla', 'Querétaro', 'Corporativo'];
 
   // Catálogos ISO 9001 (Sección 7.4)
@@ -95,6 +95,7 @@ export class LeadDialogComponent implements OnInit {
       telefono: [lead?.telefono || '', [Validators.pattern('^[0-9\\-\\+ ]{10,15}$')]],
       email: [lead?.email || '', [Validators.email]],
       fuenteLead: [lead?.fuenteLead || 'WhatsApp', Validators.required],
+      campana: [lead?.campana || '', [Validators.maxLength(150)]],
       necesidadInicial: [lead?.necesidadInicial || '', Validators.required],
       sucursalQueRecibe: [lead?.sucursalQueRecibe || 'Pachuca', Validators.required],
       idUsuarioAsignado: [lead?.idUsuarioAsignado || null, Validators.required],
@@ -242,6 +243,7 @@ export class LeadDialogComponent implements OnInit {
     if (this.action === 'create' && this.leadForm.valid) {
       const data = { ...this.leadForm.value };
       if (data.fechaRegistro instanceof Date) data.fechaRegistro = data.fechaRegistro.toISOString();
+      data.campana = (data.campana ?? '').trim() || null;
       this.dialogRef.close({
         action: 'create',
         data: data,
@@ -251,6 +253,7 @@ export class LeadDialogComponent implements OnInit {
     } else if (this.action === 'edit' && this.leadForm.valid) {
       const data = { ...this.leadForm.value };
       if (data.fechaRegistro instanceof Date) data.fechaRegistro = data.fechaRegistro.toISOString();
+      data.campana = (data.campana ?? '').trim() || null;
       this.dialogRef.close({
         action: 'edit',
         data: data,
