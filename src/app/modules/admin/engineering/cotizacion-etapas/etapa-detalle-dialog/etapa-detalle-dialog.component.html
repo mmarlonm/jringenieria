@@ -55,6 +55,44 @@
         </span>
     </div>
 
+    <!-- Panel Pendiente de autorización del cliente (Etapa 5 en estatus 6) -->
+    <div *ngIf="etapa5PendienteDelCliente" class="mx-6 mt-4 p-4 rounded-xl border border-purple-300 dark:border-purple-800 bg-purple-50/70 dark:bg-purple-950/30 space-y-3">
+        <div class="flex items-center gap-2">
+            <mat-icon class="text-purple-600 dark:text-purple-400">assignment_turned_in</mat-icon>
+            <span class="text-sm font-bold text-purple-900 dark:text-purple-200">
+                Pendiente de autorización del cliente
+            </span>
+        </div>
+        <p class="text-xs text-purple-800 dark:text-purple-300">
+            La cotización fue autorizada por JR. Registra la respuesta del cliente para que el proyecto pase a Seguimiento de Proyectos o se retrabaje en una nueva revisión.
+        </p>
+        <div *ngIf="puedeRegistrarCliente" class="flex flex-wrap gap-2 pt-1">
+            <button
+                mat-flat-button
+                color="primary"
+                (click)="abrirModalClienteAutorizo()"
+                [disabled]="guardando"
+                class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+                <mat-icon class="scale-75">thumb_up</mat-icon>
+                <span>El cliente autorizó</span>
+            </button>
+            <button
+                mat-flat-button
+                color="warn"
+                (click)="abrirModalClienteNoAutorizo()"
+                [disabled]="guardando"
+                class="text-xs"
+            >
+                <mat-icon class="scale-75">thumb_down</mat-icon>
+                <span>El cliente no autorizó</span>
+            </button>
+        </div>
+        <p *ngIf="!puedeRegistrarCliente" class="text-xs text-slate-500 italic">
+            Solo el autorizador designado, quien elaboró la propuesta o un administrador pueden registrar la respuesta del cliente.
+        </p>
+    </div>
+
     <!-- Dialog Content Body with Tabs -->
     <div class="flex-1 overflow-y-auto px-6 py-4">
         <mat-tab-group animationDuration="200ms" class="w-full">
@@ -236,6 +274,18 @@
                             {{ rev.observacionesAutorizacion }}
                         </div>
 
+                        <div *ngIf="rev.resultado === 6 || (etapaNumero === 5 && rev.fechaAutorizacion)" class="text-xs text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg border border-purple-200 dark:border-purple-800">
+                            <span>Autorizada por JR el {{ rev.fechaAutorizacion ? (rev.fechaAutorizacion | date:'dd/MM/yyyy HH:mm') : '-' }} por {{ rev.autorizadoPorNombre || 'Autorizador' }}</span>
+                        </div>
+
+                        <div *ngIf="rev.clienteResultado" class="text-xs p-2 rounded-lg border" [ngClass]="rev.clienteResultado === 3 ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'">
+                            <span>
+                                Cliente: {{ rev.clienteResultado === 3 ? 'autorizó' : 'no autorizó' }} el {{ rev.clienteFecha ? (rev.clienteFecha | date:'dd/MM/yyyy') : '-' }}
+                                <ng-container *ngIf="rev.clienteReferencia"> · ref: {{ rev.clienteReferencia }}</ng-container>
+                                <ng-container *ngIf="rev.clienteObservaciones"> · {{ rev.clienteResultado === 3 ? 'obs' : 'motivo' }}: {{ rev.clienteObservaciones }}</ng-container>
+                            </span>
+                        </div>
+
                         <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
                             <span>
                                 Autorizador: <strong>{{ rev.autorizadoPorNombre || 'Pendiente' }}</strong>
@@ -267,8 +317,8 @@
                             </div>
                         </div>
 
-                        <!-- Boton Subir Archivos (si no esta congelada y no es solo lectura) -->
-                        <div *ngIf="!revisionActualEstaCongelada() && puedeOperarAcciones">
+                        <!-- Boton Subir Archivos -->
+                        <div *ngIf="puedeSubirArchivoActual">
                             <input #fileInput type="file" multiple (change)="onArchivosSeleccionados($event)" class="hidden" />
                             <button mat-stroked-button color="primary" (click)="fileInput.click()" [disabled]="cargandoArchivos" class="gap-1 text-xs">
                                 <mat-icon class="scale-90">upload_file</mat-icon>
@@ -302,7 +352,7 @@
                                     <mat-icon class="scale-90 text-slate-500">download</mat-icon>
                                 </button>
                                 <button
-                                    *ngIf="!revisionActualEstaCongelada() && puedeOperarAcciones"
+                                    *ngIf="puedeEliminarArchivoActual"
                                     mat-icon-button
                                     (click)="eliminarArchivo(a.nombreArchivo)"
                                     [matTooltip]="'Eliminar'"
@@ -451,8 +501,12 @@
         <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <mat-icon class="text-emerald-500">check_circle</mat-icon>
-                <span>Autorizar Etapa {{ etapaNumero }}</span>
+                <span>{{ etapaNumero === 5 ? 'Autorizar cotización (JR)' : 'Autorizar Etapa ' + etapaNumero }}</span>
             </h3>
+
+            <p *ngIf="etapaNumero === 5" class="text-xs text-slate-500 dark:text-slate-400">
+                Al autorizar internamente por JR, la cotización quedará en espera de la autorización del cliente antes de pasar a Seguimiento de Proyectos.
+            </p>
 
             <!-- Siguiente Etapa -->
             <div *ngIf="(etapaConfig?.siguientes || []).length > 0" class="space-y-1">
@@ -485,7 +539,10 @@
 
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button mat-button (click)="modalAutorizarAbierto = false">Cancelar</button>
-                <button mat-flat-button color="primary" (click)="confirmarAutorizar()" [disabled]="guardando">Confirmar Autorización</button>
+                <button mat-flat-button color="primary" (click)="confirmarAutorizar()" [disabled]="guardando">
+                    <span *ngIf="!guardando">{{ etapaNumero === 5 ? 'Autorizar cotización (JR)' : 'Confirmar Autorización' }}</span>
+                    <span *ngIf="guardando">Guardando...</span>
+                </button>
             </div>
         </div>
     </div>
@@ -593,6 +650,131 @@
         </div>
     </div>
 
+    <!-- Modal El cliente autorizó -->
+    <div *ngIf="modalClienteAutorizoAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 dialogo-alto max-h-[90vh] overflow-y-auto">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-emerald-500">check_circle</mat-icon>
+                <span>El cliente autorizó la cotización</span>
+            </h3>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                Al registrar la autorización del cliente, la etapa quedará aprobada y el proyecto pasará inmediatamente a Seguimiento de Proyectos.
+            </p>
+
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha de autorización del cliente *</label>
+                <input
+                    type="date"
+                    [(ngModel)]="clienteFecha"
+                    [max]="hoyISO"
+                    class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm"
+                />
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Referencia del cliente (Opcional)</label>
+                <input
+                    type="text"
+                    [(ngModel)]="clienteReferencia"
+                    maxlength="200"
+                    placeholder="Orden de compra, correo, folio..."
+                    class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm"
+                />
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Observaciones (Opcional)</label>
+                <textarea
+                    [(ngModel)]="clienteObservaciones"
+                    rows="3"
+                    maxlength="2000"
+                    placeholder="Notas u observaciones de la autorización..."
+                    class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm"
+                ></textarea>
+                <span class="text-[11px] text-slate-400 block text-right">{{ clienteObservaciones?.length || 0 }} / 2000</span>
+            </div>
+
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                <mat-icon class="text-red-500 text-base">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <button mat-button (click)="modalClienteAutorizoAbierto = false" [disabled]="guardando">
+                    Cancelar
+                </button>
+                <button
+                    mat-flat-button
+                    color="primary"
+                    (click)="confirmarClienteAutorizo()"
+                    [disabled]="guardando || !clienteFecha"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                    <span *ngIf="!guardando">Confirmar autorización</span>
+                    <span *ngIf="guardando">Guardando...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal El cliente no autorizó -->
+    <div *ngIf="modalClienteNoAutorizoAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 dialogo-alto max-h-[90vh] overflow-y-auto">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-rose-500">cancel</mat-icon>
+                <span>El cliente no autorizó la cotización</span>
+            </h3>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                La etapa quedará rechazada para poder iniciar una nueva revisión o cancelar el caso si ya no procede.
+            </p>
+
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Referencia del cliente (Opcional)</label>
+                <input
+                    type="text"
+                    [(ngModel)]="clienteNoAutorizoReferencia"
+                    maxlength="200"
+                    placeholder="Correo, oficio, folio de rechazo..."
+                    class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm"
+                />
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Observaciones / Motivo de rechazo *</label>
+                <textarea
+                    [(ngModel)]="clienteNoAutorizoObservaciones"
+                    rows="3"
+                    maxlength="2000"
+                    placeholder="Indique el motivo por el cual el cliente no autorizó..."
+                    class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm"
+                ></textarea>
+                <span class="text-[11px] text-slate-400 block text-right">{{ clienteNoAutorizoObservaciones?.length || 0 }} / 2000</span>
+            </div>
+
+            <div *ngIf="errorMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                <mat-icon class="text-red-500 text-base">error_outline</mat-icon>
+                <span>{{ errorMsg }}</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <button mat-button (click)="modalClienteNoAutorizoAbierto = false" [disabled]="guardando">
+                    Cancelar
+                </button>
+                <button
+                    mat-flat-button
+                    color="warn"
+                    (click)="confirmarClienteNoAutorizo()"
+                    [disabled]="guardando || !clienteNoAutorizoObservaciones?.trim()"
+                >
+                    <span *ngIf="!guardando">Confirmar no autorización</span>
+                    <span *ngIf="guardando">Guardando...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer Actions -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
         <!-- Acciones secundarias izquierda -->
@@ -687,7 +869,7 @@
                     [disabled]="guardando || !puedeGuardarRevision()"
                     class="text-xs"
                 >
-                    Autorizar
+                    {{ etapaNumero === 5 ? 'Autorizar cotización (JR)' : 'Autorizar' }}
                 </button>
             </ng-container>
 
