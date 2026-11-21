@@ -842,7 +842,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
 
     revisionActualEstaCongelada(): boolean {
         const rev = this.etapaActualDto?.revisiones?.find((r) => r.numero === this.revisionSeleccionadaArchivos);
-        return !rev || rev.resultado === ESTATUS_ETAPA.Autorizada || rev.historica;
+        return !rev || rev.resultado === ESTATUS_ETAPA.Autorizada || rev.resultado === ESTATUS_ETAPA.AutorizadaInterna || rev.historica;
     }
 
     cerrar(): void {
