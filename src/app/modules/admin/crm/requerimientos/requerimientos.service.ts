@@ -175,6 +175,36 @@ export interface CalificarRequerimientoDto {
   marcaModelo?: string | null;
 }
 
+export interface GuardarBorradorDto {
+  naturaleza?: string | null;
+  rutaAtencion?: string | null;
+  viabilidad?: string | null;
+  observacionesRiesgo?: string | null;
+  motivoDescarte?: string | null;
+
+  faltaPlano?: boolean;
+  faltaFotografia?: boolean;
+  faltaCantidad?: boolean;
+  faltaUbicacion?: boolean;
+  faltaDatosElectricos?: boolean;
+  faltaCapacidad?: boolean;
+  faltaFechaEjecucion?: boolean;
+  faltaCondicionesSitio?: boolean;
+  faltaNormativa?: boolean;
+  faltaEvidenciaFalla?: boolean;
+  faltaMarcaModelo?: boolean;
+  faltaVisita?: boolean;
+  faltaOtros?: boolean;
+  faltaOtrosDescripcion?: string | null;
+
+  cantidades?: string | null;
+  ubicacionExacta?: string | null;
+  marcaModelo?: string | null;
+
+  tipoProyecto?: string | null;
+  titulo?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -216,6 +246,10 @@ export class RequerimientosService {
 
   calificarRequerimiento(id: number, dto: CalificarRequerimientoDto): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/calificar`, dto);
+  }
+
+  guardarBorrador(id: number, dto: GuardarBorradorDto): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/borrador`, dto);
   }
 
   /** Tipo de proyecto y titulo se capturan al aprobar (ya no en el requerimiento); si no se mandan, el API usa los guardados. */

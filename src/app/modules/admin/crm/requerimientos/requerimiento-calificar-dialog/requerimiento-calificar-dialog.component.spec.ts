@@ -1,9 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError, Subject } from 'rxjs';
-import { EngineeringService } from 'app/modules/admin/engineering/engineering.service';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
 import { RequerimientoCalificarDialogComponent } from './requerimiento-calificar-dialog.component';
 import Swal from 'sweetalert2';
@@ -23,15 +22,25 @@ describe('RequerimientoCalificarDialogComponent', () => {
   let fixture: ComponentFixture<RequerimientoCalificarDialogComponent>;
   let mockReqService: any;
   let dialogRefSpy: any;
+  let backdropSubject: Subject<any>;
+  let keydownSubject: Subject<any>;
 
   function abrir(puedeCalificar: boolean, override: Partial<Requerimiento> = {}, serviceMock: any = {}): void {
     mockReqService = {
       getArchivos: () => of([]),
       getSeguimientos: () => of([]),
-      aprobarRequerimiento: () => of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' }),
+      calificarRequerimiento: () => of({}),
+      guardarBorrador: () => of({}),
+      aprobarRequerimiento: () => of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización', destino: 'ingenieria' }),
       ...serviceMock
     };
-    dialogRefSpy = { close: jasmine.createSpy('close') };
+    backdropSubject = new Subject<any>();
+    keydownSubject = new Subject<any>();
+    dialogRefSpy = {
+      close: jasmine.createSpy('close'),
+      backdropClick: () => backdropSubject.asObservable(),
+      keydownEvents: () => keydownSubject.asObservable()
+    };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -39,12 +48,7 @@ describe('RequerimientoCalificarDialogComponent', () => {
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: { requerimiento: requerimiento(override), currentUser: { id: 18 }, puedeCalificar } },
         { provide: MatDialogRef, useValue: dialogRefSpy },
-        { provide: RequerimientosService, useValue: mockReqService },
-        { provide: EngineeringService, useValue: { getSolicitantes: () => of([
-          { idSolicitante: 1, nombreCompleto: 'Solicitante Uno', empresa: 'Empresa A', activo: true },
-          { idSolicitante: 2, nombreCompleto: 'Solicitante Dos', empresa: 'Empresa B', activo: true },
-          { idSolicitante: 3, nombreCompleto: 'Solicitante Baja', empresa: 'Empresa C', activo: false }
-        ]) } }
+        { provide: RequerimientosService, useValue: mockReqService }
       ]
     });
     fixture = TestBed.createComponent(RequerimientoCalificarDialogComponent);
@@ -113,58 +117,59 @@ describe('RequerimientoCalificarDialogComponent', () => {
 
   it('El_boton_Aprobar_solo_se_habilita_si_esta_calificado_y_completo', () => {
     // 1. Pendiente -> disabled
-    abrir(true, { estatus: 'Pendiente', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: 'Título' });
+    abrir(true, { estatus: 'Pendiente' });
     pestana('Aprobación').click();
     fixture.detectChanges();
     const btnPendiente = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
     expect(btnPendiente.disabled).toBeTrue();
 
-    // 2. Sin solicitante -> disabled
-    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: undefined, tipoProyecto: 'Ingeniería', titulo: 'Título' });
+    // 2. Con información faltante guardada -> disabled
+    abrir(true, { estatus: 'Calificado Comercial', faltaPlano: true });
     pestana('Aprobación').click();
     fixture.detectChanges();
-    const btnSinSolicitante = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btnSinSolicitante.disabled).toBeTrue();
+    const btnConFaltante = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
+    expect(btnConFaltante.disabled).toBeTrue();
 
-    // 3. Sin tipoProyecto pero con solicitante -> ENABLED (tipo es opcional)
-    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: undefined, titulo: 'Título' });
+    // 3. Con cambios sin guardar -> disabled
+    abrir(true, { estatus: 'Calificado Comercial' });
     pestana('Aprobación').click();
     fixture.detectChanges();
-    const btnSinTipo = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btnSinTipo.disabled).toBeFalse();
-
-    // 4. Sin título pero con solicitante -> ENABLED (título es opcional)
-    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: '' });
-    pestana('Aprobación').click();
+    expect((fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement).disabled).toBeFalse();
+    fixture.componentInstance.calificarForm.markAsDirty();
     fixture.detectChanges();
-    const btnSinTitulo = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btnSinTitulo.disabled).toBeFalse();
+    expect((fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement).disabled).toBeTrue();
 
-    // 5. Sin permiso (puedeCalificar: false) -> disabled
-    abrir(false, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: 'Título' });
+    // 4. Sin permiso (puedeCalificar: false) -> disabled
+    abrir(false, { estatus: 'Calificado Comercial' });
     pestana('Aprobación').click();
     fixture.detectChanges();
     const btnSinPermiso = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
     expect(btnSinPermiso.disabled).toBeTrue();
 
-    // 6. Completo y calificado -> ENABLED
-    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: 'Título' });
+    // 5. Completo y calificado comercial -> ENABLED
+    abrir(true, { estatus: 'Calificado Comercial' });
     pestana('Aprobación').click();
     fixture.detectChanges();
-    const btnHabilitado = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btnHabilitado.disabled).toBeFalse();
+    const btnComercial = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
+    expect(btnComercial.disabled).toBeFalse();
+
+    // 6. Completo y calificado técnico -> ENABLED
+    abrir(true, { estatus: 'Calificado Técnico' });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+    const btnTecnico = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
+    expect(btnTecnico.disabled).toBeFalse();
   });
 
   it('Si_faltan_campos_el_boton_explica_cuales', () => {
-    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: undefined, tipoProyecto: undefined, titulo: undefined });
+    abrir(true, { estatus: 'Calificado Comercial', faltaPlano: true, faltaFotografia: true });
     pestana('Aprobación').click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual(['Solicitante']);
+    expect(fixture.componentInstance.faltantesGuardados).toEqual(['Plano eléctrico', 'Fotografías del sitio']);
     const texto = fixture.nativeElement.textContent;
-    expect(texto).toContain('Solicitante');
-    // El solicitante se elige ahi mismo, en «Datos para Ingeniería»: ya no hay que volver a editar el requerimiento
-    expect(texto).not.toContain('Editar requerimiento');
+    expect(texto).toContain('No se puede aprobar: falta información');
+    expect(texto).toContain('Plano eléctrico, Fotografías del sitio');
   });
 
   it('Aprobar_pide_confirmacion_y_muestra_el_folio', () => {
@@ -179,7 +184,7 @@ describe('RequerimientoCalificarDialogComponent', () => {
       return Promise.resolve({ isConfirmed: false } as any);
     });
 
-    abrir(true, { estatus: 'Calificado Comercial', solicitanteId: 1, tipoProyecto: 'Ingeniería', titulo: 'Subestación ACME' });
+    abrir(true, { estatus: 'Calificado Técnico', tipoProyecto: 'Ingeniería', titulo: 'Subestación ACME' });
     pestana('Aprobación').click();
     fixture.detectChanges();
 
@@ -195,15 +200,13 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('#42');
   });
 
-  it('Tipo_y_titulo_son_opcionales_en_la_pestana_Aprobacion_y_se_puede_aprobar_solo_con_solicitante', () => {
-    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: 1 });
+  it('Tipo_y_titulo_son_opcionales_para_un_tecnico_y_se_puede_aprobar_sin_llenarlos', () => {
+    abrir(true, { estatus: 'Calificado Técnico' });
     pestana('Aprobación').click();
     fixture.detectChanges();
 
-    const texto = fixture.nativeElement.textContent;
-    expect(texto).toContain('Datos para Ingeniería');
+    expect(fixture.nativeElement.textContent).not.toContain('Datos para Ingeniería');
     expect(fixture.nativeElement.querySelector('#aprobacion-form')).not.toBeNull();
-    // Con solicitante y sin tipo ni titulo se puede aprobar porque son opcionales
     const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
     expect(btn.disabled).toBeFalse();
     expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual([]);
@@ -214,13 +217,14 @@ describe('RequerimientoCalificarDialogComponent', () => {
       then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
     } as any));
     const spyAprobar = jasmine.createSpy('aprobarRequerimiento').and.returnValue(
-      of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' })
+      of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización', destino: 'ingenieria' })
     );
-    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: 1 }, { aprobarRequerimiento: spyAprobar });
+    abrir(true, { estatus: 'Calificado Técnico' }, { aprobarRequerimiento: spyAprobar });
     pestana('Aprobación').click();
     fixture.detectChanges();
 
     fixture.componentInstance.aprobacionForm.patchValue({ tipoProyecto: 'Instalación', titulo: '  Subestación ACME  ' });
+    fixture.componentInstance.aprobacionForm.markAsPristine();
     fixture.detectChanges();
     const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
     expect(btn.disabled).toBeFalse();
@@ -228,50 +232,20 @@ describe('RequerimientoCalificarDialogComponent', () => {
     btn.click();
     fixture.detectChanges();
 
-    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { solicitanteId: 1, tipoProyecto: 'Instalación', titulo: 'Subestación ACME' });
-    // Ya aprobado: se ve lo que se mando a Ingenieria y los campos se bloquean
+    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { tipoProyecto: 'Instalación', titulo: 'Subestación ACME' });
     expect(fixture.componentInstance.requerimiento.tipoProyecto).toBe('Instalación');
     expect(fixture.componentInstance.aprobacionForm.disabled).toBeTrue();
     expect(fixture.nativeElement.querySelector('.resumen-titulo')?.textContent).toContain('Subestación ACME');
   });
 
-  it('Sin_solicitante_se_pide_en_Datos_para_Ingenieria_y_viaja_en_la_peticion', () => {
-    spyOn(Swal, 'fire').and.callFake(() => ({
-      then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
-    } as any));
-    const spyAprobar = jasmine.createSpy('aprobarRequerimiento').and.returnValue(
-      of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' })
-    );
-    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: undefined, tipoProyecto: 'Instalación', titulo: 'Subestación' }, { aprobarRequerimiento: spyAprobar });
-    pestana('Aprobación').click();
-    fixture.detectChanges();
-
-    // Opcional en el requerimiento, pero Ingenieria lo exige: sin elegirlo no se puede aprobar
-    expect(fixture.componentInstance.camposFaltantesAprobacion).toEqual(['Solicitante']);
-    expect((fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement).disabled).toBeTrue();
-    expect(fixture.nativeElement.querySelector('.btn-editar-faltante')).toBeNull();
-
-    fixture.componentInstance.aprobacionForm.patchValue({ solicitanteId: 2 });
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('#btn-aprobar') as HTMLButtonElement;
-    expect(btn.disabled).toBeFalse();
-
-    btn.click();
-    fixture.detectChanges();
-
-    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { solicitanteId: 2, tipoProyecto: 'Instalación', titulo: 'Subestación' });
-    expect(fixture.componentInstance.requerimiento.solicitanteId).toBe(2);
-    expect(fixture.componentInstance.requerimiento.solicitanteNombre).toBe('Solicitante Dos');
-  });
-
   it('Quien_no_es_el_responsable_ve_los_campos_pero_no_puede_escribir', () => {
-    abrir(false, { estatus: 'Calificado Técnico', solicitanteId: 1 });
+    abrir(false, { estatus: 'Calificado Técnico' });
 
     expect(fixture.componentInstance.aprobacionForm.disabled).toBeTrue();
   });
 
   it('Un_titulo_de_mas_de_500_caracteres_no_deja_aprobar', () => {
-    abrir(true, { estatus: 'Calificado Técnico', solicitanteId: 1 });
+    abrir(true, { estatus: 'Calificado Técnico' });
     fixture.componentInstance.aprobacionForm.patchValue({ tipoProyecto: 'Instalación', titulo: 'x'.repeat(501) });
 
     expect(fixture.componentInstance.puedeAprobar).toBeFalse();
@@ -374,7 +348,7 @@ describe('RequerimientoCalificarDialogComponent', () => {
 
     fixture.componentInstance.onCancel();
 
-    expect(dialogRefSpy.close).toHaveBeenCalledWith(false);
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(undefined);
   });
 
   it('Los_tres_datos_se_escriben_en_la_fila_de_su_casilla', () => {
@@ -490,5 +464,276 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(dtoEnviado.cantidades).toBe('10 piezas');
     expect(dtoEnviado.ubicacionExacta).toBe('Nave 2');
     expect(dtoEnviado.marcaModelo).toBe('Modelo Z');
+  });
+
+  it('Guardar_borrador_manda_todo_sin_estatus_y_no_cierra_el_dialogo', () => {
+    let dtoEnviado: any = null;
+    const spyBorrador = jasmine.createSpy('guardarBorrador').and.callFake((id: number, dto: any) => {
+      dtoEnviado = dto;
+      return of(null);
+    });
+    abrir(true, { estatus: 'Pendiente', nombreContacto: 'Ana', empresa: 'ACME' }, { guardarBorrador: spyBorrador });
+
+    fixture.componentInstance.calificarForm.patchValue({
+      naturaleza: 'Venta',
+      cantidades: ' 10 unidades ',
+      faltaCantidad: false,
+      faltaFotografia: true
+    });
+    fixture.componentInstance.calificarForm.markAsDirty();
+    fixture.componentInstance.aprobacionForm.patchValue({
+      tipoProyecto: 'Ingeniería',
+      titulo: ' Nuevo Proyecto '
+    });
+    fixture.componentInstance.aprobacionForm.markAsDirty();
+
+    fixture.componentInstance.guardarBorrador();
+
+    expect(spyBorrador).toHaveBeenCalled();
+    expect(dtoEnviado).not.toBeNull();
+    expect(dtoEnviado.estatus).toBeUndefined();
+    expect(dtoEnviado.naturaleza).toBe('Venta');
+    expect(dtoEnviado.cantidades).toBe('10 unidades');
+    expect(dtoEnviado.faltaCantidad).toBeFalse();
+    expect(dtoEnviado.faltaFotografia).toBeTrue();
+    expect(dtoEnviado.tipoProyecto).toBe('Ingeniería');
+    expect(dtoEnviado.titulo).toBe('Nuevo Proyecto');
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.calificarForm.pristine).toBeTrue();
+    expect(fixture.componentInstance.aprobacionForm.pristine).toBeTrue();
+    expect(fixture.componentInstance.requerimiento.cantidades).toBe('10 unidades');
+    expect(fixture.componentInstance.huboGuardado).toBeTrue();
+  });
+
+  it('Guardar_borrador_se_apaga_sin_permiso_o_si_esta_aprobado_o_no_viable', () => {
+    // 1. Sin permiso
+    abrir(false, { estatus: 'Pendiente' });
+    let btns = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    expect(btns.some(b => b.textContent?.includes('Guardar borrador'))).toBeFalse();
+
+    // 2. Aprobado
+    abrir(true, { estatus: 'Aprobado para cotización' });
+    btns = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    expect(btns.some(b => b.textContent?.includes('Guardar borrador'))).toBeFalse();
+
+    // 3. No Viable
+    abrir(true, { estatus: 'No Viable' });
+    btns = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    expect(btns.some(b => b.textContent?.includes('Guardar borrador'))).toBeFalse();
+
+    // 4. Con permiso y pendiente -> visible
+    abrir(true, { estatus: 'Pendiente' });
+    btns = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    expect(btns.some(b => b.textContent?.includes('Guardar borrador'))).toBeTrue();
+  });
+
+  it('Un_error_del_borrador_se_ve_y_conserva_lo_escrito', () => {
+    let errorMostrado = '';
+    spyOn(Swal, 'fire').and.callFake((arg1: any, arg2?: any) => {
+      errorMostrado = typeof arg1 === 'string' ? `${arg1} ${arg2 || ''}` : (arg1?.text || arg1?.title);
+      return Promise.resolve({ isConfirmed: false } as any);
+    });
+    const spyBorrador = jasmine.createSpy('guardarBorrador').and.returnValue(
+      throwError(() => ({ error: { mensaje: 'Texto demasiado largo' } }))
+    );
+    abrir(true, { estatus: 'Pendiente' }, { guardarBorrador: spyBorrador });
+
+    fixture.componentInstance.calificarForm.patchValue({ cantidades: 'Texto que debe conservarse' });
+    fixture.componentInstance.calificarForm.markAsDirty();
+
+    fixture.componentInstance.guardarBorrador();
+
+    expect(errorMostrado).toContain('Texto demasiado largo');
+    expect(fixture.componentInstance.calificarForm.get('cantidades')?.value).toBe('Texto que debe conservarse');
+    expect(fixture.componentInstance.calificarForm.dirty).toBeTrue();
+  });
+
+  it('Cerrar_con_cambios_sin_guardar_pregunta_y_no_cierra_hasta_decidir', () => {
+    let swalLlamado = false;
+    let resolverSwal: any;
+    spyOn(Swal, 'fire').and.callFake(() => {
+      swalLlamado = true;
+      return new Promise(resolve => { resolverSwal = resolve; }) as any;
+    });
+
+    abrir(true, { estatus: 'Pendiente' });
+    fixture.componentInstance.calificarForm.patchValue({ cantidades: 'Nuevo valor' });
+    fixture.componentInstance.calificarForm.markAsDirty();
+
+    fixture.componentInstance.intentarCerrar();
+
+    expect(swalLlamado).toBeTrue();
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+
+    resolverSwal({ isDismissed: true });
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+
+    backdropSubject.next(null);
+    expect(swalLlamado).toBeTrue();
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+
+    keydownSubject.next({ key: 'Escape', preventDefault: () => {} });
+    expect(swalLlamado).toBeTrue();
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+  });
+
+  it('Descartar_cambios_cierra_sin_guardar', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isDenied: true } as any));
+    const spyBorrador = jasmine.createSpy('guardarBorrador');
+    abrir(true, { estatus: 'Pendiente' }, { guardarBorrador: spyBorrador });
+
+    fixture.componentInstance.calificarForm.markAsDirty();
+    fixture.componentInstance.intentarCerrar();
+    tick();
+
+    expect(spyBorrador).not.toHaveBeenCalled();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(undefined);
+  }));
+
+  it('Cerrar_tras_haber_guardado_un_borrador_cierra_con_true_para_recargar_el_tablero', () => {
+    abrir(true, { estatus: 'Pendiente' });
+    fixture.componentInstance.huboGuardado = true;
+
+    fixture.componentInstance.intentarCerrar();
+
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
+  });
+
+  it('Guardar_borrador_desde_la_pregunta_guarda_y_cierra', fakeAsync(() => {
+    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+    const spyBorrador = jasmine.createSpy('guardarBorrador').and.returnValue(of(null));
+    abrir(true, { estatus: 'Pendiente' }, { guardarBorrador: spyBorrador });
+
+    fixture.componentInstance.calificarForm.patchValue({ cantidades: 'Borrador' });
+    fixture.componentInstance.calificarForm.markAsDirty();
+
+    fixture.componentInstance.intentarCerrar();
+    tick();
+
+    expect(spyBorrador).toHaveBeenCalled();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(true);
+  }));
+
+  it('Sin_cambios_cerrar_cierra_directo', () => {
+    const swalSpy = spyOn(Swal, 'fire');
+    abrir(true, { estatus: 'Pendiente' });
+
+    fixture.componentInstance.intentarCerrar();
+
+    expect(swalSpy).not.toHaveBeenCalled();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(undefined);
+  });
+
+  it('Aprobar_se_apaga_con_informacion_faltante_guardada_y_lista_lo_que_falta', () => {
+    abrir(true, { estatus: 'Calificado Comercial', faltaPlano: true, faltaVisita: true });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.puedeAprobar).toBeFalse();
+    expect(fixture.componentInstance.faltantesGuardados).toEqual(['Plano eléctrico', 'Visita / levantamiento previo']);
+    const banner = fixture.nativeElement.querySelector('.banner-faltantes');
+    expect(banner).not.toBeNull();
+    expect(banner.textContent).toContain('Plano eléctrico, Visita / levantamiento previo');
+  });
+
+  it('Aprobar_se_apaga_si_hay_cambios_sin_guardar_y_lo_dice', () => {
+    abrir(true, { estatus: 'Calificado Comercial' });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.puedeAprobar).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.banner-cambios-sin-guardar')).toBeNull();
+
+    fixture.componentInstance.calificarForm.markAsDirty();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.puedeAprobar).toBeFalse();
+    const banner = fixture.nativeElement.querySelector('.banner-cambios-sin-guardar');
+    expect(banner).not.toBeNull();
+    expect(banner.textContent).toContain('Tienes cambios sin guardar');
+  });
+
+  it('La_aprobacion_ya_no_pide_solicitante_ni_dice_Datos_para_Ingenieria', () => {
+    abrir(true, { estatus: 'Calificado Técnico' });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Datos para Ingeniería');
+    expect(fixture.nativeElement.querySelector('mat-select[formControlName="solicitanteId"]')).toBeNull();
+    expect(fixture.componentInstance.aprobacionForm.get('solicitanteId')).toBeNull();
+  });
+
+  it('Un_tecnico_pide_tipo_y_titulo_y_los_manda_al_aprobar_sin_solicitanteId', () => {
+    spyOn(Swal, 'fire').and.callFake(() => ({
+      then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
+    } as any));
+    const spyAprobar = jasmine.createSpy('aprobarRequerimiento').and.returnValue(
+      of({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización', destino: 'ingenieria' })
+    );
+    abrir(true, { estatus: 'Calificado Técnico' }, { aprobarRequerimiento: spyAprobar });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#aprobacion-form')).not.toBeNull();
+
+    fixture.componentInstance.aprobacionForm.patchValue({ tipoProyecto: 'Instalación', titulo: 'Tableros Principales' });
+    fixture.componentInstance.aprobacionForm.markAsPristine();
+    fixture.detectChanges();
+
+    fixture.componentInstance.aprobar();
+
+    expect(spyAprobar).toHaveBeenCalledOnceWith(8, { tipoProyecto: 'Instalación', titulo: 'Tableros Principales' });
+  });
+
+  it('Un_comercial_no_muestra_tipo_ni_titulo_dice_que_pasa_directo_a_cotizacion_y_aprueba_con_cuerpo_vacio', () => {
+    spyOn(Swal, 'fire').and.callFake(() => ({
+      then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
+    } as any));
+    const spyAprobar = jasmine.createSpy('aprobarRequerimiento').and.returnValue(
+      of({ idSeguimiento: null, folio: 'REQ-2026-0008', estatus: 'Aprobado para cotización', destino: 'cotizacion' })
+    );
+    abrir(true, { estatus: 'Calificado Comercial' }, { aprobarRequerimiento: spyAprobar });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#aprobacion-form')).toBeNull();
+    const bannerComercial = fixture.nativeElement.querySelector('.banner-comercial-directo');
+    expect(bannerComercial).not.toBeNull();
+    expect(bannerComercial.textContent).toContain('pasa directo a cotización; no se abre caso en Ingeniería');
+
+    fixture.componentInstance.aprobar();
+
+    expect(spyAprobar).toHaveBeenCalledOnceWith(8, {});
+  });
+
+  it('Aprobar_un_comercial_muestra_que_paso_directo_y_enlaza_a_Cotizaciones_sin_decir_undefined', () => {
+    spyOn(Swal, 'fire').and.callFake(() => ({
+      then: (resolve: any) => { resolve({ isConfirmed: true }); return Promise.resolve({ isConfirmed: true }); }
+    } as any));
+    const spyAprobar = jasmine.createSpy('aprobarRequerimiento').and.returnValue(
+      of({ idSeguimiento: null, folio: 'REQ-2026-0008', estatus: 'Aprobado para cotización', destino: 'cotizacion' })
+    );
+    abrir(true, { estatus: 'Calificado Comercial' }, { aprobarRequerimiento: spyAprobar });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    fixture.componentInstance.aprobar();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('#undefined');
+    const enlace = fixture.nativeElement.querySelector('.enlace-cotizaciones') as HTMLAnchorElement;
+    expect(enlace).not.toBeNull();
+    expect(enlace.getAttribute('href')).toBe('#/dashboards/quote-products');
+    expect(fixture.nativeElement.textContent).toContain('pasó directo a cotización y no requirió caso en Ingeniería');
+  });
+
+  it('El_resumen_muestra_al_contacto_como_solicitante', () => {
+    abrir(true, { nombreContacto: 'Ing. Carlos Slim', empresa: 'Grupo Carso' });
+    pestana('Aprobación').click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.solicitanteResumen).toBe('Ing. Carlos Slim (Grupo Carso)');
+    const resumen = fixture.nativeElement.querySelector('.resumen-solicitante');
+    expect(resumen.textContent).toContain('Ing. Carlos Slim (Grupo Carso)');
   });
 });

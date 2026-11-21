@@ -11,8 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { formatearTamano } from 'app/core/documentos-requisicion/documentos-requisicion.utils';
-import { EngineeringService, Solicitante } from 'app/modules/admin/engineering/engineering.service';
-import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento, AprobarRequerimientoResultadoDto, TIPOS_PROYECTO } from '../requerimientos.service';
+import { RequerimientosService, Requerimiento, RequerimientoArchivo, RequerimientoSeguimiento, AprobarRequerimientoResultadoDto, GuardarBorradorDto, TIPOS_PROYECTO } from '../requerimientos.service';
 import {
   CATEGORIA_GENERAL, CHECKLIST, ItemChecklist, archivosDeCategoria, etiquetaCategoria, guardarBlob, iconoArchivo, temaArchivo, validarArchivos
 } from '../requerimiento-archivos.utils';
@@ -66,14 +65,14 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   /** Datos que Ingenieria necesita para abrir el caso: se piden al aprobar, ya no en el requerimiento. */
   aprobacionForm: FormGroup;
   readonly tiposProyecto = TIPOS_PROYECTO;
-  solicitantes: Solicitante[] = [];
-  errorSolicitantes: string | null = null;
   currentUser: any;
   /** Solo el responsable asignado califica; los demás ven la calificación sin poder cambiarla. */
   puedeCalificar: boolean;
 
   pestana: Pestana = 'clasificacion';
   guardando = false;
+  guardandoBorrador = false;
+  huboGuardado = false;
   aprobando = false;
   aprobadoResultado: AprobarRequerimientoResultadoDto | null = null;
 
@@ -104,7 +103,6 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private reqService: RequerimientosService,
-    private engineeringService: EngineeringService,
     private dialogRef: MatDialogRef<RequerimientoCalificarDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { requerimiento: Requerimiento; currentUser: any; puedeCalificar: boolean }
   ) {
@@ -113,8 +111,6 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     this.puedeCalificar = data.puedeCalificar;
 
     this.aprobacionForm = this.fb.group({
-      // El solicitante es obligatorio para Ingeniería al aprobar; tipo de proyecto y título son opcionales
-      solicitanteId: [this.requerimiento.solicitanteId ?? null, [Validators.required]],
       tipoProyecto: [this.requerimiento.tipoProyecto ?? ''],
       titulo: [this.requerimiento.titulo ?? '', [Validators.maxLength(500)]]
     });
@@ -172,19 +168,19 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       else if (this.puedeCalificar) c?.enable({ emitEvent: false });
       this.calificarForm.updateValueAndValidity();
     });
+
+    this.dialogRef.backdropClick().subscribe(() => this.intentarCerrar());
+    this.dialogRef.keydownEvents().subscribe(event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.intentarCerrar();
+      }
+    });
   }
 
   ngOnInit(): void {
     this.loadArchivos();
     this.loadSeguimientos();
-    this.cargarSolicitantes();
-  }
-
-  private cargarSolicitantes(): void {
-    this.engineeringService.getSolicitantes().subscribe({
-      next: sols => this.solicitantes = (sols || []).filter(s => s.activo),
-      error: () => this.errorSolicitantes = 'No se pudieron cargar los solicitantes.'
-    });
   }
 
   // ------------------------------------------------------------------ pestañas
@@ -345,21 +341,77 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     this.calificarForm.updateValueAndValidity();
   }
 
-  // ------------------------------------------------------------------ guardar
+  // ------------------------------------------------------------------ guardar / borrador
+
+  guardarBorrador(cerrarAlTerminar = false): void {
+    if (!this.puedeCalificar || this.guardando || this.guardandoBorrador || this.estaAprobado || this.esNoViable) return;
+
+    this.guardandoBorrador = true;
+    const rawCal = this.calificarForm.getRawValue();
+    const rawAprob = this.aprobacionForm.getRawValue();
+    const dto: GuardarBorradorDto = {
+      naturaleza: rawCal.naturaleza || null,
+      rutaAtencion: rawCal.rutaAtencion || null,
+      viabilidad: rawCal.viabilidad || null,
+      observacionesRiesgo: (rawCal.observacionesRiesgo ?? '').trim() || null,
+      motivoDescarte: (rawCal.motivoDescarte ?? '').trim() || null,
+      faltaPlano: !!rawCal.faltaPlano,
+      faltaFotografia: !!rawCal.faltaFotografia,
+      faltaCantidad: !!rawCal.faltaCantidad,
+      faltaUbicacion: !!rawCal.faltaUbicacion,
+      faltaDatosElectricos: !!rawCal.faltaDatosElectricos,
+      faltaCapacidad: !!rawCal.faltaCapacidad,
+      faltaFechaEjecucion: !!rawCal.faltaFechaEjecucion,
+      faltaCondicionesSitio: !!rawCal.faltaCondicionesSitio,
+      faltaNormativa: !!rawCal.faltaNormativa,
+      faltaEvidenciaFalla: !!rawCal.faltaEvidenciaFalla,
+      faltaMarcaModelo: !!rawCal.faltaMarcaModelo,
+      faltaVisita: !!rawCal.faltaVisita,
+      faltaOtros: !!rawCal.faltaOtros,
+      faltaOtrosDescripcion: (rawCal.faltaOtrosDescripcion ?? '').trim() || null,
+      cantidades: (rawCal.cantidades ?? '').trim() || null,
+      ubicacionExacta: (rawCal.ubicacionExacta ?? '').trim() || null,
+      marcaModelo: (rawCal.marcaModelo ?? '').trim() || null,
+      tipoProyecto: (rawAprob.tipoProyecto ?? '').trim() || null,
+      titulo: (rawAprob.titulo ?? '').trim() || null
+    };
+
+    this.reqService.guardarBorrador(this.requerimiento.id, dto).subscribe({
+      next: () => {
+        this.guardandoBorrador = false;
+        this.huboGuardado = true;
+        this.calificarForm.markAsPristine();
+        this.aprobacionForm.markAsPristine();
+        Object.assign(this.requerimiento, dto);
+        this.avisar('Borrador guardado.');
+        if (cerrarAlTerminar) {
+          this.dialogRef.close(true);
+        }
+      },
+      error: (err) => {
+        this.guardandoBorrador = false;
+        Swal.fire('No se pudo guardar el borrador', this.mensajeDe(err), 'error');
+      }
+    });
+  }
 
   onSubmit(): void {
-    if (!this.puedeCalificar || this.calificarForm.invalid || this.guardando) return;
+    if (!this.puedeCalificar || this.calificarForm.invalid || this.guardando || this.estaAprobado) return;
 
     this.guardando = true;
     const raw = this.calificarForm.getRawValue();
     const dto = {
       ...raw,
-      cantidades: (raw.cantidades ?? '').trim(),
-      ubicacionExacta: (raw.ubicacionExacta ?? '').trim(),
-      marcaModelo: (raw.marcaModelo ?? '').trim()
+      cantidades: (raw.cantidades ?? '').trim() || null,
+      ubicacionExacta: (raw.ubicacionExacta ?? '').trim() || null,
+      marcaModelo: (raw.marcaModelo ?? '').trim() || null
     };
     this.reqService.calificarRequerimiento(this.requerimiento.id, dto).subscribe({
-      next: () => this.dialogRef.close(true),
+      next: () => {
+        this.guardando = false;
+        this.huboGuardado = true;
+        this.dialogRef.close(true);
+      },
       error: (err) => {
         this.guardando = false;
         Swal.fire('No se pudo guardar la calificación', this.mensajeDe(err), 'error');
@@ -367,35 +419,77 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
     });
   }
 
+  // ------------------------------------------------------------------ cierre y guardia
+
+  get hayCambiosSinGuardar(): boolean {
+    return this.calificarForm.dirty || this.aprobacionForm.dirty;
+  }
+
+  intentarCerrar(): void {
+    if (!this.hayCambiosSinGuardar) {
+      this.dialogRef.close(this.huboGuardado ? true : undefined);
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Hay cambios sin guardar',
+      text: '¿Deseas guardar los cambios como borrador antes de salir?',
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: 'Guardar borrador',
+      denyButtonText: 'Descartar cambios',
+      cancelButtonText: 'Seguir editando'
+    }).then(res => {
+      if (res.isConfirmed) {
+        this.guardarBorrador(true);
+      } else if (res.isDenied) {
+        this.dialogRef.close(this.huboGuardado ? true : undefined);
+      }
+    });
+  }
+
+  onCancel(): void {
+    this.intentarCerrar();
+  }
+
   // ------------------------------------------------------------------ aprobación
 
+  get esNoViable(): boolean {
+    return this.requerimiento.estatus === 'No Viable';
+  }
+
   get estaAprobado(): boolean {
-    return !!this.requerimiento.seguimientoProyectoId ||
-      this.requerimiento.estatus === 'Aprobado para cotización' ||
+    return (this.requerimiento.estatus || '').toLowerCase().includes('aprobado') ||
+      !!this.requerimiento.seguimientoProyectoId ||
       !!this.aprobadoResultado;
   }
 
-  get esEstatusCalificado(): boolean {
-    return this.requerimiento.estatus === 'Calificado Comercial' ||
-      this.requerimiento.estatus === 'Calificado Técnico';
+  get esTecnico(): boolean {
+    return this.requerimiento.estatus === 'Calificado Técnico';
   }
 
-  /** Nombre del solicitante elegido en «Datos para Ingeniería» (o el que ya trae el requerimiento); null si no hay. */
-  get solicitanteResumen(): string | null {
-    const id = this.aprobacionForm.get('solicitanteId')?.value;
-    if (!id) return null;
-    return this.solicitantes.find(s => s.idSolicitante === id)?.nombreCompleto
-      ?? (id === this.requerimiento.solicitanteId ? this.requerimiento.solicitanteNombre : null)
-      ?? '#' + id;
+  get esComercial(): boolean {
+    return this.requerimiento.estatus === 'Calificado Comercial';
+  }
+
+  get esCalificadoGuardado(): boolean {
+    return this.esTecnico || this.esComercial;
+  }
+
+  get solicitanteResumen(): string {
+    return `${this.requerimiento.nombreContacto || ''} (${this.requerimiento.empresa || ''})`.trim();
+  }
+
+  get faltantesGuardados(): string[] {
+    return this.checklist
+      .filter(item => !!(this.requerimiento as any)[item.control])
+      .map(item => item.etiqueta);
   }
 
   get camposFaltantesAprobacion(): string[] {
     const faltantes: string[] = [];
-    const datos = this.aprobacionForm.getRawValue();
-    if (!datos.solicitanteId) {
-      faltantes.push('Solicitante');
-    }
-    if ((datos.titulo ?? '').trim().length > 500) {
+    if (this.esTecnico && this.aprobacionForm.get('titulo')?.hasError('maxlength')) {
       faltantes.push('Título (máximo 500 caracteres)');
     }
     return faltantes;
@@ -404,20 +498,27 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   get puedeAprobar(): boolean {
     return this.puedeCalificar &&
       !this.estaAprobado &&
-      this.esEstatusCalificado &&
-      this.camposFaltantesAprobacion.length === 0;
+      !this.esNoViable &&
+      this.esCalificadoGuardado &&
+      this.faltantesGuardados.length === 0 &&
+      !this.hayCambiosSinGuardar &&
+      (!this.esTecnico || this.aprobacionForm.valid);
   }
 
   aprobar(): void {
     if (!this.puedeAprobar || this.aprobando) return;
     this.aprobando = true;
 
-    const textoConfirmacion = this.totalFaltantes > 0
-      ? 'El requerimiento tiene información faltante marcada. ¿Deseas aprobarlo de todas formas para generar el folio en Solicitud de cliente?'
-      : 'Se creará el caso en Solicitud de cliente de Ingeniería y se generará un folio. Esta acción no se puede deshacer.';
+    const tituloConfirmacion = this.esComercial
+      ? '¿Aprobar requerimiento para cotización?'
+      : '¿Aprobar requerimiento para Ingeniería?';
+
+    const textoConfirmacion = this.esComercial
+      ? 'El requerimiento pasará directo a cotización sin crear caso en Ingeniería.'
+      : 'Se creará el caso en Solicitud de cliente en el módulo de Ingeniería.';
 
     Swal.fire({
-      title: '¿Aprobar para cotización?',
+      title: tituloConfirmacion,
       text: textoConfirmacion,
       icon: 'question',
       showCancelButton: true,
@@ -435,39 +536,49 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
   private ejecutarAprobacion(): void {
     if (this.aprobando && this.aprobadoResultado) return;
     this.aprobando = true;
+
     const datos = this.aprobacionForm.getRawValue();
-    this.reqService.aprobarRequerimiento(this.requerimiento.id, {
-      solicitanteId: datos.solicitanteId,
-      tipoProyecto: (datos.tipoProyecto ?? '').trim(),
-      titulo: (datos.titulo ?? '').trim()
-    }).subscribe({
+    const payload = this.esComercial
+      ? {}
+      : {
+          tipoProyecto: (datos.tipoProyecto ?? '').trim() || null,
+          titulo: (datos.titulo ?? '').trim() || null
+        };
+
+    this.reqService.aprobarRequerimiento(this.requerimiento.id, payload).subscribe({
       next: (res) => {
         this.aprobando = false;
+        this.huboGuardado = true;
         this.aprobadoResultado = res;
-        this.requerimiento.solicitanteNombre = this.solicitanteResumen ?? undefined;
-        this.requerimiento.solicitanteId = datos.solicitanteId;
-        this.requerimiento.tipoProyecto = (datos.tipoProyecto ?? '').trim();
-        this.requerimiento.titulo = (datos.titulo ?? '').trim();
+        if (this.esTecnico) {
+          this.requerimiento.tipoProyecto = (datos.tipoProyecto ?? '').trim() || undefined;
+          this.requerimiento.titulo = (datos.titulo ?? '').trim() || undefined;
+        }
         this.aprobacionForm.disable();
+        this.calificarForm.disable();
         this.requerimiento.estatus = res.estatus;
-        this.requerimiento.seguimientoProyectoId = res.idSeguimiento;
+        this.requerimiento.seguimientoProyectoId = res.idSeguimiento ?? undefined;
         this.calificarForm.get('estatus')?.setValue(res.estatus);
-        Swal.fire({
-          icon: 'success',
-          title: '¡Requerimiento aprobado!',
-          html: `Se generó el folio <b>${this.escapar(res.folio)}</b> en Solicitud de cliente.`
-        });
+
+        if (res.destino === 'cotizacion' || !res.idSeguimiento) {
+          Swal.fire({
+            icon: 'success',
+            title: '¡Requerimiento aprobado!',
+            html: 'El requerimiento fue aprobado para cotización y no requiere caso en Ingeniería.'
+          });
+        } else {
+          Swal.fire({
+            icon: 'success',
+            title: '¡Requerimiento aprobado!',
+            html: `Se generó el folio <b>${this.escapar(res.folio)}</b> en Solicitud de cliente.`
+          });
+        }
       },
       error: (err) => {
         this.aprobando = false;
         Swal.fire('No se pudo aprobar', this.mensajeDe(err), 'error');
       }
     });
-  }
-
-  onCancel(): void {
-    // Si se aprobó aquí, se cierra con `true`: el tablero solo se recarga con un valor verdadero.
-    this.dialogRef.close(!!this.aprobadoResultado);
   }
 
   // ------------------------------------------------------------------ utilidades

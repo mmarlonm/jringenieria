@@ -384,6 +384,7 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
           width: '880px',
           maxWidth: '95vw',
           autoFocus: false,
+          disableClose: true,
           data: {
             requerimiento: reqFull,
             currentUser: { id: this.reqService.usuarioActualId() },

@@ -9,7 +9,7 @@
             </div>
             <div class="mt-0.5 ml-7 text-[11px] font-semibold uppercase tracking-wider text-slate-400">SGC-PRO-COM-02</div>
         </div>
-        <button mat-icon-button type="button" (click)="onCancel()" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
+        <button mat-icon-button type="button" (click)="intentarCerrar()" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar">
             <mat-icon>close</mat-icon>
         </button>
     </div>
@@ -295,41 +295,71 @@
         <div *ngIf="pestana === 'aprobacion'" class="flex flex-col gap-6">
 
             <!-- Banner si ya está aprobado -->
-            <div *ngIf="estaAprobado" class="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 p-4">
+            <div *ngIf="estaAprobado" class="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 p-4 banner-aprobado">
                 <div class="flex items-center gap-3">
                     <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-6 text-purple-600 dark:text-purple-400 shrink-0"></mat-icon>
                     <div>
                         <h4 class="font-bold text-sm text-purple-900 dark:text-purple-200">Requerimiento Aprobado para Cotización</h4>
-                        <p class="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
-                            Este requerimiento ya fue aprobado. Se generó el folio
-                            <strong class="font-bold">#{{ requerimiento.seguimientoProyectoId || aprobadoResultado?.idSeguimiento }}</strong>
-                            en Solicitud de cliente.
-                        </p>
-                        <div class="mt-2">
-                            <a href="#/engineering/solicitud-cliente" class="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 hover:text-purple-900 dark:text-purple-300 underline">
-                                <span>Ver en Solicitud de cliente</span>
-                                <mat-icon svgIcon="heroicons_outline:arrow-top-right-on-square" class="icon-size-3.5"></mat-icon>
-                            </a>
+                        <div *ngIf="requerimiento.seguimientoProyectoId || aprobadoResultado?.idSeguimiento; else bannerSinCaso">
+                            <p class="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
+                                Este requerimiento ya fue aprobado. Se generó el folio
+                                <strong class="font-bold">#{{ requerimiento.seguimientoProyectoId || aprobadoResultado?.idSeguimiento }}</strong>
+                                en Solicitud de cliente.
+                            </p>
+                            <div class="mt-2">
+                                <a href="#/engineering/solicitud-cliente" class="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 hover:text-purple-900 dark:text-purple-300 underline">
+                                    <span>Ver en Solicitud de cliente</span>
+                                    <mat-icon svgIcon="heroicons_outline:arrow-top-right-on-square" class="icon-size-3.5"></mat-icon>
+                                </a>
+                            </div>
                         </div>
+                        <ng-template #bannerSinCaso>
+                            <p class="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
+                                Este requerimiento pasó directo a cotización y no requirió caso en Ingeniería.
+                            </p>
+                            <div class="mt-2">
+                                <a href="#/dashboards/quote-products" class="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 hover:text-purple-900 dark:text-purple-300 underline enlace-cotizaciones">
+                                    <span>Ir a Cotizaciones</span>
+                                    <mat-icon svgIcon="heroicons_outline:arrow-top-right-on-square" class="icon-size-3.5"></mat-icon>
+                                </a>
+                            </div>
+                        </ng-template>
                     </div>
                 </div>
             </div>
 
-            <!-- Banner si faltan campos -->
-            <div *ngIf="camposFaltantesAprobacion.length > 0" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 p-4">
-                <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200">
-                        <mat-icon svgIcon="heroicons_outline:exclamation-triangle" class="icon-size-5 text-amber-600 shrink-0 mt-0.5"></mat-icon>
-                        <div>
-                            <p class="font-semibold">Para aprobar para cotización es obligatorio completar:</p>
-                            <p class="mt-1 font-bold">{{ camposFaltantesAprobacion.join(', ') }}</p>
-                        </div>
+            <!-- Banner si faltan casillas guardadas -->
+            <div *ngIf="faltantesGuardados.length > 0 && !estaAprobado" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 p-4 banner-faltantes">
+                <div class="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200">
+                    <mat-icon svgIcon="heroicons_outline:exclamation-triangle" class="icon-size-5 text-amber-600 shrink-0 mt-0.5"></mat-icon>
+                    <div>
+                        <p class="font-semibold">No se puede aprobar: falta información</p>
+                        <p class="mt-1 font-bold">{{ faltantesGuardados.join(', ') }}</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Banner si hay cambios sin guardar -->
+            <div *ngIf="hayCambiosSinGuardar && !estaAprobado" class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 p-4 banner-cambios-sin-guardar">
+                <div class="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-200">
+                    <mat-icon svgIcon="heroicons_outline:information-circle" class="icon-size-5 text-amber-600 shrink-0 mt-0.5"></mat-icon>
+                    <div>
+                        <p class="font-semibold">Tienes cambios sin guardar.</p>
+                        <p class="mt-0.5 text-xs">Guarda la calificación o el borrador antes de aprobar.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner si es Comercial -->
+            <div *ngIf="esComercial && !estaAprobado" class="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 p-4 banner-comercial-directo">
+                <div class="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
+                    <mat-icon svgIcon="heroicons_outline:information-circle" class="icon-size-5 text-blue-600 shrink-0"></mat-icon>
+                    <span>Este requerimiento pasa directo a cotización; no se abre caso en Ingeniería.</span>
                 </div>
             </div>
 
             <!-- Banner si no está calificado -->
-            <div *ngIf="!esEstatusCalificado && !estaAprobado" class="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 p-4">
+            <div *ngIf="!esCalificadoGuardado && !estaAprobado" class="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 p-4">
                 <div class="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
                     <mat-icon svgIcon="heroicons_outline:information-circle" class="icon-size-5 text-blue-600 shrink-0"></mat-icon>
                     <span>El requerimiento debe estar calificado como <strong>«Calificado Comercial»</strong> o <strong>«Calificado Técnico»</strong> para poder ser aprobado.</span>
@@ -351,7 +381,7 @@
                     </div>
                     <div>
                         <span class="text-xs text-slate-400 block">Solicitante</span>
-                        <span class="font-semibold resumen-solicitante" [ngClass]="{'text-amber-600': !solicitanteResumen}">
+                        <span class="font-semibold resumen-solicitante">
                             {{ solicitanteResumen || 'Sin definir' }}
                         </span>
                     </div>
@@ -370,21 +400,9 @@
                 </div>
             </div>
 
-            <!-- Datos que Ingeniería necesita para abrir el caso (ya no se capturan en el requerimiento) -->
-            <form *ngIf="!estaAprobado" [formGroup]="aprobacionForm" id="aprobacion-form"
+            <!-- Formulario para Técnico (tipo y título) -->
+            <form *ngIf="!estaAprobado && esTecnico" [formGroup]="aprobacionForm" id="aprobacion-form"
                   class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">
-                <div>
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Datos para Ingeniería</h4>
-                    <p class="text-xs text-slate-400 mt-1">Se piden al aprobar porque Ingeniería los necesita para abrir el caso.</p>
-                </div>
-                <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Solicitante</mat-label>
-                    <mat-select formControlName="solicitanteId" required>
-                        <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">{{ s.nombreCompleto }} ({{ s.empresa }})</mat-option>
-                    </mat-select>
-                    <mat-hint *ngIf="errorSolicitantes" class="text-red-600">{{ errorSolicitantes }}</mat-hint>
-                    <mat-error *ngIf="aprobacionForm.get('solicitanteId')?.hasError('required')">El solicitante es obligatorio</mat-error>
-                </mat-form-field>
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Tipo de proyecto (opcional)</mat-label>
                     <mat-select formControlName="tipoProyecto">
@@ -406,7 +424,9 @@
                 <div>
                     <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Aprobar para cotización</h3>
                     <p class="text-xs text-slate-400 mt-1 max-w-md">
-                        Al aprobar, el requerimiento se convertirá en un caso de Ingeniería y generará un folio en Solicitud de cliente.
+                        {{ esComercial
+                            ? 'Al aprobar, el requerimiento pasará directo a cotización sin abrir caso en Ingeniería.'
+                            : 'Al aprobar, el requerimiento se convertirá en un caso de Ingeniería y generará un folio en Solicitud de cliente.' }}
                     </p>
                 </div>
                 <button id="btn-aprobar" mat-flat-button color="primary" type="button" class="mt-2 px-6 h-11 rounded-xl"
@@ -424,11 +444,14 @@
         <span class="hidden sm:block text-xs text-slate-400">
             {{ pestana === 'clasificacion' || pestana === 'checklist'
                 ? 'La clasificación y el checklist se guardan con «Guardar calificación».'
-                : (pestana === 'aprobacion' ? 'La aprobación genera el caso en Solicitud de cliente.' : 'Los archivos y seguimientos se guardan al instante.') }}
+                : (pestana === 'aprobacion' ? 'La aprobación genera el caso o pasa directo a cotización.' : 'Los archivos y seguimientos se guardan al instante.') }}
         </span>
         <div class="flex items-center gap-2 ml-auto">
-            <button mat-button type="button" (click)="onCancel()">{{ estaAprobado ? 'Cerrar' : 'Cancelar' }}</button>
-            <button *ngIf="pestana !== 'aprobacion'" mat-flat-button color="primary" type="submit" form="calificar-form" [disabled]="!puedeCalificar || calificarForm.invalid || guardando || estaAprobado">
+            <button mat-button type="button" (click)="intentarCerrar()">{{ estaAprobado ? 'Cerrar' : 'Cancelar' }}</button>
+            <button *ngIf="puedeCalificar && !estaAprobado && !esNoViable" mat-stroked-button type="button" (click)="guardarBorrador()" [disabled]="guardando || guardandoBorrador">
+                {{ guardandoBorrador ? 'Guardando borrador…' : 'Guardar borrador' }}
+            </button>
+            <button *ngIf="pestana === 'clasificacion' || pestana === 'checklist'" mat-flat-button color="primary" type="submit" form="calificar-form" [disabled]="!puedeCalificar || calificarForm.invalid || guardando || estaAprobado">
                 {{ guardando ? 'Guardando…' : 'Guardar calificación' }}
             </button>
         </div>
