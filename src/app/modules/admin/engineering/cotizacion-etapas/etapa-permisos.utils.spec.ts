@@ -19,18 +19,20 @@ describe('etapa-permisos.utils', () => {
         expect(puedeAutorizar(null, 42, false)).toBeFalse();
     });
 
-    it('si no hay autorizador designado, cualquiera con permiso puede autorizar', () => {
+    it('Sin_autorizador_designado_solo_un_administrador_puede_autorizar', () => {
         const sinDesignado: CotizacionEtapaDto = {
             ...baseEtapa,
             autorizaUsuarioId: null
         };
-        expect(puedeAutorizar(sinDesignado, 10, false)).toBeTrue();
-        expect(puedeAutorizar(sinDesignado, 99, false)).toBeTrue();
+        expect(puedeAutorizar(sinDesignado, 10, false)).toBeFalse();
+        expect(puedeAutorizar(sinDesignado, 99, false)).toBeFalse();
+        expect(puedeAutorizar(sinDesignado, 10, true)).toBeTrue();
     });
 
-    it('si hay autorizador designado, solo ese usuario puede autorizar', () => {
+    it('Con_autorizador_designado_solo_ese_usuario_o_un_administrador', () => {
         expect(puedeAutorizar(baseEtapa, 42, false)).toBeTrue();
         expect(puedeAutorizar(baseEtapa, 43, false)).toBeFalse();
         expect(puedeAutorizar(baseEtapa, 1, false)).toBeFalse();
+        expect(puedeAutorizar(baseEtapa, 43, true)).toBeTrue();
     });
 });

@@ -53,7 +53,7 @@ export const ETAPAS: EtapaConfig[] = [
     {
         numero: 5,
         ruta: 'propuesta-tecnico-comercial',
-        titulo: 'Propuesta técnico-comercial',
+        titulo: 'Cotización técnico-comercial',
         usaInformacion: false,
         usaFechaProgramada: false,
         usaMonto: true,

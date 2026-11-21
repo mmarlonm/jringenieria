@@ -12,7 +12,7 @@ describe('etapas.config', () => {
             { numero: 2, ruta: 'levantamiento-tecnico', titulo: 'Levantamiento técnico' },
             { numero: 3, ruta: 'diseno-calculo', titulo: 'Diseño/Cálculo e Ingeniería' },
             { numero: 4, ruta: 'presupuesto-tecnico', titulo: 'Presupuesto técnico' },
-            { numero: 5, ruta: 'propuesta-tecnico-comercial', titulo: 'Propuesta técnico-comercial' }
+            { numero: 5, ruta: 'propuesta-tecnico-comercial', titulo: 'Cotización técnico-comercial' }
         ];
 
         esperado.forEach((esp) => {
@@ -21,6 +21,13 @@ describe('etapas.config', () => {
             expect(config?.ruta).toBe(esp.ruta);
             expect(config?.titulo).toBe(esp.titulo);
         });
+    });
+
+    it('La_etapa_5_se_llama_Cotizacion_tecnico_comercial_y_conserva_su_ruta', () => {
+        const config = obtenerEtapaConfig(5);
+        expect(config).toBeDefined();
+        expect(config?.titulo).toBe('Cotización técnico-comercial');
+        expect(config?.ruta).toBe('propuesta-tecnico-comercial');
     });
 
     it('debe configurar correctamente las etapas siguientes permitidas', () => {

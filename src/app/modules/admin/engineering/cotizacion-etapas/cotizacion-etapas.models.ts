@@ -3,7 +3,8 @@ export const ESTATUS_ETAPA = {
     EnProceso: 2,
     Autorizada: 3,
     Rechazada: 4,
-    NoAplica: 5
+    NoAplica: 5,
+    AutorizadaInterna: 6
 } as const;
 
 export const INFORMACION = {
@@ -42,6 +43,7 @@ export interface CotizacionEtapasArchivoCasoDto {
 export interface CotizacionEtapasRevisionDto {
     numero: number;
     fechaElaboracion?: string | null;
+    elaboradoPorUsuarioId?: number | null;
     elaboradoPorNombre?: string | null;
     queCambio?: string | null;
     monto?: number | null;
@@ -49,8 +51,22 @@ export interface CotizacionEtapasRevisionDto {
     observacionesAutorizacion?: string | null;
     autorizadoPorNombre?: string | null;
     fechaAutorizacion?: string | null;
+    enviadaAutorizarFecha?: string | null;
+    enviadaAutorizarPorNombre?: string | null;
+    clienteResultado?: number | null;
+    clienteFecha?: string | null;
+    clienteReferencia?: string | null;
+    clienteObservaciones?: string | null;
+    clienteRegistradoPorNombre?: string | null;
     historica: boolean;
     carpetaLegada?: string | null;
+}
+
+export interface AutorizacionClienteDto {
+    resultado: 3 | 4;
+    fecha?: string | null;
+    referencia?: string | null;
+    observaciones?: string | null;
 }
 
 export interface CotizacionEtapaDto {

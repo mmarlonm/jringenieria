@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { CotizacionEtapasService } from './cotizacion-etapas.service';
 import { environment } from 'environments/environment';
-import { CrearCasoDto, GuardarEtapaDto, CambiarEstatusDto } from './cotizacion-etapas.models';
+import { CrearCasoDto, GuardarEtapaDto, CambiarEstatusDto, AutorizacionClienteDto } from './cotizacion-etapas.models';
 
 describe('CotizacionEtapasService', () => {
     let service: CotizacionEtapasService;
@@ -97,6 +97,28 @@ describe('CotizacionEtapasService', () => {
         service.reactivar(8).subscribe();
         const req = httpMock.expectOne(`${baseUrl}/8/reactivar`);
         expect(req.request.method).toBe('POST');
+        req.flush({});
+    });
+
+    it('enviarAutorizacion_hace_POST_a_enviar_autorizacion_con_cuerpo_vacio', () => {
+        service.enviarAutorizacion(10, 5).subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/10/etapas/5/enviar-autorizacion`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({});
+        req.flush({});
+    });
+
+    it('autorizacionCliente_hace_POST_con_el_cuerpo_exacto', () => {
+        const dto: AutorizacionClienteDto = {
+            resultado: 3,
+            fecha: '2026-11-20',
+            referencia: 'OC-1234',
+            observaciones: 'Aprobado sin cambios'
+        };
+        service.autorizacionCliente(10, dto).subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/10/autorizacion-cliente`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(dto);
         req.flush({});
     });
 

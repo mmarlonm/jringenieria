@@ -54,6 +54,24 @@ describe('Navigation Data (mock-api)', () => {
                 expect(cincoAntes).toEqual(idsCincoEtapas, `Las 5 etapas deben preceder a control-ejecucion en ${nombre}`);
             });
 
+            it('El_menu_muestra_Cotizacion_tecnico_comercial_con_el_mismo_id_y_enlace', () => {
+                function buscarItem(items: FuseNavigationItem[], id: string): FuseNavigationItem | undefined {
+                    for (const item of items) {
+                        if (item.id === id) return item;
+                        if (item.children) {
+                            const enc = buscarItem(item.children, id);
+                            if (enc) return enc;
+                        }
+                    }
+                    return undefined;
+                }
+
+                const item = buscarItem(nav, 'ingenieria.propuesta-tecnico-comercial');
+                expect(item).toBeDefined(`Debe existir ingenieria.propuesta-tecnico-comercial en ${nombre}`);
+                expect(item?.title).toBe('Cotización técnico-comercial');
+                expect(item?.link).toBe('/engineering/propuesta-tecnico-comercial');
+            });
+
             it('debe tener el grupo finanzas con Dashboard, Bancos, CFDI, Créditos, Cobranza, Conciliación y Despacho, en el orden del proceso, inmediatamente después de rrhh', () => {
                 const indiceRrhh = nav.findIndex((i) => i.id === 'rrhh');
                 expect(indiceRrhh).toBeGreaterThanOrEqual(0, `No existe el grupo rrhh en ${nombre}`);
