@@ -66,6 +66,35 @@ export class IsoDocumentacionComponent implements OnInit {
     paginas: { [key: string]: number } = {};
     pageSize = 12;
 
+    // Buscador general en todos los apartados y subcarpetas
+    busquedaGeneral: string = '';
+
+    get busquedaGeneralActiva(): boolean {
+        return !!(this.busquedaGeneral && this.busquedaGeneral.trim().length > 0);
+    }
+
+    get apartadosFiltrados(): IsoApartado[] {
+        if (!this.busquedaGeneralActiva) {
+            return this.apartados;
+        }
+        const term = this.normalizar(this.busquedaGeneral);
+        return this.apartados.filter((cat) => {
+            const catCoincide = this.normalizar(cat.label || '').includes(term) || this.normalizar(cat.nombre || '').includes(term);
+            const tieneArchivos = (this.cachedFiles[cat.nombre] || []).length > 0;
+            const tieneSubcarpetas = (this.cachedSubcarpetas[cat.nombre] || []).length > 0;
+            return catCoincide || tieneArchivos || tieneSubcarpetas;
+        });
+    }
+
+    get totalArchivosEncontrados(): number {
+        if (!this.busquedaGeneralActiva) return 0;
+        return this.apartadosFiltrados.reduce((acc, cat) => acc + (this.cachedFiles[cat.nombre] || []).length, 0);
+    }
+
+    get totalApartadosConCoincidencias(): number {
+        return this.apartadosFiltrados.length;
+    }
+
     isLoading = false;
     mostrarBitacora = false;
     bitacoraItems: IsoBitacoraItem[] = [];
@@ -209,15 +238,89 @@ export class IsoDocumentacionComponent implements OnInit {
     // OPTIMIZACIÓN DE RENDIMIENTO: ÍNDICES EN MEMORIA (O(1)) Y PAGINACIÓN
     // =========================================================================
 
+    normalizar(text: string | null | undefined): string {
+        if (!text) return '';
+        return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    }
+
+    onBusquedaGeneralChange(): void {
+        for (const cat of this.apartados) {
+            this.paginas[cat.nombre] = 1;
+        }
+        this.reindexarArchivos();
+        this._cdr.markForCheck();
+    }
+
+    limpiarBusquedaGeneral(): void {
+        this.busquedaGeneral = '';
+        this.onBusquedaGeneralChange();
+    }
+
+    getFileNameOnly(path: string | undefined): string {
+        if (!path) return '';
+        return path.split('/').pop() || path;
+    }
+
+    getFileFolderPath(path: string | undefined): string {
+        if (!path || !path.includes('/')) return '';
+        const parts = path.split('/');
+        parts.pop();
+        return parts.join('/');
+    }
+
     reindexarArchivos(): void {
         this.cachedSubcarpetas = {};
         this.cachedFiles = {};
 
+        const isGlobal = this.busquedaGeneralActiva;
+        const globalTerm = isGlobal ? this.normalizar(this.busquedaGeneral) : '';
+
         for (const cat of this.apartados) {
-            // Indexar subcarpetas (tanto de carpetas en disco vacías como de archivos)
             const subSet = new Set<string>();
             const activeSub = this.activeSubcarpetas[cat.nombre];
+            const catCoincide = isGlobal && (
+                this.normalizar(cat.label || '').includes(globalTerm) ||
+                this.normalizar(cat.nombre || '').includes(globalTerm)
+            );
 
+            if (isGlobal) {
+                // Modo búsqueda general:
+                // 1. Indexar subcarpetas que coincidan con el término
+                if (this.subcarpetas && this.subcarpetas.length > 0) {
+                    for (const s of this.subcarpetas) {
+                        if (s.tipo === cat.nombre && s.nombreSubcarpeta) {
+                            if (catCoincide || this.normalizar(s.nombreSubcarpeta).includes(globalTerm)) {
+                                subSet.add(s.nombreSubcarpeta);
+                            }
+                        }
+                    }
+                }
+                for (const a of this.archivos) {
+                    if (a.tipo === cat.nombre && a.nombreArchivo && a.nombreArchivo.includes('/')) {
+                        const folderPath = this.getFileFolderPath(a.nombreArchivo);
+                        if (folderPath && (catCoincide || this.normalizar(folderPath).includes(globalTerm))) {
+                            subSet.add(folderPath);
+                        }
+                    }
+                }
+                this.cachedSubcarpetas[cat.nombre] = Array.from(subSet).sort();
+
+                // 2. Indexar archivos que coincidan (o todos si catCoincide es true)
+                const matchingFiles = this.archivos.filter((a) => {
+                    if (a.tipo !== cat.nombre || !a.nombreArchivo) return false;
+                    if (catCoincide) return true;
+                    const nombreNorm = this.normalizar(a.nombreArchivo);
+                    return nombreNorm.includes(globalTerm);
+                });
+
+                this.cachedFiles[cat.nombre] = matchingFiles;
+                if (!this.paginas[cat.nombre]) {
+                    this.paginas[cat.nombre] = 1;
+                }
+                continue;
+            }
+
+            // Indexar subcarpetas (tanto de carpetas en disco vacías como de archivos)
             // 1. De la lista de subcarpetas creadas físicamente en disco (incluso vacías)
             if (this.subcarpetas && this.subcarpetas.length > 0) {
                 for (const s of this.subcarpetas) {
@@ -321,6 +424,9 @@ export class IsoDocumentacionComponent implements OnInit {
 
     getFileDisplayName(file: any, categoryName: string): string {
         if (!file || !file.nombreArchivo) return '';
+        if (this.busquedaGeneralActiva) {
+            return this.getFileNameOnly(file.nombreArchivo);
+        }
         const activeSub = this.activeSubcarpetas[categoryName];
         if (activeSub && file.nombreArchivo.startsWith(activeSub + '/')) {
             return file.nombreArchivo.substring(activeSub.length + 1);
@@ -575,6 +681,9 @@ export class IsoDocumentacionComponent implements OnInit {
     }
 
     navegarSubcarpeta(categoryName: string, subcarpeta: string | null): void {
+        if (this.busquedaGeneralActiva) {
+            this.busquedaGeneral = '';
+        }
         if (subcarpeta) {
             const current = this.activeSubcarpetas[categoryName];
             if (current && !subcarpeta.startsWith(current)) {

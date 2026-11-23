@@ -2,7 +2,7 @@
   <div class="w-full">
     
     <!-- Dynamic Categories Header & Config / Actions Button (Idéntico a Control de Ejecución) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-6 gap-4">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-slate-100 mb-6 gap-4">
       <div>
         <h3 class="text-lg font-black text-slate-800 uppercase tracking-wide flex items-center gap-3">
           <div class="p-2 bg-indigo-50 rounded-xl text-indigo-600">
@@ -13,27 +13,80 @@
         <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-1">Sube y organiza los documentos de ISO 9001 por apartados</p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <!-- Buscador General -->
+        <div class="relative w-full sm:w-72 md:w-80">
+          <mat-form-field class="w-full fuse-mat-dense fuse-mat-rounded" appearance="outline" subscriptSizing="dynamic">
+            <mat-icon matPrefix class="icon-size-4.5 text-slate-400 ml-1 mr-2" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+            <input matInput
+              [(ngModel)]="busquedaGeneral"
+              (ngModelChange)="onBusquedaGeneralChange()"
+              placeholder="Buscar en todos los apartados..."
+              autocomplete="off">
+            <button *ngIf="busquedaGeneral" mat-icon-button matSuffix (click)="limpiarBusquedaGeneral()" type="button"
+              class="w-6 h-6 min-h-6 min-w-6 mr-1 text-slate-400 hover:text-slate-600" matTooltip="Limpiar búsqueda">
+              <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+
         <!-- Bitacora Button -->
         <button mat-stroked-button type="button" (click)="abrirBitacora()"
           matTooltip="Ver historial de auditoría de actividad"
-          class="!rounded-xl shadow-xs bg-white hover:bg-slate-50 text-slate-700">
+          class="!rounded-xl shadow-xs bg-white hover:bg-slate-50 text-slate-700 whitespace-nowrap">
           <mat-icon class="icon-size-5 mr-1 text-indigo-600" [svgIcon]="'heroicons_outline:clipboard-document-list'"></mat-icon>
           Bitácora
         </button>
 
         <!-- Nuevo Apartado Button -->
-        <button *ngIf="permisos.agregarCarpetas" mat-flat-button color="primary" type="button" (click)="crearApartado()" class="!rounded-xl shadow-md hover:shadow-lg transition-all">
+        <button *ngIf="permisos.agregarCarpetas" mat-flat-button color="primary" type="button" (click)="crearApartado()" class="!rounded-xl shadow-md hover:shadow-lg transition-all whitespace-nowrap">
           <mat-icon class="icon-size-5 mr-2" [svgIcon]="'heroicons_outline:folder-plus'"></mat-icon>
           Nuevo Apartado
         </button>
       </div>
     </div>
 
+    <!-- BANNER DE RESULTADOS DE BÚSQUEDA GENERAL -->
+    <div *ngIf="!isLoading && busquedaGeneralActiva"
+      class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 mb-6 bg-indigo-50/80 border border-indigo-200/80 rounded-2xl shadow-xs text-xs gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="p-1.5 bg-indigo-600 text-white rounded-lg">
+          <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+        </div>
+        <div>
+          <span class="font-bold text-slate-700">Resultados de búsqueda para: </span>
+          <span class="font-black text-indigo-950 bg-white px-2 py-0.5 rounded-md border border-indigo-200">"{{ busquedaGeneral }}"</span>
+          <span class="text-slate-500 ml-2">
+            ({{ totalArchivosEncontrados }} {{ totalArchivosEncontrados === 1 ? 'archivo encontrado' : 'archivos encontrados' }} en {{ totalApartadosConCoincidencias }} {{ totalApartadosConCoincidencias === 1 ? 'apartado' : 'apartados' }})
+          </span>
+        </div>
+      </div>
+      <button mat-button color="primary" type="button" (click)="limpiarBusquedaGeneral()" class="!rounded-lg !text-xs !py-1 !px-2.5 font-bold">
+        <mat-icon class="icon-size-3.5 mr-1" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
+        Limpiar búsqueda
+      </button>
+    </div>
+
     <!-- SPINNER -->
     <div *ngIf="isLoading" class="flex flex-col items-center justify-center p-20 space-y-3">
       <mat-spinner diameter="40" strokeWidth="4"></mat-spinner>
       <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cargando apartados ISO...</span>
+    </div>
+
+    <!-- ZERO STATE CUANDO LA BÚSQUEDA GENERAL NO TIENE RESULTADOS -->
+    <div *ngIf="!isLoading && busquedaGeneralActiva && apartadosFiltrados.length === 0"
+      class="flex flex-col items-center justify-center p-12 sm:p-20 bg-white rounded-2xl border-2 border-dashed border-slate-200 text-center shadow-xs">
+      <div class="p-4 bg-indigo-50 rounded-2xl text-indigo-600 mb-3">
+        <mat-icon class="icon-size-10" [svgIcon]="'heroicons_outline:document-magnifying-glass'"></mat-icon>
+      </div>
+      <h3 class="text-base font-black text-slate-800 uppercase tracking-wide">Sin resultados encontrados</h3>
+      <p class="text-xs text-slate-400 font-semibold mt-1 max-w-md">
+        No se encontraron archivos, subcarpetas ni apartados que coincidan con <strong class="text-slate-700">"{{ busquedaGeneral }}"</strong>.
+      </p>
+      <button mat-stroked-button color="primary" type="button" (click)="limpiarBusquedaGeneral()" class="!rounded-xl mt-5 shadow-xs">
+        <mat-icon class="icon-size-4 mr-1.5" [svgIcon]="'heroicons_solid:arrow-path'"></mat-icon>
+        Restablecer búsqueda
+      </button>
     </div>
 
     <!-- ZERO STATE (CUANDO NO HAY APARTADOS CREADOS AÚN) -->
@@ -53,9 +106,9 @@
     </div>
 
     <!-- Categories Grid (Estructura, clases y diseño idénticos a Control de Ejecución) -->
-    <div *ngIf="!isLoading && apartados.length > 0" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+    <div *ngIf="!isLoading && apartados.length > 0 && (!busquedaGeneralActiva || apartadosFiltrados.length > 0)" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
 
-      <ng-container *ngFor="let cat of apartados; trackBy: trackByApartado">
+      <ng-container *ngFor="let cat of apartadosFiltrados; trackBy: trackByApartado">
         <div
           (dragover)="onDragOver($event, cat.nombre)"
           (dragleave)="onDragLeave($event, cat.nombre)"
@@ -109,11 +162,19 @@
           <!-- Breadcrumb / Folder navigation path -->
           <div class="flex items-center justify-between gap-1 mb-2 text-[10px] font-bold text-slate-400 uppercase flex-none">
             <div class="flex items-center gap-1">
-              <span class="cursor-pointer hover:text-indigo-600 transition-colors" (click)="navegarSubcarpeta(cat.nombre, null)">Inicio</span>
-              <span *ngIf="activeSubcarpetas[cat.nombre]" class="inline-flex items-center">
-                <mat-icon class="icon-size-3" [svgIcon]="'heroicons_solid:chevron-right'"></mat-icon>
-                <span class="text-indigo-600 font-extrabold truncate max-w-[120px]">{{ activeSubcarpetas[cat.nombre] }}</span>
-              </span>
+              <ng-container *ngIf="!busquedaGeneralActiva; else searchBreadcrumb">
+                <span class="cursor-pointer hover:text-indigo-600 transition-colors" (click)="navegarSubcarpeta(cat.nombre, null)">Inicio</span>
+                <span *ngIf="activeSubcarpetas[cat.nombre]" class="inline-flex items-center">
+                  <mat-icon class="icon-size-3" [svgIcon]="'heroicons_solid:chevron-right'"></mat-icon>
+                  <span class="text-indigo-600 font-extrabold truncate max-w-[120px]">{{ activeSubcarpetas[cat.nombre] }}</span>
+                </span>
+              </ng-container>
+              <ng-template #searchBreadcrumb>
+                <span class="text-indigo-600 font-bold flex items-center gap-1">
+                  <mat-icon class="icon-size-3" [svgIcon]="'heroicons_solid:magnifying-glass'"></mat-icon>
+                  Búsqueda global
+                </span>
+              </ng-template>
             </div>
             <span *ngIf="getFilesByCategory(cat.nombre).length > 0" class="text-slate-400 font-semibold">
               {{ getFilesByCategory(cat.nombre).length }} arch.
@@ -121,7 +182,7 @@
           </div>
 
           <!-- Micro-buscador rápido si hay más de 5 archivos en la tarjeta -->
-          <div *ngIf="getFilesByCategory(cat.nombre).length > 5 || searchQuery[cat.nombre]" class="mb-2 flex-none">
+          <div *ngIf="!busquedaGeneralActiva && (getFilesByCategory(cat.nombre).length > 5 || searchQuery[cat.nombre])" class="mb-2 flex-none">
             <input type="text" [(ngModel)]="searchQuery[cat.nombre]" (ngModelChange)="onSearchChanged(cat.nombre)"
               placeholder="Filtrar archivos..." 
               class="w-full px-2.5 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-lg text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -173,14 +234,21 @@
 
             <!-- Empty state -->
             <div *ngIf="getFilesByCategory(cat.nombre).length === 0 && getSubcarpetasByCategory(cat.nombre).length === 0 && !isUploading[cat.nombre]"
-              (click)="permisos.subir ? triggerFileInput(cat.nombre) : null"
-              class="flex flex-col items-center justify-center py-8 text-slate-400 border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:text-indigo-600 rounded-xl cursor-pointer transition-all bg-slate-50/50 hover:bg-indigo-50/20 group select-none">
+              (click)="!busquedaGeneralActiva && permisos.subir ? triggerFileInput(cat.nombre) : null"
+              class="flex flex-col items-center justify-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl transition-all bg-slate-50/50 group select-none"
+              [ngClass]="{'hover:border-indigo-400 hover:text-indigo-600 cursor-pointer hover:bg-indigo-50/20': !busquedaGeneralActiva && permisos.subir}">
               <mat-icon
-                class="icon-size-8 text-slate-300 group-hover:text-indigo-500 mb-2 transition-colors" [svgIcon]="'heroicons_outline:cloud-arrow-up'"></mat-icon>
+                class="icon-size-8 text-slate-300 mb-2 transition-colors"
+                [ngClass]="{'group-hover:text-indigo-500': !busquedaGeneralActiva && permisos.subir}"
+                [svgIcon]="busquedaGeneralActiva ? 'heroicons_outline:document-magnifying-glass' : 'heroicons_outline:cloud-arrow-up'"></mat-icon>
               <span
-                class="text-[10px] font-bold uppercase tracking-wider group-hover:text-indigo-600 transition-colors">Subir
-                Archivo</span>
-              <span class="text-[9px] text-slate-400 mt-1">Haz clic o arrastra archivos aquí (+100 o ZIP)</span>
+                class="text-[10px] font-bold uppercase tracking-wider transition-colors"
+                [ngClass]="{'group-hover:text-indigo-600': !busquedaGeneralActiva && permisos.subir}">
+                {{ busquedaGeneralActiva ? 'Sin archivos coincidentes' : 'Subir Archivo' }}
+              </span>
+              <span class="text-[9px] text-slate-400 mt-1">
+                {{ busquedaGeneralActiva ? 'No hay documentos que coincidan con la búsqueda' : 'Haz clic o arrastra archivos aquí (+100 o ZIP)' }}
+              </span>
             </div>
 
             <!-- List Paginated Files inside active folder/root (Paginación O(1) de alto rendimiento) -->
@@ -193,9 +261,17 @@
                   <span class="text-xs font-bold text-slate-700 hover:text-indigo-600 truncate block transition-colors" [title]="file.nombreArchivo">
                     {{ getFileDisplayName(file, cat.nombre) }}
                   </span>
-                  <span class="text-[9px] text-slate-400 block font-semibold mt-0.5" *ngIf="file.tamanoBytes">
-                    {{ formatSizeBytes(file.tamanoBytes) }}
-                  </span>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="text-[9px] text-slate-400 block font-semibold" *ngIf="file.tamanoBytes">
+                      {{ formatSizeBytes(file.tamanoBytes) }}
+                    </span>
+                    <span *ngIf="busquedaGeneralActiva && getFileFolderPath(file.nombreArchivo)"
+                      class="inline-flex items-center gap-0.5 text-[9px] font-bold text-indigo-600 bg-indigo-50/80 px-1.5 py-0.5 rounded border border-indigo-100 max-w-[140px] truncate"
+                      [title]="getFileFolderPath(file.nombreArchivo)">
+                      <mat-icon class="icon-size-2.5" [svgIcon]="'heroicons_solid:folder'"></mat-icon>
+                      {{ getFileFolderPath(file.nombreArchivo) }}
+                    </span>
+                  </div>
                 </div>
               </div>
 
