@@ -235,12 +235,28 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     busquedaRespuestas = '';
     filtroRespuestaFormulario: number | 'todos' = 'todos';
 
-    // Selección de encuestas para descarga de respuestas detalladas
+    // Selección de encuestas y modal de descarga de respuestas
+    modalDescargarRespuestasAbierto = false;
+    filtroTipoModalDescarga: 'todos' | 'producto' | 'servicio' = 'todos';
+    busquedaModalDescarga = '';
     encuestasSeleccionadas = new Set<number>();
     descargandoRespuestasDetalladas = false;
 
     get hayEncuestasSeleccionadas(): boolean {
         return this.encuestasSeleccionadas.size > 0;
+    }
+
+    get encuestasFiltradasModal(): FormularioProductoDto[] {
+        return this.formulariosList.filter(f => {
+            const fTipo = f.tipo || 'producto';
+            const matchesTipo = this.filtroTipoModalDescarga === 'todos' || fTipo === this.filtroTipoModalDescarga;
+            const busq = (this.busquedaModalDescarga || '').toLowerCase().trim();
+            const matchesBusqueda = !busq ||
+                (f.titulo && f.titulo.toLowerCase().includes(busq)) ||
+                (f.descripcion && f.descripcion.toLowerCase().includes(busq)) ||
+                (f.slug && f.slug.toLowerCase().includes(busq));
+            return matchesTipo && matchesBusqueda;
+        });
     }
 
     // Modales
@@ -1754,8 +1770,37 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     }
 
     // =========================================================================
-    // SELECCIÓN Y DESCARGA DE RESPUESTAS DETALLADAS POR ENCUESTA
+    // SELECCIÓN Y DESCARGA DE RESPUESTAS DETALLADAS POR ENCUESTA (MODAL GENERAL)
     // =========================================================================
+
+    abrirModalDescargarRespuestas(): void {
+        this.busquedaModalDescarga = '';
+        this.filtroTipoModalDescarga = 'todos';
+        this.modalDescargarRespuestasAbierto = true;
+        // Si no hay encuestas seleccionadas previamente, preseleccionamos las que tienen respuestas
+        if (this.encuestasSeleccionadas.size === 0) {
+            this.formulariosList.forEach(f => {
+                if (f.totalRespuestas > 0) {
+                    this.encuestasSeleccionadas.add(f.id);
+                }
+            });
+            // Si ninguna tiene respuestas registradas, seleccionamos todas
+            if (this.encuestasSeleccionadas.size === 0) {
+                this.formulariosList.forEach(f => this.encuestasSeleccionadas.add(f.id));
+            }
+        }
+        this._cdr.markForCheck();
+    }
+
+    cerrarModalDescargarRespuestas(): void {
+        this.modalDescargarRespuestasAbierto = false;
+        this._cdr.markForCheck();
+    }
+
+    cambiarFiltroTipoModalDescarga(tipo: 'todos' | 'producto' | 'servicio'): void {
+        this.filtroTipoModalDescarga = tipo;
+        this._cdr.markForCheck();
+    }
 
     toggleSeleccionEncuesta(formId: number, event?: Event): void {
         if (event) {
@@ -1774,7 +1819,8 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     }
 
     seleccionarTodasEncuestas(): void {
-        for (const f of this.formulariosFiltrados) {
+        const objetivo = this.encuestasFiltradasModal.length > 0 ? this.encuestasFiltradasModal : this.formulariosFiltrados;
+        for (const f of objetivo) {
             this.encuestasSeleccionadas.add(f.id);
         }
         this._cdr.markForCheck();
@@ -1792,6 +1838,8 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         }
 
         const seleccionadas = this.formulariosList.filter(f => this.encuestasSeleccionadas.has(f.id));
+        this.cerrarModalDescargarRespuestas();
+
         if (seleccionadas.length === 1) {
             this.descargarRespuestasEncuesta(seleccionadas[0]);
             return;

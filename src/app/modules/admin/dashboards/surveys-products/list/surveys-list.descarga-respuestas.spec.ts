@@ -63,6 +63,19 @@ describe('SurveysListComponent — Descarga de Respuestas Detalladas de Encuesta
         fechaCreacion: '2026-01-01T00:00:00Z'
     };
 
+    const formMockServicio: FormularioProductoDto = {
+        id: 102,
+        titulo: 'Encuesta Mantenimiento Subestaciones',
+        slug: 'encuesta-subestaciones',
+        descripcion: 'Calidad del servicio técnico',
+        tipo: 'servicio',
+        activo: true,
+        totalRespuestas: 5,
+        camposConfigJson: '[]',
+        disenoConfigJson: '{}',
+        fechaCreacion: '2026-02-01T00:00:00Z'
+    };
+
     const respuestasMock: FormularioProductoRespuestaDetalleDto[] = [
         {
             id: 201,
@@ -117,7 +130,7 @@ describe('SurveysListComponent — Descarga de Respuestas Detalladas de Encuesta
 
         snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
 
-        servicio.getFormularios.and.returnValue(of([formMock2026]));
+        servicio.getFormularios.and.returnValue(of([formMock2026, formMockServicio]));
         servicio.getSurveys.and.returnValue(of({ code: 200, message: '', data: [] }));
         servicio.obtenerRespuestasUnificadas.and.returnValue(of([]));
         servicio.obtenerDetalleRespuestaUnificada.and.returnValue(of({} as any));
@@ -209,7 +222,42 @@ describe('SurveysListComponent — Descarga de Respuestas Detalladas de Encuesta
         );
     });
 
+    it('modal de descarga: abrir, cerrar, filtrar por tipo y buscar', () => {
+        component.formulariosList = [formMock2026, formMockServicio];
+        component.encuestasSeleccionadas.clear();
+
+        // Abrir modal
+        component.abrirModalDescargarRespuestas();
+        expect(component.modalDescargarRespuestasAbierto).toBeTrue();
+        expect(component.filtroTipoModalDescarga).toBe('todos');
+        expect(component.busquedaModalDescarga).toBe('');
+        // Preselecciona encuestas con respuestas
+        expect(component.encuestasSeleccionadas.has(101)).toBeTrue();
+        expect(component.encuestasSeleccionadas.has(102)).toBeTrue();
+
+        // Filtrar por producto
+        component.cambiarFiltroTipoModalDescarga('producto');
+        expect(component.encuestasFiltradasModal.length).toBe(1);
+        expect(component.encuestasFiltradasModal[0].id).toBe(101);
+
+        // Filtrar por servicio
+        component.cambiarFiltroTipoModalDescarga('servicio');
+        expect(component.encuestasFiltradasModal.length).toBe(1);
+        expect(component.encuestasFiltradasModal[0].id).toBe(102);
+
+        // Filtrar por busqueda
+        component.cambiarFiltroTipoModalDescarga('todos');
+        component.busquedaModalDescarga = '2026';
+        expect(component.encuestasFiltradasModal.length).toBe(1);
+        expect(component.encuestasFiltradasModal[0].id).toBe(101);
+
+        // Cerrar modal
+        component.cerrarModalDescargarRespuestas();
+        expect(component.modalDescargarRespuestasAbierto).toBeFalse();
+    });
+
     it('toggleSeleccionEncuesta y gestion de seleccion multiple de encuestas', () => {
+        component.encuestasSeleccionadas.clear();
         expect(component.hayEncuestasSeleccionadas).toBeFalse();
         expect(component.estaEncuestaSeleccionada(101)).toBeFalse();
 
@@ -225,7 +273,9 @@ describe('SurveysListComponent — Descarga de Respuestas Detalladas de Encuesta
         expect(component.hayEncuestasSeleccionadas).toBeFalse();
 
         // Seleccionar todas y limpiar
-        component.formulariosList = [formMock2026, { ...formMock2026, id: 102 }];
+        component.formulariosList = [formMock2026, formMockServicio];
+        component.filtroTipoModalDescarga = 'todos';
+        component.busquedaModalDescarga = '';
         component.seleccionarTodasEncuestas();
         expect(component.encuestasSeleccionadas.size).toBe(2);
 
@@ -233,9 +283,9 @@ describe('SurveysListComponent — Descarga de Respuestas Detalladas de Encuesta
         expect(component.encuestasSeleccionadas.size).toBe(0);
     });
 
-    it('descargarRespuestasSeleccionadas procesa la descarga de las encuestas elegidas', fakeAsync(() => {
-        const form2: FormularioProductoDto = { ...formMock2026, id: 102, slug: 'encuesta-2', titulo: 'Encuesta 2' };
-        component.formulariosList = [formMock2026, form2];
+    it('descargarRespuestasSeleccionadas cierra el modal y procesa la descarga de las encuestas elegidas', fakeAsync(() => {
+        component.formulariosList = [formMock2026, formMockServicio];
+        component.modalDescargarRespuestasAbierto = true;
         component.toggleSeleccionEncuesta(101);
         component.toggleSeleccionEncuesta(102);
 
@@ -243,13 +293,15 @@ describe('SurveysListComponent — Descarga de Respuestas Detalladas de Encuesta
 
         component.descargarRespuestasSeleccionadas();
 
+        expect(component.modalDescargarRespuestasAbierto).toBeFalse();
+
         // Primera llamada inmediata (idx = 0)
         tick(10);
         expect(component.descargarRespuestasEncuesta).toHaveBeenCalledWith(formMock2026);
 
         // Segunda llamada con delay (idx = 1)
         tick(700);
-        expect(component.descargarRespuestasEncuesta).toHaveBeenCalledWith(form2);
+        expect(component.descargarRespuestasEncuesta).toHaveBeenCalledWith(formMockServicio);
     }));
 
     it('exportarRespuestasExcel delega a la descarga detallada cuando filtroFormularioId tiene una encuesta activa', () => {

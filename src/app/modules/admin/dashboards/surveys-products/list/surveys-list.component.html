@@ -56,6 +56,14 @@
                         <span>Importar Doc</span>
                     </button>
 
+                    <button (click)="abrirModalDescargarRespuestas()"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 shadow-2xs transition-colors cursor-pointer"
+                            matTooltip="Descargar respuestas detalladas de encuestas (CSV/Excel)">
+                        <mat-icon class="text-sm">download</mat-icon>
+                        <span>Descargar Respuestas</span>
+                    </button>
+
                     <button (click)="nuevoFormulario('producto')"
                             type="button"
                             class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-2xs transition-colors cursor-pointer">
@@ -255,39 +263,6 @@
 
                 </div>
 
-                <!-- BARRA DE ACCIÓN PARA ENCUESTAS SELECCIONADAS -->
-                <div *ngIf="hayEncuestasSeleccionadas"
-                     class="mb-6 p-4 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in duration-200">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                            <mat-icon class="text-sm">checklist</mat-icon>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800 dark:text-white">
-                                {{ encuestasSeleccionadas.size }} {{ encuestasSeleccionadas.size === 1 ? 'encuesta seleccionada' : 'encuestas seleccionadas' }}
-                            </h4>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                Descarga las respuestas de cada campo por cliente de las encuestas elegidas.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                        <button type="button"
-                                (click)="descargarRespuestasSeleccionadas()"
-                                [disabled]="descargandoRespuestasDetalladas"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50">
-                            <mat-icon class="text-sm">download</mat-icon>
-                            <span>{{ descargandoRespuestasDetalladas ? 'Descargando...' : 'Descargar respuestas' }}</span>
-                        </button>
-                        <button type="button"
-                                (click)="limpiarSeleccionEncuestas()"
-                                class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer">
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-
                 <!-- LISTADO DE TARJETAS DE FORMULARIOS -->
                 <div *ngIf="formulariosFiltrados.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -305,14 +280,7 @@
 
                             <!-- BADGES SUPERIORES: TIPO Y SLUG -->
 
-                            <div class="absolute top-3 left-3 flex items-center gap-1.5 z-10">
-                                <button type="button"
-                                        (click)="toggleSeleccionEncuesta(form.id, $event)"
-                                        [matTooltip]="estaEncuestaSeleccionada(form.id) ? 'Deseleccionar encuesta' : 'Seleccionar encuesta para descargar respuestas'"
-                                        class="w-6 h-6 rounded-lg flex items-center justify-center transition-all backdrop-blur-md border cursor-pointer"
-                                        [ngClass]="estaEncuestaSeleccionada(form.id) ? 'bg-emerald-500 text-white border-emerald-400 shadow-md ring-2 ring-emerald-400/50' : 'bg-black/40 text-white/80 hover:text-white border-white/20 hover:bg-black/60'">
-                                    <mat-icon class="text-xs">{{ estaEncuestaSeleccionada(form.id) ? 'check' : '' }}</mat-icon>
-                                </button>
+                            <div class="absolute top-3 left-3 flex items-center gap-1.5">
                                 <span *ngIf="(form.tipo || 'producto') === 'producto'"
                                       class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider bg-sky-600/90 text-white border border-sky-400/40 shadow-sm flex items-center gap-1 backdrop-blur-md">
                                     <mat-icon class="text-[12px]">inventory_2</mat-icon>
@@ -388,12 +356,6 @@
                                             class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
                                             matTooltip="Ver respuestas recibidas de esta encuesta">
                                         <mat-icon class="text-sm">reviews</mat-icon>
-                                    </button>
-                                    <button (click)="descargarRespuestasEncuesta(form)"
-                                            type="button"
-                                            class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
-                                            matTooltip="Descargar respuestas detalladas de esta encuesta (CSV)">
-                                        <mat-icon class="text-sm">download</mat-icon>
                                     </button>
                                     <button (click)="abrirEnNuevaPestana(form.slug)"
                                             class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
@@ -2367,6 +2329,187 @@ SECCIÓN 2: EVALUACIÓN DE CALIDAD TÉCNICA
                         class="rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5 disabled:opacity-40">
                     <mat-icon class="text-sm mr-1">check_circle</mat-icon>
                     <span>Aplicar e Importar al Formulario ({{ camposWordPrevisualizados.length }})</span>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL: DESCARGAR RESPUESTAS DE ENCUESTAS (SELECCIÓN Y TIPO)              -->
+    <!-- ========================================================================= -->
+    <div *ngIf="modalDescargarRespuestasAbierto"
+         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/75 backdrop-blur-md animate-fade-in">
+
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-scale-in">
+
+            <!-- HEADER DEL MODAL -->
+            <div class="px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs flex-shrink-0">
+                        <mat-icon class="text-xl">download</mat-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                            Descargar Respuestas de Encuestas
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Exporta todas las preguntas y respuestas por cliente en formato CSV/Excel.
+                        </p>
+                    </div>
+                </div>
+
+                <button (click)="cerrarModalDescargarRespuestas()"
+                        type="button"
+                        class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+                        matTooltip="Cerrar">
+                    <mat-icon class="text-base">close</mat-icon>
+                </button>
+            </div>
+
+            <!-- CUERPO SCROLLABLE DEL MODAL -->
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 min-h-0 bg-slate-50/40 dark:bg-slate-900/40">
+
+                <!-- FILTROS Y CONTROLES: TIPO Y BUSCADOR (RESPONSIVO) -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <!-- Selector de Tipo -->
+                    <div class="inline-flex p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl flex-shrink-0">
+                        <button type="button"
+                                (click)="cambiarFiltroTipoModalDescarga('todos')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                [ngClass]="filtroTipoModalDescarga === 'todos' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
+                            Todas
+                        </button>
+                        <button type="button"
+                                (click)="cambiarFiltroTipoModalDescarga('producto')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                                [ngClass]="filtroTipoModalDescarga === 'producto' ? 'bg-white dark:bg-slate-700 text-sky-700 dark:text-sky-300 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
+                            <mat-icon class="text-xs">inventory_2</mat-icon>
+                            <span>Productos</span>
+                        </button>
+                        <button type="button"
+                                (click)="cambiarFiltroTipoModalDescarga('servicio')"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                                [ngClass]="filtroTipoModalDescarga === 'servicio' ? 'bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-300 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
+                            <mat-icon class="text-xs">engineering</mat-icon>
+                            <span>Servicios</span>
+                        </button>
+                    </div>
+
+                    <!-- Buscador en modal -->
+                    <div class="relative flex-1 sm:max-w-xs">
+                        <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</mat-icon>
+                        <input type="text"
+                               [(ngModel)]="busquedaModalDescarga"
+                               placeholder="Buscar encuesta..."
+                               class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/30 text-slate-800 dark:text-white">
+                    </div>
+                </div>
+
+                <!-- BARRA DE SELECCIÓN RÁPIDA -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-700 dark:text-slate-200">
+                            {{ encuestasSeleccionadas.size }} de {{ formulariosList.length }} seleccionadas
+                        </span>
+                        <span *ngIf="encuestasSeleccionadas.size > 0" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                            (listas para exportar)
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button type="button"
+                                (click)="seleccionarTodasEncuestas()"
+                                class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                            Seleccionar visibles
+                        </button>
+                        <span class="text-slate-300 dark:text-slate-700">|</span>
+                        <button type="button"
+                                (click)="limpiarSeleccionEncuestas()"
+                                class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                            Deseleccionar todas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LISTA DE ENCUESTAS -->
+                <div class="space-y-2 max-h-72 sm:max-h-80 overflow-y-auto pr-1">
+                    <div *ngFor="let form of encuestasFiltradasModal"
+                         (click)="toggleSeleccionEncuesta(form.id)"
+                         class="p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none"
+                         [ngClass]="estaEncuestaSeleccionada(form.id) ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 shadow-xs' : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'">
+
+                        <div class="flex items-center gap-3 min-w-0">
+                            <!-- Checkbox personalizado -->
+                            <div class="w-5 h-5 rounded-lg flex items-center justify-center transition-all flex-shrink-0 border"
+                                 [ngClass]="estaEncuestaSeleccionada(form.id) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'">
+                                <mat-icon *ngIf="estaEncuestaSeleccionada(form.id)" class="text-xs">check</mat-icon>
+                            </div>
+
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-white truncate">
+                                        {{ form.titulo }}
+                                    </h4>
+                                    <!-- Badge Tipo -->
+                                    <span *ngIf="(form.tipo || 'producto') === 'producto'"
+                                          class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300">
+                                        Producto
+                                    </span>
+                                    <span *ngIf="form.tipo === 'servicio'"
+                                          class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300">
+                                        Servicio
+                                    </span>
+                                </div>
+                                <p *ngIf="form.descripcion" class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                    {{ form.descripcion }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Info respuestas y estado -->
+                        <div class="flex items-center gap-2 flex-shrink-0 text-right">
+                            <span class="text-[11px] font-bold px-2 py-1 rounded-lg"
+                                  [ngClass]="form.totalRespuestas > 0 ? 'bg-emerald-100/80 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'">
+                                {{ form.totalRespuestas }} {{ form.totalRespuestas === 1 ? 'respuesta' : 'respuestas' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Estado vacío cuando el filtro no coincide -->
+                    <div *ngIf="encuestasFiltradasModal.length === 0"
+                         class="p-8 text-center rounded-2xl bg-white dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700">
+                        <mat-icon class="text-3xl text-slate-400 mb-1">search_off</mat-icon>
+                        <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            No se encontraron encuestas
+                        </p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">
+                            Prueba cambiando el filtro de tipo o los términos de búsqueda.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- FOOTER DEL MODAL (RESPONSIVO) -->
+            <div class="px-5 sm:px-6 py-4 bg-slate-100/90 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 flex-shrink-0">
+                <button (click)="cerrarModalDescargarRespuestas()"
+                        type="button"
+                        class="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer text-center">
+                    Cancelar
+                </button>
+
+                <button (click)="descargarRespuestasSeleccionadas()"
+                        type="button"
+                        [disabled]="!hayEncuestasSeleccionadas || descargandoRespuestasDetalladas"
+                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all cursor-pointer">
+                    <mat-icon [class.animate-spin]="descargandoRespuestasDetalladas" class="text-sm">
+                        {{ descargandoRespuestasDetalladas ? 'refresh' : 'download' }}
+                    </mat-icon>
+                    <span>
+                        {{ descargandoRespuestasDetalladas ? 'Generando descarga...' : ('Descargar ' + encuestasSeleccionadas.size + ' ' + (encuestasSeleccionadas.size === 1 ? 'encuesta' : 'encuestas') + ' (.csv)') }}
+                    </span>
                 </button>
             </div>
 
