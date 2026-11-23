@@ -33,6 +33,7 @@ import {
     SurveysProductsService,
     FormularioProductoDto,
     FormularioProductoSaveDto,
+    FormularioProductoRespuestaDetalleDto,
     CampoConfig,
     DisenoConfig,
     PasoFormularioConfig,
@@ -233,6 +234,14 @@ export class SurveysListComponent implements OnInit, OnDestroy {
     errorCargaRespuestas = false;
     busquedaRespuestas = '';
     filtroRespuestaFormulario: number | 'todos' = 'todos';
+
+    // Selección de encuestas para descarga de respuestas detalladas
+    encuestasSeleccionadas = new Set<number>();
+    descargandoRespuestasDetalladas = false;
+
+    get hayEncuestasSeleccionadas(): boolean {
+        return this.encuestasSeleccionadas.size > 0;
+    }
 
     // Modales
     modalQrAbierto = false;
@@ -1744,12 +1753,299 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         this.cargandoDetalleRespuesta = false;
     }
 
+    // =========================================================================
+    // SELECCIÓN Y DESCARGA DE RESPUESTAS DETALLADAS POR ENCUESTA
+    // =========================================================================
+
+    toggleSeleccionEncuesta(formId: number, event?: Event): void {
+        if (event) {
+            event.stopPropagation();
+        }
+        if (this.encuestasSeleccionadas.has(formId)) {
+            this.encuestasSeleccionadas.delete(formId);
+        } else {
+            this.encuestasSeleccionadas.add(formId);
+        }
+        this._cdr.markForCheck();
+    }
+
+    estaEncuestaSeleccionada(formId: number): boolean {
+        return this.encuestasSeleccionadas.has(formId);
+    }
+
+    seleccionarTodasEncuestas(): void {
+        for (const f of this.formulariosFiltrados) {
+            this.encuestasSeleccionadas.add(f.id);
+        }
+        this._cdr.markForCheck();
+    }
+
+    limpiarSeleccionEncuestas(): void {
+        this.encuestasSeleccionadas.clear();
+        this._cdr.markForCheck();
+    }
+
+    descargarRespuestasSeleccionadas(): void {
+        if (this.encuestasSeleccionadas.size === 0) {
+            this._snackBar.open('Selecciona al menos una encuesta para descargar sus respuestas', 'Cerrar', { duration: 2500 });
+            return;
+        }
+
+        const seleccionadas = this.formulariosList.filter(f => this.encuestasSeleccionadas.has(f.id));
+        if (seleccionadas.length === 1) {
+            this.descargarRespuestasEncuesta(seleccionadas[0]);
+            return;
+        }
+
+        this._snackBar.open(`Descargando respuestas de ${seleccionadas.length} encuestas seleccionadas...`, '', { duration: 2500 });
+        seleccionadas.forEach((f, idx) => {
+            setTimeout(() => {
+                this.descargarRespuestasEncuesta(f);
+            }, idx * 600);
+        });
+    }
+
+    descargarArchivoCsv(csvContent: string, nombreArchivo: string): void {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    resolverValorOpcion(opciones: any[] | undefined, valor: any): string {
+        if (valor === null || valor === undefined || valor === '') return '—';
+        if (!opciones || opciones.length === 0) return String(valor);
+        const valStr = String(valor).trim();
+        for (const opt of opciones) {
+            if (typeof opt === 'string') {
+                if (opt === valStr || opt.startsWith(valStr + ' - ') || opt.startsWith(valStr + ' = ')) {
+                    return opt;
+                }
+            } else if (opt && typeof opt === 'object') {
+                const optVal = String(opt.valor ?? opt.value ?? '').trim();
+                const optEtq = String(opt.etiqueta ?? opt.label ?? optVal).trim();
+                if (optVal === valStr) {
+                    return optEtq;
+                }
+            }
+        }
+        return valStr;
+    }
+
+    resolverValorMatriz(columnasMatriz: ColumnaMatrizConfig[] | undefined, valor: any): string {
+        if (valor === null || valor === undefined || valor === '') return '—';
+        if (!columnasMatriz || columnasMatriz.length === 0) return String(valor);
+        const valStr = String(valor).trim();
+        const col = columnasMatriz.find(c => String(c.valor).trim() === valStr);
+        return col ? (col.etiqueta || col.valor) : valStr;
+    }
+
+    construirCsvRespuestasDetalladas(form: FormularioProductoDto, respuestas: FormularioProductoRespuestaDetalleDto[]): string {
+        let campos: CampoConfig[] = [];
+        try {
+            campos = JSON.parse(form.camposConfigJson || '[]');
+        } catch {
+            campos = [];
+        }
+
+        const baseHeaders = [
+            'ID',
+            'Fecha',
+            'Encuesta',
+            'Tipo',
+            'Cliente / Evaluador',
+            'Empresa',
+            'Correo Electrónico',
+            'Teléfono',
+            'Cargo / Puesto',
+            'Calificación General'
+        ];
+
+        interface ColumnaDinamica {
+            key: string;
+            etiqueta: string;
+            tipo: string;
+            campo: CampoConfig;
+        }
+
+        const columnasDinamicas: ColumnaDinamica[] = [];
+
+        for (const campo of campos) {
+            if (campo.tipo === 'section') continue;
+
+            if (campo.tipo === 'matrix') {
+                const filas = campo.filasMatriz || [];
+                if (filas.length > 0) {
+                    for (const f of filas) {
+                        const keyFila = `${campo.id}_${f.id}`;
+                        const label = `${campo.etiqueta || campo.id} — ${f.texto || f.id}`;
+                        columnasDinamicas.push({
+                            key: keyFila,
+                            etiqueta: label,
+                            tipo: 'matrix',
+                            campo
+                        });
+                    }
+                } else {
+                    columnasDinamicas.push({
+                        key: campo.id,
+                        etiqueta: campo.etiqueta || campo.id,
+                        tipo: 'matrix',
+                        campo
+                    });
+                }
+            } else {
+                columnasDinamicas.push({
+                    key: campo.id,
+                    etiqueta: campo.etiqueta || campo.id,
+                    tipo: campo.tipo,
+                    campo
+                });
+            }
+        }
+
+        const allHeaders = [...baseHeaders, ...columnasDinamicas.map(c => c.etiqueta)];
+
+        const escapeCsv = (val: any): string => {
+            if (val === null || val === undefined) return '';
+            const str = String(val);
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
+
+        const rows = respuestas.map(r => {
+            let rJson: { [key: string]: any } = {};
+            try {
+                rJson = JSON.parse(r.respuestasJson || '{}');
+            } catch {
+                rJson = {};
+            }
+
+            const nombre = r.nombreCliente || rJson['nombre'] || rJson['nombreCliente'] || rJson['evaluador'] || 'Anónimo';
+            const empresa = r.empresaCliente || rJson['empresa'] || rJson['empresaCliente'] || '—';
+            const email = r.emailCliente || rJson['email'] || rJson['correo'] || '—';
+            const telefono = r.telefonoCliente || rJson['telefono'] || rJson['tel'] || '—';
+            const cargo = r.cargoCliente || rJson['cargo'] || rJson['puesto'] || '—';
+            const calif = r.calificacionGeneral != null ? Number(r.calificacionGeneral).toFixed(1) : '—';
+            const fecha = this.formatearFechaMexico(r.fechaRegistro);
+
+            const baseVals = [
+                `#${r.id}`,
+                fecha,
+                form.titulo || 'Encuesta',
+                r.tipo || form.tipo || 'producto',
+                nombre,
+                empresa,
+                email,
+                telefono,
+                cargo,
+                calif
+            ];
+
+            const dynamicVals = columnasDinamicas.map(col => {
+                const rawVal = rJson[col.key];
+                if (rawVal === undefined || rawVal === null || rawVal === '') {
+                    return '—';
+                }
+
+                if (col.tipo === 'matrix') {
+                    return this.resolverValorMatriz(col.campo.columnasMatriz, rawVal);
+                }
+
+                if (col.tipo === 'radio' || col.tipo === 'select') {
+                    return this.resolverValorOpcion(col.campo.opciones, rawVal);
+                }
+
+                if (col.tipo === 'checkbox') {
+                    if (Array.isArray(rawVal)) {
+                        return rawVal.map(v => this.resolverValorOpcion(col.campo.opciones, v)).join(', ');
+                    }
+                    return this.resolverValorOpcion(col.campo.opciones, rawVal);
+                }
+
+                if (typeof rawVal === 'boolean') {
+                    return rawVal ? 'Sí' : 'No';
+                }
+
+                if (typeof rawVal === 'object') {
+                    return JSON.stringify(rawVal);
+                }
+
+                return String(rawVal);
+            });
+
+            return [...baseVals, ...dynamicVals].map(escapeCsv);
+        });
+
+        return '\uFEFF' + [allHeaders.map(escapeCsv).join(','), ...rows.map(row => row.join(','))].join('\n');
+    }
+
+    descargarRespuestasEncuesta(form: FormularioProductoDto, idsFiltrados?: Set<number>): void {
+        if (!form) return;
+        this.descargandoRespuestasDetalladas = true;
+        this._snackBar.open(`Generando reporte de "${form.titulo}"...`, '', { duration: 1500 });
+
+        this._surveyService.getRespuestasFormulario(form.id)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (respuestas) => {
+                    this.descargandoRespuestasDetalladas = false;
+                    let lista = respuestas || [];
+                    if (idsFiltrados && idsFiltrados.size > 0) {
+                        lista = lista.filter(r => idsFiltrados.has(r.id));
+                    }
+
+                    if (lista.length === 0) {
+                        this._snackBar.open(`"${form.titulo}" no tiene respuestas registradas para descargar`, 'Cerrar', { duration: 3000 });
+                        this._cdr.markForCheck();
+                        return;
+                    }
+
+                    const csvContent = this.construirCsvRespuestasDetalladas(form, lista);
+                    const slugLimpio = (form.slug || form.titulo || 'encuesta')
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '_')
+                        .replace(/^_+|_+$/g, '');
+                    const fecha = new Date().toISOString().slice(0, 10);
+                    const nombreArchivo = `Respuestas_${slugLimpio}_${fecha}.csv`;
+
+                    this.descargarArchivoCsv(csvContent, nombreArchivo);
+                    this._snackBar.open(`Se descargaron ${lista.length} respuestas con todos sus campos`, 'OK', { duration: 3500 });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.descargandoRespuestasDetalladas = false;
+                    console.error('Error al descargar respuestas del formulario:', err);
+                    this._snackBar.open('Error al obtener las respuestas para descargar', 'Cerrar', { duration: 3000 });
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
     exportarRespuestasExcel(): void {
         if (this.respuestasFiltradas.length === 0) {
             this._snackBar.open('No hay respuestas para exportar', 'Cerrar', { duration: 2500 });
             return;
         }
 
+        // Si se seleccionó una encuesta específica en el filtro de respuestas:
+        if (this.filtroFormularioId !== 'todos' && this.filtroFormularioId !== 0) {
+            const form = this.formulariosList.find(f => f.id === this.filtroFormularioId);
+            if (form) {
+                const idsFiltrados = new Set(this.respuestasFiltradas.map(r => r.id));
+                this.descargarRespuestasEncuesta(form, idsFiltrados);
+                return;
+            }
+        }
+
+        // Exportación general estándar (cuando se exportan múltiples encuestas combinadas o heredadas)
         const headers = ['ID', 'Tipo', 'Formulario', 'Cliente', 'Empresa', 'Correo', 'Teléfono', 'Cargo', 'Calificación', 'Fecha'];
         const escapeCsv = (val: string | number | null | undefined): string => {
             if (val === null || val === undefined) return '';
@@ -1774,15 +2070,7 @@ export class SurveysListComponent implements OnInit, OnDestroy {
         ]);
 
         const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Encuestas_Satisfaccion_Productos_${new Date().toISOString().slice(0, 10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        this.descargarArchivoCsv(csvContent, `Encuestas_Satisfaccion_Productos_${new Date().toISOString().slice(0, 10)}.csv`);
         this._snackBar.open('Reporte CSV descargado con éxito', 'Cerrar', { duration: 3000 });
     }
 
