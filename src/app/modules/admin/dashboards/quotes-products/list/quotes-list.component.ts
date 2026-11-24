@@ -649,7 +649,8 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
       maxHeight: '90vh',
       data: {
         cotizacionProductosId: quote.cotizacionProductosId,
-        informativa: !this.tieneRegistroSgc(quote)
+        informativa: quote.informativa ?? !this.tieneRegistroSgc(quote),
+        unidadNombre: quote.unidadDeNegocio?.nombre || quote.unidadDeNegocioNombre || null
       }
     });
   }

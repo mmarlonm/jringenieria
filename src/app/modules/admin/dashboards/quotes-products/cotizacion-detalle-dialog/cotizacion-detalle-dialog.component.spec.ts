@@ -15,18 +15,26 @@ describe('CotizacionDetalleDialogComponent', () => {
   let router: jasmine.SpyObj<Router>;
 
   const mockCabecera = {
-    cotizacionProductosId: 311,
-    folioContpaq: 'COT-1234',
-    nombreCliente: 'Cliente Ficticio',
-    nombreEmpresa: 'Cliente Ficticio SA de CV',
-    correo: 'contacto@ficticio.test',
-    telefono: '5512345678',
-    unidadDeNegocio: { nombre: 'Querétaro' },
-    createdDate: '2026-11-20T10:00:00',
-    total: 25000,
-    cotizacionProductosDetalles: [
-      { partida: 1, materialServicio: 'Sensor Óptico Local', cantidad: 2, unidad: 'PZA', precioUnitario: 12500 }
-    ]
+    code: 200,
+    message: '',
+    data: {
+      cotizacionProductosId: 311,
+      folioContpaq: 'COT-1234',
+      nombreCliente: 'Cliente Ficticio',
+      nombreEmpresa: 'Cliente Ficticio SA de CV',
+      correo: 'contacto@ficticio.test',
+      telefono: '5512345678',
+      createdDate: '2026-11-20T10:00:00',
+      total: 25000,
+      detalles: [
+        {
+          cantidad: 2,
+          precioUnitario: 12500,
+          descuento: 0,
+          producto: { nombreProducto: 'Sensor Óptico Local', codigoProducto: 'SEN-01' }
+        }
+      ]
+    }
   };
 
   const mockSgc: RespuestaObtenerSgc = {
@@ -127,7 +135,7 @@ describe('CotizacionDetalleDialogComponent', () => {
     }
   };
 
-  function crearComponente(data: any = { cotizacionProductosId: 311 }): void {
+  function crearComponente(data: any = { cotizacionProductosId: 311, unidadNombre: 'Querétaro' }): void {
     quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
     dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
     router = jasmine.createSpyObj('Router', ['navigate']);
@@ -371,5 +379,103 @@ describe('CotizacionDetalleDialogComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['dashboards/quote-products', 311]);
     expect(dialogRef.close).toHaveBeenCalled();
+  });
+
+  it('Informativa_con_forma_real_del_API_muestra_nombre_del_producto_e_importe_con_descuento', () => {
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
+    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    router = jasmine.createSpyObj('Router', ['navigate']);
+
+    const respuestaRealApi = {
+      code: 200,
+      message: '',
+      data: {
+        cotizacionProductosId: 400,
+        nombreCliente: 'Cliente Real',
+        folioContpaq: 'COT-99',
+        total: 180,
+        createdDate: '2026-11-20',
+        detalles: [
+          {
+            cantidad: 2,
+            precioUnitario: 100,
+            descuento: 20,
+            producto: { nombreProducto: 'Interruptor', codigoProducto: 'P-1' }
+          }
+        ]
+      }
+    };
+
+    quotesService.getQuoteById.and.returnValue(of(respuestaRealApi));
+    quotesService.origen.and.returnValue(of({ cotizacionProductosId: 400, requerimiento: null, lead: null }));
+
+    TestBed.configureTestingModule({
+      imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 400, informativa: true } },
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: QuotesService, useValue: quotesService },
+        { provide: Router, useValue: router }
+      ]
+    });
+
+    fixture = TestBed.createComponent(CotizacionDetalleDialogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const desc = fixture.nativeElement.querySelector('[data-testid="descripcion-partida"]');
+    const imp = fixture.nativeElement.querySelector('[data-testid="importe-partida"]');
+
+    expect(desc?.textContent?.trim()).toBe('Interruptor');
+    expect(imp?.textContent).toContain('180.00');
+  });
+
+  it('Partida_SGC_con_descuento_calcula_importe_restando_descuento', () => {
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
+    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    router = jasmine.createSpyObj('Router', ['navigate']);
+
+    const sgcConDescuento: RespuestaObtenerSgc = {
+      ...mockSgc,
+      partidas: [
+        {
+          partida: 1,
+          materialServicio: 'Cable UTP Cat6',
+          cantidad: 10,
+          unidad: 'MTR',
+          precioUnitario: 50,
+          descuento: 50,
+          tipoConcepto: 'Material',
+          tiempoEntregaDias: 1
+        }
+      ]
+    };
+
+    quotesService.getQuoteById.and.returnValue(of(mockCabecera));
+    quotesService.obtenerSgc.and.returnValue(of(sgcConDescuento));
+    quotesService.origen.and.returnValue(of(mockOrigen));
+
+    TestBed.configureTestingModule({
+      imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: QuotesService, useValue: quotesService },
+        { provide: Router, useValue: router }
+      ]
+    });
+
+    fixture = TestBed.createComponent(CotizacionDetalleDialogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const imp = fixture.nativeElement.querySelector('[data-testid="importe-partida"]');
+    expect(imp?.textContent).toContain('450.00');
+  });
+
+  it('Unidad_de_negocio_se_muestra_desde_los_datos_del_dialogo', () => {
+    crearComponente({ cotizacionProductosId: 311, unidadNombre: 'Sucursal Matriz' });
+
+    expect(q('unidad-negocio')?.textContent?.trim()).toBe('Sucursal Matriz');
   });
 });

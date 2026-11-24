@@ -69,7 +69,8 @@ export class QuotesBoardComponent implements OnChanges {
       maxHeight: '90vh',
       data: {
         cotizacionProductosId: q.cotizacionProductosId,
-        informativa: !!q.informativa
+        informativa: !!q.informativa,
+        unidadNombre: q.unidadDeNegocio?.nombre || null
       }
     });
   }

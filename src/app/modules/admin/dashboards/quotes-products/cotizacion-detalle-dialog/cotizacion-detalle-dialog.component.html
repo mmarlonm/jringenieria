@@ -58,8 +58,8 @@
         </div>
         <div>
           <span class="text-slate-400 block mb-0.5">Unidad de negocio:</span>
-          <span class="font-medium text-slate-700 dark:text-slate-300">
-            {{ cabecera?.unidadDeNegocio?.nombre || cabecera?.unidadDeNegocioNombre || 'Sin unidad' }}
+          <span data-testid="unidad-negocio" class="font-medium text-slate-700 dark:text-slate-300">
+            {{ data.unidadNombre || 'Sin unidad' }}
           </span>
         </div>
         <div>
@@ -133,11 +133,11 @@
           <tbody>
             <tr *ngFor="let p of partidas; let i = index" class="border-b border-slate-100 dark:border-slate-800">
               <td class="py-2 pr-2 font-mono font-semibold">{{ p.partida || (i + 1) }}</td>
-              <td class="py-2 px-2 font-medium">{{ p.materialServicio || p.descripcion || p.nombreProducto }}</td>
+              <td class="py-2 px-2 font-medium" data-testid="descripcion-partida">{{ descripcionPartida(p) }}</td>
               <td class="py-2 px-2 text-right tabular-nums">{{ p.cantidad }}</td>
-              <td class="py-2 px-2 text-center">{{ p.unidad }}</td>
+              <td class="py-2 px-2 text-center">{{ unidadPartida(p) }}</td>
               <td class="py-2 px-2 text-right tabular-nums">{{ p.precioUnitario | currency:moneda:'symbol':'1.2-2' }}</td>
-              <td class="py-2 pl-2 text-right font-bold tabular-nums">{{ (p.cantidad * p.precioUnitario) | currency:moneda:'symbol':'1.2-2' }}</td>
+              <td class="py-2 pl-2 text-right font-bold tabular-nums" data-testid="importe-partida">{{ importePartida(p) | currency:moneda:'symbol':'1.2-2' }}</td>
             </tr>
           </tbody>
         </table>
@@ -190,7 +190,7 @@
             El requerimiento no tiene lead asociado.
           </div>
 
-          <div *ngIf="origen?.lead as lead" class="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:purple-900 flex flex-col gap-2">
+          <div *ngIf="origen?.lead as lead" class="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 flex flex-col gap-2">
             <div class="text-xs font-bold text-purple-900 dark:text-purple-200 uppercase tracking-wider flex items-center gap-1.5">
               <mat-icon class="icon-size-4 text-purple-600">groups</mat-icon>
               Lead de origen

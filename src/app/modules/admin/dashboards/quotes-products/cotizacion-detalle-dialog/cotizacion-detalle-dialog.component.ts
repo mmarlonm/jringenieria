@@ -8,10 +8,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { QuotesService } from '../quotes-products.service';
 import { CotizacionOrigen, RespuestaObtenerSgc } from '../quotes-products.types';
 import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
+import { importeLinea } from '../sgc/cotizacion-sgc.utils';
 
 export interface CotizacionDetalleDialogData {
   cotizacionProductosId: number;
   informativa?: boolean;
+  unidadNombre?: string | null;
 }
 
 @Component({
@@ -109,7 +111,19 @@ export class CotizacionDetalleDialogComponent implements OnInit {
     if (this.sgcRes?.partidas && this.sgcRes.partidas.length > 0) {
       return this.sgcRes.partidas;
     }
-    return this.cabecera?.cotizacionProductosDetalles || this.cabecera?.detalles || [];
+    return this.cabecera?.detalles || [];
+  }
+
+  importePartida(p: any): number {
+    return importeLinea(p?.cantidad || 0, p?.precioUnitario || 0, p?.descuento || 0);
+  }
+
+  descripcionPartida(p: any): string {
+    return p?.materialServicio || p?.descripcion || p?.producto?.nombreProducto || 'Sin descripción';
+  }
+
+  unidadPartida(p: any): string {
+    return p?.unidad || '—';
   }
 
   get total(): number {
