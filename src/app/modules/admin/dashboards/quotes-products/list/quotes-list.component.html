@@ -322,6 +322,18 @@
               </td>
             </ng-container>
 
+            <!-- Ver detalle -->
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef class="sticky right-0 bg-white z-10 w-12 text-center"></th>
+              <td mat-cell *matCellDef="let quote" class="sticky right-0 bg-white z-10 w-12 text-center">
+                <button mat-icon-button type="button" [matTooltip]="'Ver detalle'"
+                  [attr.data-testid]="'ver-detalle-' + quote.cotizacionProductosId"
+                  (click)="verDetalle(quote); $event.stopPropagation()">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
             <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
             <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
           </table>
@@ -433,6 +445,12 @@
 
               <button mat-icon-button color="primary" (click)="enviarEncuesta(quote)">
                 <mat-icon>send</mat-icon>
+              </button>
+
+              <button mat-icon-button type="button" [matTooltip]="'Ver detalle'"
+                [attr.data-testid]="'ver-detalle-mobile-' + quote.cotizacionProductosId"
+                (click)="verDetalle(quote); $event.stopPropagation()">
+                <mat-icon>visibility</mat-icon>
               </button>
             </div>
           </div>

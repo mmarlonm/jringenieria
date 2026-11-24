@@ -24,7 +24,8 @@ import {
   CierreSgcDto,
   CierreResultado,
   FiltroIndicadoresSgc,
-  IndicadoresSgc
+  IndicadoresSgc,
+  CotizacionOrigen
 } from './quotes-products.types';
 import { ContpaqiMaterialDto } from 'app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types';
 import { agruparExistencias } from 'app/shared/materiales/existencias.utils';
@@ -202,5 +203,9 @@ export class QuotesService {
       params = params.set('unidadDeNegocioId', filtro.unidadDeNegocioId.toString());
     }
     return this.http.get<IndicadoresSgc>(`${this.apiUrl}/indicadores`, { params });
+  }
+
+  origen(id: number): Observable<CotizacionOrigen> {
+    return this.http.get<CotizacionOrigen>(`${this.apiUrl}/${id}/origen`);
   }
 }

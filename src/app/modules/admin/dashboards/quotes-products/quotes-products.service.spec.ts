@@ -9,7 +9,8 @@ import {
     GuardarCotizacionSgc,
     RegistrarSeguimientoDto,
     RespuestaObtenerSgc,
-    ResumenSgc
+    ResumenSgc,
+    CotizacionOrigen
 } from './quotes-products.types';
 import { ContpaqiMaterialDto } from 'app/modules/admin/administration/solicitudes-compra/models/solicitud-compra.types';
 
@@ -398,5 +399,50 @@ describe('QuotesService SGC', () => {
         expect(req.request.params.has('desde')).toBeFalse();
         expect(req.request.params.has('hasta')).toBeFalse();
         req.flush({ code: 200, data: [], totalCount: 0 });
+    });
+
+    it('origen_hace_GET_a_id_origen_y_conserva_la_forma_del_contrato', () => {
+        const mockOrigen: CotizacionOrigen = {
+            cotizacionProductosId: 311,
+            requerimiento: {
+                id: 57,
+                folio: 'REQ-2026-0057',
+                titulo: 'Modernización de tablero',
+                tipoProyecto: 'Instalación',
+                descripcion: 'Suministro de tableros',
+                estatus: 'Aprobado para cotización',
+                rutaAtencion: 'Técnica',
+                empresa: 'Cliente Ficticio SA de CV',
+                nombreContacto: 'Contacto Ficticio',
+                telefono: '5512345678',
+                email: 'contacto@ficticio.test',
+                fechaRecepcion: '2026-11-20T10:00:00'
+            },
+            lead: {
+                id: 12,
+                nombreContacto: 'Contacto Ficticio',
+                empresa: 'Cliente Ficticio SA de CV',
+                telefono: '5512345678',
+                email: 'contacto@ficticio.test',
+                fuenteLead: 'WhatsApp',
+                campana: null,
+                necesidadInicial: 'Motor trifásico',
+                sucursalQueRecibe: 'Querétaro',
+                estatus: 'Oportunidad',
+                tipoCliente: 'Industrial',
+                tipoNecesidad: 'Producto',
+                zonaAtencion: 'Querétaro',
+                nivelPrioridad: 'Alta',
+                fechaRegistro: '2026-11-18T09:30:00'
+            }
+        };
+
+        service.origen(311).subscribe((res) => {
+            expect(res).toEqual(mockOrigen);
+        });
+
+        const req = httpMock.expectOne(`${apiUrl}/311/origen`);
+        expect(req.request.method).toBe('GET');
+        req.flush(mockOrigen);
     });
 });

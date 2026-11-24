@@ -23,36 +23,46 @@
     </div>
 
     <div class="space-y-3 overflow-y-auto min-h-0 flex-1">
-      <button *ngFor="let q of col.visibles; trackBy: trackPorId" type="button"
-              [attr.data-testid]="'tarjeta-' + q.cotizacionProductosId"
-              class="w-full text-left bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-              (click)="abrir.emit(q.cotizacionProductosId)">
-        <div class="flex items-center justify-between gap-2 mb-1">
-          <span class="text-xs font-bold text-primary font-mono truncate">{{ textoFolio(q) }}</span>
-          <span *ngIf="q.informativa" data-testid="etiqueta-informativa"
-                class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-slate-100 text-slate-600 border border-slate-300">
-            Informativa
-          </span>
-          <app-etapa-chip *ngIf="q.etapa" [etapa]="q.etapa"></app-etapa-chip>
-        </div>
-        <h4 class="font-semibold text-sm leading-tight">{{ q.nombreCliente || 'Sin cliente' }}</h4>
-        <p *ngIf="q.unidadDeNegocio?.nombre" class="text-xs text-gray-400 mt-0.5 truncate">{{ q.unidadDeNegocio?.nombre }}</p>
-        <div class="flex items-center justify-between mt-3">
-          <span class="text-sm font-black tabular-nums">{{ (q.totalSgc ?? q.total) | currency:(q.moneda || 'MXN'):'symbol':'1.2-2' }}</span>
-          <span class="text-[10px] text-gray-400">{{ q.createdDate | date:'dd/MM/yyyy' }}</span>
-        </div>
-        <div class="mt-2 flex flex-wrap gap-1">
-          <span *ngIf="q.requerimientoFolio" class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-700">
-            {{ q.requerimientoFolio }}
-          </span>
-          <span *ngIf="q.vencida" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-red-100 text-red-800 border border-red-300">
-            Vencida por cerrar
-          </span>
-          <span *ngIf="q.seguimientoAtrasado" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-300">
-            Seguimiento atrasado
-          </span>
-        </div>
-      </button>
+      <div *ngFor="let q of col.visibles; trackBy: trackPorId" class="relative group">
+        <button type="button"
+                [attr.data-testid]="'tarjeta-' + q.cotizacionProductosId"
+                class="w-full text-left bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow pr-10"
+                (click)="abrir.emit(q.cotizacionProductosId)">
+          <div class="flex items-center justify-between gap-2 mb-1 pr-6">
+            <span class="text-xs font-bold text-primary font-mono truncate">{{ textoFolio(q) }}</span>
+            <span *ngIf="q.informativa" data-testid="etiqueta-informativa"
+                  class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-slate-100 text-slate-600 border border-slate-300">
+              Informativa
+            </span>
+            <app-etapa-chip *ngIf="q.etapa" [etapa]="q.etapa"></app-etapa-chip>
+          </div>
+          <h4 class="font-semibold text-sm leading-tight">{{ q.nombreCliente || 'Sin cliente' }}</h4>
+          <p *ngIf="q.unidadDeNegocio?.nombre" class="text-xs text-gray-400 mt-0.5 truncate">{{ q.unidadDeNegocio?.nombre }}</p>
+          <div class="flex items-center justify-between mt-3">
+            <span class="text-sm font-black tabular-nums">{{ (q.totalSgc ?? q.total) | currency:(q.moneda || 'MXN'):'symbol':'1.2-2' }}</span>
+            <span class="text-[10px] text-gray-400">{{ q.createdDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <span *ngIf="q.requerimientoFolio" class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-700">
+              {{ q.requerimientoFolio }}
+            </span>
+            <span *ngIf="q.vencida" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-red-100 text-red-800 border border-red-300">
+              Vencida por cerrar
+            </span>
+            <span *ngIf="q.seguimientoAtrasado" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-300">
+              Seguimiento atrasado
+            </span>
+          </div>
+        </button>
+
+        <button mat-icon-button type="button"
+                [attr.data-testid]="'ver-tarjeta-' + q.cotizacionProductosId"
+                matTooltip="Ver detalle"
+                class="absolute top-2 right-2 text-slate-400 hover:text-primary z-10"
+                (click)="verDetalle(q, $event)">
+          <mat-icon class="icon-size-4">visibility</mat-icon>
+        </button>
+      </div>
 
       <div *ngIf="col.cargando" class="py-4 text-center text-xs text-gray-400" data-testid="cargando-columna">Cargando…</div>
       <div *ngIf="!col.cargando && !col.error && col.items.length === 0" data-testid="columna-vacia"

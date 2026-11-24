@@ -1,0 +1,232 @@
+<div class="flex flex-col w-full max-h-[90vh] overflow-hidden bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300">
+
+  <!-- Header -->
+  <div class="flex-none flex items-center justify-between border-b px-6 py-4 bg-slate-50 dark:bg-slate-900">
+    <div class="min-w-0">
+      <div class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+        <mat-icon class="text-primary icon-size-5">visibility</mat-icon>
+        <span class="truncate">Detalle de cotización</span>
+      </div>
+      <div class="text-xs text-slate-400 mt-0.5">
+        ID: <span class="font-mono font-semibold">{{ data.cotizacionProductosId }}</span>
+      </div>
+    </div>
+    <button mat-icon-button type="button" (click)="cerrar()" aria-label="Cerrar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-auto min-h-0 overflow-y-auto px-6 py-5 flex flex-col gap-6">
+
+    <!-- SECCION 1: COTIZACIÓN -->
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+        <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <mat-icon class="icon-size-4 text-primary">request_quote</mat-icon>
+          Cotización
+        </h3>
+        <span *ngIf="esInformativa" data-testid="aviso-informativa" class="px-2 py-0.5 text-xs font-bold rounded uppercase bg-slate-200 text-slate-700">
+          Informativa
+        </span>
+      </div>
+
+      <div *ngIf="cargandoCabecera" class="text-xs text-slate-400 py-2">Cargando cotización…</div>
+      <div *ngIf="errorCabecera" class="p-3 rounded-lg bg-red-50 text-red-800 text-xs font-medium">
+        No se pudo cargar la información general de la cotización.
+      </div>
+
+      <div *ngIf="!cargandoCabecera && !errorCabecera" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div>
+          <span class="text-slate-400 block mb-0.5">Folio SGC:</span>
+          <span data-testid="folio-sgc" class="font-mono font-bold text-sm text-slate-800 dark:text-slate-100">
+            {{ sgcRes?.sgc?.folio || (esInformativa ? 'Informativa' : 'Sin folio') }}
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Folio de la cotización:</span>
+          <span data-testid="folio-cotizacion" class="font-mono font-bold text-sm text-slate-800 dark:text-slate-100">
+            {{ cabecera?.folioContpaq || 'Sin folio' }}
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Tipo y etapa:</span>
+          <div class="flex items-center gap-2">
+            <span class="font-semibold">{{ sgcRes?.sgc?.tipo || 'CS' }}</span>
+            <app-etapa-chip *ngIf="sgcRes?.sgc?.etapa || cabecera?.etapa" [etapa]="sgcRes?.sgc?.etapa || cabecera?.etapa"></app-etapa-chip>
+          </div>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Unidad de negocio:</span>
+          <span class="font-medium text-slate-700 dark:text-slate-300">
+            {{ cabecera?.unidadDeNegocio?.nombre || cabecera?.unidadDeNegocioNombre || 'Sin unidad' }}
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Fecha de creación:</span>
+          <span class="font-medium text-slate-700 dark:text-slate-300">
+            {{ cabecera?.createdDate | date:'dd/MM/yyyy' }}
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Total:</span>
+          <span data-testid="total-cotizacion" class="font-extrabold text-sm text-emerald-600 dark:text-emerald-400">
+            {{ total | currency:moneda:'symbol':'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCION 2: CLIENTE Y CONTACTO -->
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-4">
+      <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <mat-icon class="icon-size-4 text-primary">person</mat-icon>
+        Cliente y contacto
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div>
+          <span class="text-slate-400 block mb-0.5">Cliente:</span>
+          <span class="font-semibold text-slate-800 dark:text-slate-100">{{ cabecera?.nombreCliente || cabecera?.clienteNombre || 'Sin cliente' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Empresa / Razón Social:</span>
+          <span class="font-semibold text-slate-800 dark:text-slate-100">{{ cabecera?.nombreEmpresa || cabecera?.empresa || 'Sin empresa' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Correo electrónico:</span>
+          <span class="font-medium text-slate-700 dark:text-slate-300">{{ sgcRes?.sgc?.contactoCorreo || cabecera?.correo || cabecera?.contactoCorreo || 'Sin correo' }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Teléfono:</span>
+          <span class="font-medium text-slate-700 dark:text-slate-300">{{ sgcRes?.sgc?.contactoTelefono || cabecera?.telefono || cabecera?.contactoTelefono || 'Sin teléfono' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCION 3: PARTIDAS -->
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+        <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <mat-icon class="icon-size-4 text-primary">list_alt</mat-icon>
+          Partidas
+        </h3>
+        <span *ngIf="partidas.length" class="text-xs text-slate-400 font-semibold">{{ partidas.length }} partidas</span>
+      </div>
+
+      <div *ngIf="cargandoSgc" class="text-xs text-slate-400 py-2">Cargando partidas…</div>
+      <div *ngIf="errorSgc" data-testid="error-sgc" class="p-3 rounded-lg bg-red-50 text-red-800 text-xs font-medium">
+        No se pudieron cargar las partidas del SGC.
+      </div>
+
+      <div *ngIf="!cargandoSgc && !errorSgc" class="overflow-x-auto">
+        <table *ngIf="partidas.length; else sinPartidas" class="w-full text-xs text-left">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 font-semibold">
+              <th class="py-2 pr-2 w-12">#</th>
+              <th class="py-2 px-2">Descripción</th>
+              <th class="py-2 px-2 text-right">Cant.</th>
+              <th class="py-2 px-2 text-center">Unidad</th>
+              <th class="py-2 px-2 text-right">Precio Unit.</th>
+              <th class="py-2 pl-2 text-right">Importe</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of partidas; let i = index" class="border-b border-slate-100 dark:border-slate-800">
+              <td class="py-2 pr-2 font-mono font-semibold">{{ p.partida || (i + 1) }}</td>
+              <td class="py-2 px-2 font-medium">{{ p.materialServicio || p.descripcion || p.nombreProducto }}</td>
+              <td class="py-2 px-2 text-right tabular-nums">{{ p.cantidad }}</td>
+              <td class="py-2 px-2 text-center">{{ p.unidad }}</td>
+              <td class="py-2 px-2 text-right tabular-nums">{{ p.precioUnitario | currency:moneda:'symbol':'1.2-2' }}</td>
+              <td class="py-2 pl-2 text-right font-bold tabular-nums">{{ (p.cantidad * p.precioUnitario) | currency:moneda:'symbol':'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #sinPartidas>
+          <div class="text-xs text-slate-400 py-2">Sin partidas registradas.</div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- SECCION 4: ORIGEN -->
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-4">
+      <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <mat-icon class="icon-size-4 text-primary">account_tree</mat-icon>
+        Origen
+      </h3>
+
+      <div *ngIf="cargandoOrigen" class="text-xs text-slate-400 py-2">Cargando origen…</div>
+      <div *ngIf="errorOrigen" data-testid="error-origen" class="p-3 rounded-lg bg-red-50 text-red-800 text-xs font-medium">
+        No se pudo cargar la información de origen.
+      </div>
+
+      <div *ngIf="!cargandoOrigen && !errorOrigen">
+        <div *ngIf="!origen?.requerimiento" data-testid="sin-requerimiento" class="text-xs text-slate-500 py-2">
+          Esta cotización no proviene de un requerimiento.
+        </div>
+
+        <div *ngIf="origen?.requerimiento as req" class="flex flex-col gap-4">
+          <!-- Requerimiento -->
+          <div class="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 flex flex-col gap-2">
+            <div class="text-xs font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wider flex items-center gap-1.5">
+              <mat-icon class="icon-size-4 text-blue-600">assignment</mat-icon>
+              Requerimiento
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div><span class="text-slate-400 block">Folio:</span> <span class="font-mono font-bold">{{ req.folio }}</span></div>
+              <div><span class="text-slate-400 block">Título:</span> <span class="font-semibold">{{ req.titulo || 'Sin título' }}</span></div>
+              <div><span class="text-slate-400 block">Tipo de proyecto:</span> <span>{{ req.tipoProyecto || 'Sin tipo' }}</span></div>
+              <div><span class="text-slate-400 block">Ruta de atención:</span> <span>{{ req.rutaAtencion || 'Sin ruta' }}</span></div>
+              <div><span class="text-slate-400 block">Estatus:</span> <span class="font-semibold">{{ req.estatus }}</span></div>
+              <div><span class="text-slate-400 block">Fecha recepción:</span> <span>{{ req.fechaRecepcion | date:'dd/MM/yyyy HH:mm' }}</span></div>
+            </div>
+            <div class="mt-2 text-xs">
+              <span class="text-slate-400 block mb-0.5">Descripción:</span>
+              <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{{ req.descripcion }}</p>
+            </div>
+          </div>
+
+          <!-- Lead -->
+          <div *ngIf="!origen?.lead" data-testid="sin-lead" class="text-xs text-slate-500 py-2">
+            El requerimiento no tiene lead asociado.
+          </div>
+
+          <div *ngIf="origen?.lead as lead" class="p-4 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:purple-900 flex flex-col gap-2">
+            <div class="text-xs font-bold text-purple-900 dark:text-purple-200 uppercase tracking-wider flex items-center gap-1.5">
+              <mat-icon class="icon-size-4 text-purple-600">groups</mat-icon>
+              Lead de origen
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div><span class="text-slate-400 block">Contacto:</span> <span class="font-bold">{{ lead.nombreContacto }}</span></div>
+              <div><span class="text-slate-400 block">Empresa:</span> <span class="font-semibold">{{ lead.empresa || 'Sin empresa' }}</span></div>
+              <div><span class="text-slate-400 block">Teléfono:</span> <span>{{ lead.telefono || 'Sin teléfono' }}</span></div>
+              <div><span class="text-slate-400 block">Correo:</span> <span>{{ lead.email || 'Sin correo' }}</span></div>
+              <div><span class="text-slate-400 block">Fuente lead:</span> <span>{{ lead.fuenteLead || 'Sin fuente' }}</span></div>
+              <div><span class="text-slate-400 block">Campaña:</span> <span>{{ lead.campana || 'Sin campaña' }}</span></div>
+              <div><span class="text-slate-400 block">Necesidad inicial:</span> <span>{{ lead.necesidadInicial || 'Sin necesidad' }}</span></div>
+              <div><span class="text-slate-400 block">Sucursal que recibe:</span> <span>{{ lead.sucursalQueRecibe || 'Sin sucursal' }}</span></div>
+              <div><span class="text-slate-400 block">Estatus:</span> <span class="font-semibold">{{ lead.estatus || 'Sin estatus' }}</span></div>
+              <div><span class="text-slate-400 block">Tipo cliente:</span> <span>{{ lead.tipoCliente || 'Sin tipo' }}</span></div>
+              <div><span class="text-slate-400 block">Tipo necesidad:</span> <span>{{ lead.tipoNecesidad || 'Sin tipo' }}</span></div>
+              <div><span class="text-slate-400 block">Zona de atención:</span> <span>{{ lead.zonaAtencion || 'Sin zona' }}</span></div>
+              <div><span class="text-slate-400 block">Nivel de prioridad:</span> <span class="font-bold">{{ lead.nivelPrioridad || 'Sin prioridad' }}</span></div>
+              <div><span class="text-slate-400 block">Fecha de registro:</span> <span>{{ lead.fechaRegistro | date:'dd/MM/yyyy HH:mm' }}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="flex-none flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+    <button mat-stroked-button type="button" data-testid="btn-cerrar" (click)="cerrar()">
+      Cerrar
+    </button>
+    <button mat-flat-button color="primary" type="button" data-testid="btn-abrir-cotizacion" (click)="abrirCotizacion()">
+      <mat-icon class="mr-1.5 icon-size-4">open_in_new</mat-icon>
+      Abrir cotización
+    </button>
+  </div>
+
+</div>

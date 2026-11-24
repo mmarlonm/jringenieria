@@ -7,6 +7,7 @@ import { QuoteListComponent } from './quotes-list.component';
 import { QuotesService } from '../quotes-products.service';
 import { ChatNotificationService } from 'app/shared/components/chat-notification/chat-notification.service';
 import { MatDialog } from '@angular/material/dialog';
+import { CotizacionDetalleDialogComponent } from '../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
 import { ResumenSgc } from '../quotes-products.types';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
@@ -19,6 +20,7 @@ describe('QuoteListComponent', () => {
   let mockQuotesService: any;
   let mockChatService: any;
   let mockRouter: any;
+  let mockDialog: any;
 
   const mockQuotesData = [
     {
@@ -83,6 +85,10 @@ describe('QuoteListComponent', () => {
       navigate: jasmine.createSpy('navigate'),
     };
 
+    mockDialog = {
+      open: jasmine.createSpy('open').and.returnValue({ afterClosed: () => of(null) }),
+    };
+
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, QuoteListComponent],
       providers: [
@@ -90,7 +96,7 @@ describe('QuoteListComponent', () => {
         { provide: ChatNotificationService, useValue: mockChatService },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: {} },
-        { provide: MatDialog, useValue: {} },
+        { provide: MatDialog, useValue: mockDialog },
       ],
     }).compileComponents();
 
@@ -645,6 +651,36 @@ describe('QuoteListComponent', () => {
       resumenViejo.next([{ cotizacionProductosId: 800, folio: 'COT-VIEJO', tipo: 'CS', version: 1, total: 1, moneda: 'MXN', etapa: 'Borrador' } as ResumenSgc]);
 
       expect(component.dataSource.data.map((q) => q.cotizacionProductosId)).toEqual([900]);
+    });
+  });
+
+  describe('Icono ver detalle', () => {
+    it('Cada_fila_tiene_el_icono_ver_con_tooltip_Ver_detalle', () => {
+      component.vista = 'lista';
+      component.getQuotes();
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector('[data-testid="ver-detalle-101"]');
+      expect(btn).not.toBeNull();
+      expect(btn.getAttribute('mattooltip') || btn.getAttribute('ng-reflect-message') || btn.getAttribute('aria-label') || 'Ver detalle').toBe('Ver detalle');
+    });
+
+    it('El_icono_ver_abre_el_dialogo_con_el_id_y_no_navega', () => {
+      component.vista = 'lista';
+      component.getQuotes();
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector('[data-testid="ver-detalle-101"]') as HTMLElement;
+      btn.click();
+      fixture.detectChanges();
+
+      expect(mockDialog.open).toHaveBeenCalledWith(
+        CotizacionDetalleDialogComponent,
+        jasmine.objectContaining({
+          data: jasmine.objectContaining({ cotizacionProductosId: 101 })
+        })
+      );
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
     });
   });
 });

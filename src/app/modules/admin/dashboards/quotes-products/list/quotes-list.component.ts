@@ -22,6 +22,7 @@ import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
 import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
 import { QuotesBoardComponent } from './quotes-board/quotes-board.component';
+import { CotizacionDetalleDialogComponent } from '../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
 import { aplicarResumenSgc } from './quotes-sgc-merge';
 import moment from 'moment';
 
@@ -67,7 +68,8 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     'envio',
     'responsable',
     'estatus',
-    'actions'
+    'actions',
+    'acciones'
   ];
   dataSource = new MatTableDataSource<any>();
   quotesCount: number = 0;
@@ -636,6 +638,18 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       else {
         this._chatNotificationService.showError('Error', 'Hubo un error en el sistema, contacte al administrador del sistema.', 5000);
+      }
+    });
+  }
+
+  verDetalle(quote: any): void {
+    this.dialog.open(CotizacionDetalleDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: {
+        cotizacionProductosId: quote.cotizacionProductosId,
+        informativa: !this.tieneRegistroSgc(quote)
       }
     });
   }

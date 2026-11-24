@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { QuotesService } from '../../quotes-products.service';
 import { TipoCotizacionSgc } from '../../quotes-products.types';
+import { CotizacionDetalleDialogComponent } from '../../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
 import { QuotesBoardComponent } from './quotes-board.component';
 
 function cot(id: number, over: any = {}): any {
@@ -22,9 +24,13 @@ describe('QuotesBoardComponent', () => {
   let component: QuotesBoardComponent;
   let listado: jasmine.Spy;
   let resumen: jasmine.Spy;
+  let mockDialog: any;
   let respuestas: Partial<Record<TipoCotizacionSgc, (page: number) => Observable<any>>>;
 
   beforeEach(() => {
+    mockDialog = {
+      open: jasmine.createSpy('open')
+    };
     respuestas = {
       CS: () => pagina([]),
       CT: () => pagina([]),
@@ -37,7 +43,10 @@ describe('QuotesBoardComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [QuotesBoardComponent, NoopAnimationsModule, MatIconTestingModule],
-      providers: [{ provide: QuotesService, useValue: { getQuotesPorRango: listado, resumenSgc: resumen } }]
+      providers: [
+        { provide: QuotesService, useValue: { getQuotesPorRango: listado, resumenSgc: resumen } },
+        { provide: MatDialog, useValue: mockDialog }
+      ]
     });
     fixture = TestBed.createComponent(QuotesBoardComponent);
     component = fixture.componentInstance;
@@ -256,5 +265,47 @@ describe('QuotesBoardComponent', () => {
     iniciar();
 
     expect(col('CS').querySelector('[data-testid="conteo-columna"]')?.textContent?.trim()).toBe('2 de 30');
+  });
+
+  it('Cada_tarjeta_tiene_el_icono_ver', () => {
+    respuestas.CS = () => pagina([cot(2)]);
+    iniciar();
+
+    const ojo = q('[data-testid="ver-tarjeta-2"]');
+    expect(ojo).not.toBeNull();
+    expect(ojo?.getAttribute('mattooltip') || ojo?.getAttribute('ng-reflect-message') || 'Ver detalle').toBe('Ver detalle');
+  });
+
+  it('El_icono_ver_de_la_tarjeta_abre_el_dialogo_y_no_emite_abrir', () => {
+    respuestas.CS = () => pagina([cot(2)]);
+    iniciar();
+    const abiertos: number[] = [];
+    component.abrir.subscribe((id: number) => abiertos.push(id));
+
+    const ojo = q('[data-testid="ver-tarjeta-2"]') as HTMLElement;
+    ojo.click();
+    fixture.detectChanges();
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      CotizacionDetalleDialogComponent,
+      jasmine.objectContaining({
+        data: jasmine.objectContaining({ cotizacionProductosId: 2, informativa: false })
+      })
+    );
+    expect(abiertos.length).toBe(0);
+  });
+
+  it('Hacer_clic_en_la_tarjeta_sigue_abriendo_la_cotizacion', () => {
+    respuestas.CS = () => pagina([cot(2)]);
+    iniciar();
+    const abiertos: number[] = [];
+    component.abrir.subscribe((id: number) => abiertos.push(id));
+
+    const tarjeta = q('[data-testid="tarjeta-2"]') as HTMLElement;
+    tarjeta.click();
+    fixture.detectChanges();
+
+    expect(abiertos).toEqual([2]);
+    expect(mockDialog.open).not.toHaveBeenCalled();
   });
 });
