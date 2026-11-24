@@ -1,11 +1,12 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import Swal from 'sweetalert2';
 import { TipoCotizacionSgc } from 'app/modules/admin/dashboards/quotes-products/quotes-products.types';
@@ -16,6 +17,23 @@ import {
   Requerimiento,
   RequerimientosService
 } from '../requerimientos.service';
+
+export function folioCotizacionValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const valor = control.value;
+    if (valor === null || valor === undefined || valor === '') {
+      return null;
+    }
+    const str = String(valor);
+    if (str.length > 0 && str.trim().length === 0) {
+      return { soloEspacios: true };
+    }
+    if (/[\u0000-\u001F\u007F]/.test(str)) {
+      return { caracterControl: true };
+    }
+    return null;
+  };
+}
 
 export interface ConvertirCotizacionDialogData {
   requerimiento: Requerimiento;
@@ -52,6 +70,7 @@ export const TIPOS_COTIZACION: ReadonlyArray<{ codigo: TipoCotizacionSgc; nombre
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatSelectModule
   ],
   templateUrl: './requerimiento-convertir-cotizacion-dialog.component.html'
@@ -60,6 +79,10 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
   readonly tipos = TIPOS_COTIZACION;
   readonly tipoSugerido: TipoCotizacionSgc;
 
+  readonly folioControl = new FormControl<string>('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.maxLength(50), folioCotizacionValidator()]
+  });
   readonly tipoControl: FormControl<TipoCotizacionSgc>;
   readonly unidadControl = new FormControl<number | null>(null, { validators: [Validators.required] });
 
@@ -93,7 +116,8 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
   }
 
   get puedeConvertir(): boolean {
-    return this.unidadControl.valid
+    return this.folioControl.valid
+      && this.unidadControl.valid
       && !this.cotizacionExistente
       && !this.convirtiendo
       && !this.cargandoUnidades;
@@ -122,7 +146,8 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
 
   async convertir(): Promise<void> {
     const unidadDeNegocioId = this.unidadControl.value;
-    if (!this.puedeConvertir || unidadDeNegocioId === null) {
+    const folio = this.folioControl.value?.trim();
+    if (!this.puedeConvertir || unidadDeNegocioId === null || !folio) {
       return;
     }
     // Se marca antes de la confirmación: un segundo clic mientras se decide no abre otra.
@@ -146,7 +171,8 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
     this.reqService.convertirACotizacion({
       requerimientoId: this.data.requerimiento.id,
       tipo: this.tipoControl.value,
-      unidadDeNegocioId
+      unidadDeNegocioId,
+      folioCotizacion: folio
     }).subscribe({
       next: (resultado) => {
         this.dialogRef.close({ convertido: true, resultado });
