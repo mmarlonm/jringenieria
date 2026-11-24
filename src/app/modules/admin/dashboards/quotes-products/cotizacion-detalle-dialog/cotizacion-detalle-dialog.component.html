@@ -44,10 +44,13 @@
           </span>
         </div>
         <div>
-          <span class="text-slate-400 block mb-0.5">Folio de la cotización:</span>
-          <span data-testid="folio-cotizacion" class="font-mono font-bold text-sm text-slate-800 dark:text-slate-100">
-            {{ cabecera?.folioContpaq || 'Sin folio' }}
-          </span>
+          <app-folio-cotizacion
+            data-testid="folio-cotizacion"
+            [cotizacionProductosId]="data.cotizacionProductosId"
+            [folio]="cabecera?.folioContpaq || origen?.folioCotizacion"
+            [puedeAgregar]="origen?.puedeAgregarFolio || false"
+            (folioAgregado)="onFolioAgregado($event)">
+          </app-folio-cotizacion>
         </div>
         <div>
           <span class="text-slate-400 block mb-0.5">Tipo y etapa:</span>

@@ -443,6 +443,8 @@ export interface OrigenLead {
 
 export interface CotizacionOrigen {
     cotizacionProductosId: number;
+    folioCotizacion?: string | null;
+    puedeAgregarFolio?: boolean;
     requerimiento?: OrigenRequerimiento | null;
     lead?: OrigenLead | null;
 }

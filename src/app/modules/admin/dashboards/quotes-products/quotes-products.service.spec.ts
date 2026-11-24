@@ -404,6 +404,8 @@ describe('QuotesService SGC', () => {
     it('origen_hace_GET_a_id_origen_y_conserva_la_forma_del_contrato', () => {
         const mockOrigen: CotizacionOrigen = {
             cotizacionProductosId: 311,
+            folioCotizacion: null,
+            puedeAgregarFolio: true,
             requerimiento: {
                 id: 57,
                 folio: 'REQ-2026-0057',
@@ -444,5 +446,21 @@ describe('QuotesService SGC', () => {
         const req = httpMock.expectOne(`${apiUrl}/311/origen`);
         expect(req.request.method).toBe('GET');
         req.flush(mockOrigen);
+    });
+
+    it('agregarFolio_hace_PUT_a_id_folio_cotizacion_con_el_cuerpo_del_contrato', () => {
+        const respuestaApi = {
+            cotizacionProductosId: 311,
+            folioCotizacion: 'COT-1234'
+        };
+
+        service.agregarFolio(311, 'COT-1234').subscribe((res) => {
+            expect(res).toEqual(respuestaApi);
+        });
+
+        const req = httpMock.expectOne(`${apiUrl}/311/folio-cotizacion`);
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({ folioCotizacion: 'COT-1234' });
+        req.flush(respuestaApi);
     });
 });

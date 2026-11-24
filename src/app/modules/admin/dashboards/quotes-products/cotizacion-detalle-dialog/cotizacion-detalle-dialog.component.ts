@@ -9,6 +9,7 @@ import { QuotesService } from '../quotes-products.service';
 import { CotizacionOrigen, RespuestaObtenerSgc } from '../quotes-products.types';
 import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
 import { importeLinea } from '../sgc/cotizacion-sgc.utils';
+import { FolioCotizacionComponent } from '../folio-cotizacion/folio-cotizacion.component';
 
 export interface CotizacionDetalleDialogData {
   cotizacionProductosId: number;
@@ -25,7 +26,8 @@ export interface CotizacionDetalleDialogData {
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
-    EtapaChipComponent
+    EtapaChipComponent,
+    FolioCotizacionComponent
   ],
   templateUrl: './cotizacion-detalle-dialog.component.html'
 })
@@ -140,6 +142,16 @@ export class CotizacionDetalleDialogComponent implements OnInit {
   abrirCotizacion(): void {
     this.router.navigate(['dashboards/quote-products', this.data.cotizacionProductosId]);
     this.dialogRef.close();
+  }
+
+  onFolioAgregado(nuevoFolio: string): void {
+    if (this.cabecera) {
+      this.cabecera.folioContpaq = nuevoFolio;
+    }
+    if (this.origen) {
+      this.origen.folioCotizacion = nuevoFolio;
+      this.origen.puedeAgregarFolio = false;
+    }
   }
 
   cerrar(): void {

@@ -6,6 +6,14 @@
         <span *ngIf="folio" class="text-gray-500 font-normal text-lg ml-2">{{ folio }} v{{ version || 1 }}</span>
       </h1>
       <app-etapa-chip *ngIf="quotesId" [etapa]="etapa" class="etapa-chip-header"></app-etapa-chip>
+      <app-folio-cotizacion
+        *ngIf="quotesId && origen"
+        data-testid="folio-cotizacion-header"
+        [cotizacionProductosId]="quotesId"
+        [folio]="origen.folioCotizacion"
+        [puedeAgregar]="origen.puedeAgregarFolio || false"
+        (folioAgregado)="onFolioAgregado($event)">
+      </app-folio-cotizacion>
     </div>
 
     <button mat-flat-button color="accent" (click)="openCotizacionPreview()">

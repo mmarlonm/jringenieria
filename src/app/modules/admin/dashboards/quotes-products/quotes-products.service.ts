@@ -208,4 +208,11 @@ export class QuotesService {
   origen(id: number): Observable<CotizacionOrigen> {
     return this.http.get<CotizacionOrigen>(`${this.apiUrl}/${id}/origen`);
   }
+
+  agregarFolio(id: number, folioCotizacion: string): Observable<{ cotizacionProductosId: number; folioCotizacion: string }> {
+    return this.http.put<{ cotizacionProductosId: number; folioCotizacion: string }>(
+      `${this.apiUrl}/${id}/folio-cotizacion`,
+      { folioCotizacion }
+    );
+  }
 }
