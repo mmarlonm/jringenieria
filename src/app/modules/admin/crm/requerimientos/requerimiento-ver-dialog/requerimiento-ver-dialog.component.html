@@ -101,6 +101,23 @@
         </a>
       </div>
 
+      <!-- Convertir a cotización: pide el folio de CONTPAQ y pasa el requerimiento al módulo de Cotizaciones -->
+      <div *ngIf="puedeConvertir"
+           class="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between gap-4 banner-convertir-cotizacion">
+        <div>
+          <div class="text-xs font-semibold text-blue-900 dark:text-blue-200 uppercase tracking-wider">
+            Convertir a cotización
+          </div>
+          <div class="text-sm text-blue-700 dark:text-blue-300">
+            Captura el folio de la cotización de CONTPAQ y pasa con todos sus datos al módulo de Cotizaciones.
+          </div>
+        </div>
+        <button mat-flat-button color="primary" type="button" data-testid="btn-convertir-cotizacion" class="shrink-0" (click)="convertir()">
+          <mat-icon svgIcon="heroicons_outline:document-text" class="icon-size-4 mr-1"></mat-icon>
+          Convertir a cotización
+        </button>
+      </div>
+
       <!-- Datos de la Solicitud (Empate con Ingeniería) -->
       <div class="bg-gray-50/70 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
         <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">

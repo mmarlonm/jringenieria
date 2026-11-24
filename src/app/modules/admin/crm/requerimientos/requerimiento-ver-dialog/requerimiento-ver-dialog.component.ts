@@ -1,12 +1,17 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
 import { guardarBlob } from '../requerimiento-archivos.utils';
 import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
+import {
+  ConvertirCotizacionDialogData,
+  ConvertirCotizacionDialogResult,
+  RequerimientoConvertirCotizacionDialogComponent
+} from '../requerimiento-convertir-cotizacion-dialog/requerimiento-convertir-cotizacion-dialog.component';
 import Swal from 'sweetalert2';
 
 export interface RequerimientoVerDialogData {
@@ -36,7 +41,8 @@ export class RequerimientoVerDialogComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: RequerimientoVerDialogData,
     public dialogRef: MatDialogRef<RequerimientoVerDialogComponent>,
-    private reqService: RequerimientosService
+    private reqService: RequerimientosService,
+    private dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
@@ -79,6 +85,13 @@ export class RequerimientoVerDialogComponent implements OnInit {
     return this.requerimiento.estatus === 'Aprobado para cotización' || !!this.requerimiento.seguimientoProyectoId;
   }
 
+  /** Solo un requerimiento «Aprobado para cotización» (con o sin caso en Ingeniería) que aún no tiene cotización. */
+  get puedeConvertir(): boolean {
+    return !!this.requerimiento
+      && this.requerimiento.estatus === 'Aprobado para cotización'
+      && !this.requerimiento.cotizacionVinculada;
+  }
+
   get esNoViable(): boolean {
     return this.requerimiento?.estatus === 'No Viable';
   }
@@ -99,6 +112,22 @@ export class RequerimientoVerDialogComponent implements OnInit {
     this.reqService.descargarArchivo(this.requerimiento.id, archivoId).subscribe({
       next: blob => guardarBlob(blob, nombre),
       error: () => { Swal.fire('No se pudo descargar', 'Intenta de nuevo o vuelve a iniciar sesión.', 'error'); }
+    });
+  }
+
+  /** Abre el diálogo del folio de CONTPAQ; si se convirtió, cierra este con la acción para que el tablero se recargue. */
+  convertir(): void {
+    if (!this.requerimiento) {
+      return;
+    }
+    const ref = this.dialog.open<RequerimientoConvertirCotizacionDialogComponent, ConvertirCotizacionDialogData, ConvertirCotizacionDialogResult>(
+      RequerimientoConvertirCotizacionDialogComponent,
+      { width: '680px', maxWidth: '95vw', autoFocus: false, data: { requerimiento: this.requerimiento } }
+    );
+    ref.afterClosed().subscribe(res => {
+      if (res?.convertido) {
+        this.dialogRef.close({ accion: 'convertido', resultado: res.resultado });
+      }
     });
   }
 

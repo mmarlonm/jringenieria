@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { Requerimiento, RequerimientosService } from '../requerimientos.service';
 import { RequerimientosComponent } from '../requerimientos.component';
 import { RequerimientoVerDialogComponent, RequerimientoVerDialogData } from './requerimiento-ver-dialog.component';
+import { RequerimientoConvertirCotizacionDialogComponent } from '../requerimiento-convertir-cotizacion-dialog/requerimiento-convertir-cotizacion-dialog.component';
 import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
 import Swal from 'sweetalert2';
 
@@ -311,6 +312,68 @@ describe('RequerimientoVerDialogComponent', () => {
 
     text = fixture.nativeElement.textContent;
     expect(text).toContain('Caso #77 en Ingeniería');
+  });
+
+  describe('Convertir a cotización', () => {
+    const botonConvertir = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="btn-convertir-cotizacion"]');
+
+    function reiniciar(req: Requerimiento): void {
+      fixture?.destroy();
+      TestBed.resetTestingModule();
+      configurar({ id: req.id }, of(req));
+    }
+
+    it('Muestra_el_boton_Convertir_solo_si_esta_aprobado_y_no_tiene_cotizacion', () => {
+      reiniciar(mockRequerimiento({ estatus: 'Pendiente' }));
+      expect(botonConvertir()).toBeNull();
+
+      reiniciar(mockRequerimiento({ estatus: 'Calificado Comercial' }));
+      expect(botonConvertir()).toBeNull();
+
+      reiniciar(mockRequerimiento({ estatus: 'No Viable' }));
+      expect(botonConvertir()).toBeNull();
+
+      reiniciar(mockRequerimiento({ estatus: 'Aprobado para cotización' }));
+      expect(botonConvertir()).not.toBeNull();
+
+      // Aprobado con caso en Ingeniería: también se puede convertir
+      reiniciar(mockRequerimiento({ estatus: 'Aprobado para cotización', seguimientoProyectoId: 42 }));
+      expect(botonConvertir()).not.toBeNull();
+
+      // Ya convertido: se oculta
+      reiniciar(mockRequerimiento({
+        estatus: 'Aprobado para cotización',
+        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: 'COT-1234', tipo: 'CS', etapa: 'Borrador' }
+      }));
+      expect(botonConvertir()).toBeNull();
+    });
+
+    it('Convertir_abre_el_dialogo_con_el_requerimiento_y_cierra_el_ver_con_accion_convertido', () => {
+      const req = mockRequerimiento({ estatus: 'Aprobado para cotización' });
+      configurar({ id: 10 }, of(req));
+      const resultado = {
+        cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CS', etapa: 'Borrador',
+        folioContpaq: 'COT-1234', requerimientoId: 10, requerimientoFolio: 'REQ-2026-0010'
+      };
+      const abrir = spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of({ convertido: true, resultado }) } as any);
+
+      botonConvertir()!.click();
+
+      expect(abrir).toHaveBeenCalledWith(
+        RequerimientoConvertirCotizacionDialogComponent,
+        jasmine.objectContaining({ data: { requerimiento: req } })
+      );
+      expect(mockDialogRef.close).toHaveBeenCalledWith({ accion: 'convertido', resultado });
+    });
+
+    it('Si_el_dialogo_de_convertir_se_cierra_sin_convertir_el_ver_sigue_abierto', () => {
+      configurar({ id: 10 }, of(mockRequerimiento({ estatus: 'Aprobado para cotización' })));
+      spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as any);
+
+      botonConvertir()!.click();
+
+      expect(mockDialogRef.close).not.toHaveBeenCalled();
+    });
   });
 
   it('El_ver_no_ofrece_Calificar_si_esta_aprobado_o_no_viable', () => {
