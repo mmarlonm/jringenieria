@@ -17,8 +17,13 @@
   <app-proceso-comercial *ngIf="quotesId" tipo="cotizacion" [id]="quotesId" [refresco]="procesoRefresco" class="block mb-4 shrink-0"></app-proceso-comercial>
 
   <!-- Franja de sólo lectura cuando la cotización no es editable -->
-  <div *ngIf="soloLectura" class="franja-solo-lectura bg-amber-50 border-l-4 border-amber-500 p-4 mb-4 text-amber-800">
+  <div *ngIf="soloLectura && !esInformativa" class="franja-solo-lectura bg-amber-50 border-l-4 border-amber-500 p-4 mb-4 text-amber-800">
     {{ mensajeFranjaSoloLectura }}
+  </div>
+
+  <!-- Cotización de CONTPAQ sin capa SGC: solo consulta -->
+  <div *ngIf="esInformativa" class="franja-informativa bg-slate-50 border-l-4 border-slate-400 p-4 mb-4 text-slate-700 text-sm">
+    Cotización informativa de CONTPAQ: solo consulta y sin flujo de seguimiento. Las cotizaciones con flujo se crean al convertir un requerimiento aprobado.
   </div>
 
   <!-- Alerta de errores de validación del guardado (400 / error) -->

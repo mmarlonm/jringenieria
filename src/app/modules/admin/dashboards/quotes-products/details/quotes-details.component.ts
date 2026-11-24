@@ -149,6 +149,8 @@ export class QuoteDetailsComponent implements OnInit {
   revisionesVigentes: RevisionSgc[] = [];
   revisionesRequeridas: string[] = [];
   soloLectura: boolean = false;
+  /** Cotización que solo viene de CONTPAQ (sin capa SGC): solo consulta, sin flujo. Lo dice el API (contrato v1.2). */
+  esInformativa: boolean = false;
   requerimientoVinculado: RequerimientoResumen | null = null;
   vinculoRequerimientoRemovido: boolean = false;
   enviandoRevision: boolean = false;
@@ -417,7 +419,9 @@ export class QuoteDetailsComponent implements OnInit {
           });
         }
 
-        if (!this.acciones.editar) {
+        this.esInformativa = sgcRes.informativa === true;
+
+        if (!this.acciones.editar || this.esInformativa) {
           this.soloLectura = true;
           this.quotesForm.disable({ emitEvent: false });
           this.sgcForm.disable({ emitEvent: false });

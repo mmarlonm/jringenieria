@@ -444,6 +444,67 @@ describe('QuoteDetailsComponent SGC', () => {
     );
   });
 
+  describe('Cotización informativa (contrato v1.2)', () => {
+    const respuesta = (over: Partial<RespuestaObtenerSgc> = {}): RespuestaObtenerSgc => ({
+      cotizacionProductosId: 55,
+      cotizacion: {
+        cotizacionProductosId: 55, clienteId: 1, unidadDeNegocioId: 2, usuarioId: 7, requisitosEspeciales: false,
+        createdDate: '2026-11-14T10:00:00Z', updatedDate: null,
+      } as any,
+      sgc: null,
+      partidas: [],
+      partidasHeredadas: true,
+      totales: { subtotal: 0, iva: 0, total: 0, costoDirecto: 0, utilidad: null, margenPorcentaje: null, margenBajo: false, partidasSinCosto: 0 },
+      faltantes: [],
+      ...over,
+    });
+
+    it('Con_informativa_true_queda_en_solo_consulta_con_su_franja_y_sin_la_de_solo_lectura', () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuesta({ informativa: true })));
+
+      component.loadQuotes(55);
+      fixture.detectChanges();
+
+      expect(component.esInformativa).toBeTrue();
+      expect(component.soloLectura).toBeTrue();
+      expect(component.quotesForm.disabled).toBeTrue();
+      expect(component.sgcForm.disabled).toBeTrue();
+      expect(fixture.nativeElement.querySelector('.franja-informativa')?.textContent).toContain('solo consulta');
+      expect(fixture.nativeElement.querySelector('.franja-solo-lectura')).toBeNull();
+    });
+
+    it('Sin_el_campo_informativa_la_cotizacion_sigue_editable_como_antes', () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuesta()));
+
+      component.loadQuotes(55);
+      fixture.detectChanges();
+
+      expect(component.esInformativa).toBeFalse();
+      expect(component.soloLectura).toBeFalse();
+      expect(component.quotesForm.enabled).toBeTrue();
+      expect(fixture.nativeElement.querySelector('.franja-informativa')).toBeNull();
+    });
+
+    it('Con_informativa_false_tampoco_cambia_nada', () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuesta({ informativa: false })));
+
+      component.loadQuotes(55);
+      fixture.detectChanges();
+
+      expect(component.esInformativa).toBeFalse();
+      expect(component.soloLectura).toBeFalse();
+    });
+
+    it('Informativa_false_con_partidas_no_heredadas_no_es_informativa', () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuesta({ informativa: false, partidasHeredadas: false })));
+
+      component.loadQuotes(55);
+      fixture.detectChanges();
+
+      expect(component.esInformativa).toBeFalse();
+    });
+  });
+
   it('La_pestana_Resumen_muestra_totales_y_faltantes', async () => {
     component.folio = 'COT-2026-0042';
     component.version = 1;

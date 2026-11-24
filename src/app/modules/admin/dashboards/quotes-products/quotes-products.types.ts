@@ -283,6 +283,8 @@ export interface RespuestaObtenerSgc {
     revisiones?: RevisionSgc[];
     acciones?: AccionesSgc;
     seguimiento?: ResumenSeguimiento | null;
+    /** Contrato v1.2: `true` ⇔ la cotización no tiene capa SGC (solo viene de CONTPAQ): se ve solo como consulta. Si no viene, es `false`. */
+    informativa?: boolean;
 }
 
 export interface ResumenSgc {

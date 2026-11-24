@@ -1,0 +1,74 @@
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 flex-auto min-h-0 overflow-auto" data-testid="tablero-cotizaciones">
+  <div *ngFor="let col of columnas" [attr.data-testid]="'columna-' + col.tipo"
+       class="flex flex-col min-h-0 bg-gray-50/50 dark:bg-gray-900/10 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+
+    <div class="mb-1 flex items-center justify-between">
+      <span class="font-bold text-sm uppercase tracking-wider text-primary">{{ col.titulo }}</span>
+      <span class="px-2 py-0.5 text-xs font-semibold bg-primary-100 text-primary-700 rounded-full" data-testid="conteo-columna">
+        {{ col.items.length }} de {{ col.total }}
+      </span>
+    </div>
+    <p class="text-[11px] text-gray-400 mb-3">{{ col.ayuda }}</p>
+
+    <!-- Error de esta columna: las otras siguen funcionando -->
+    <div *ngIf="col.error" data-testid="error-columna"
+         class="p-3 mb-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-2">
+      <span>{{ col.error }}</span>
+      <button mat-stroked-button color="warn" type="button" data-testid="reintentar-columna" (click)="cargar(col, true)">Reintentar</button>
+    </div>
+
+    <div *ngIf="col.resumenFallo" data-testid="aviso-resumen"
+         class="p-2 mb-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px]">
+      No se pudo cargar la información del SGC; se muestran los datos base.
+    </div>
+
+    <div class="space-y-3 overflow-y-auto min-h-0 flex-1">
+      <button *ngFor="let q of col.visibles; trackBy: trackPorId" type="button"
+              [attr.data-testid]="'tarjeta-' + q.cotizacionProductosId"
+              class="w-full text-left bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+              (click)="abrir.emit(q.cotizacionProductosId)">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <span class="text-xs font-bold text-primary font-mono truncate">{{ textoFolio(q) }}</span>
+          <span *ngIf="q.informativa" data-testid="etiqueta-informativa"
+                class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-slate-100 text-slate-600 border border-slate-300">
+            Informativa
+          </span>
+          <app-etapa-chip *ngIf="q.etapa" [etapa]="q.etapa"></app-etapa-chip>
+        </div>
+        <h4 class="font-semibold text-sm leading-tight">{{ q.nombreCliente || 'Sin cliente' }}</h4>
+        <p *ngIf="q.unidadDeNegocio?.nombre" class="text-xs text-gray-400 mt-0.5 truncate">{{ q.unidadDeNegocio?.nombre }}</p>
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-sm font-black tabular-nums">{{ (q.totalSgc ?? q.total) | currency:(q.moneda || 'MXN'):'symbol':'1.2-2' }}</span>
+          <span class="text-[10px] text-gray-400">{{ q.createdDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-1">
+          <span *ngIf="q.requerimientoFolio" class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-700">
+            {{ q.requerimientoFolio }}
+          </span>
+          <span *ngIf="q.vencida" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-red-100 text-red-800 border border-red-300">
+            Vencida por cerrar
+          </span>
+          <span *ngIf="q.seguimientoAtrasado" class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-300">
+            Seguimiento atrasado
+          </span>
+        </div>
+      </button>
+
+      <div *ngIf="col.cargando" class="py-4 text-center text-xs text-gray-400" data-testid="cargando-columna">Cargando…</div>
+      <div *ngIf="!col.cargando && !col.error && col.items.length === 0" data-testid="columna-vacia"
+           class="py-8 text-center text-xs text-gray-400">
+        Sin cotizaciones en este rango.
+      </div>
+      <div *ngIf="!col.cargando && col.items.length > 0 && col.visibles.length === 0" data-testid="columna-sin-coincidencias"
+           class="py-6 text-center text-xs text-gray-400">
+        Ninguna de las cargadas coincide con los filtros.
+      </div>
+
+      <div *ngIf="masDisponible(col)" class="pt-1 text-center">
+        <button mat-stroked-button type="button" data-testid="ver-mas" (click)="cargar(col, false)">
+          Ver más ({{ col.total - col.items.length }})
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

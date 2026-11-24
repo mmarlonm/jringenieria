@@ -94,10 +94,148 @@ describe('QuoteListComponent', () => {
       ],
     }).compileComponents();
 
+    // La vista por omisión es el tablero por tipo; estas pruebas son de la lista de siempre.
+    localStorage.removeItem('cotizaciones.vista');
     fixture = TestBed.createComponent(QuoteListComponent);
     component = fixture.componentInstance;
+    component.vista = 'lista';
     component.permisosDisponibles = ['btnAdd', 'btnEdit', 'btnDelete'];
     fixture.detectChanges();
+  });
+
+  afterEach(() => localStorage.removeItem('cotizaciones.vista'));
+
+  describe('Vista tablero y lista', () => {
+    const llamadasConTipo = (): any[][] => mockQuotesService.getQuotesPorRango.calls.allArgs();
+
+    it('Por_omision_la_vista_es_tablero_y_se_piden_las_tres_columnas_con_su_tipo', () => {
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      const f = TestBed.createComponent(QuoteListComponent);
+      f.detectChanges();
+
+      expect(f.componentInstance.vista).toBe('tablero');
+      expect(llamadasConTipo().map(a => a[4]).sort()).toEqual(['CE', 'CS', 'CT']);
+      expect(f.nativeElement.querySelector('[data-testid="tablero-cotizaciones"]')).not.toBeNull();
+      expect(f.nativeElement.querySelector('table')).toBeNull();
+    });
+
+    it('La_lista_actual_sigue_igual_con_su_tabla_y_su_paginador', () => {
+      expect(fixture.nativeElement.querySelector('table')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('mat-paginator')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="tablero-cotizaciones"]')).toBeNull();
+    });
+
+    it('El_interruptor_pasa_a_lista_la_carga_una_vez_y_recuerda_la_vista', () => {
+      localStorage.removeItem('cotizaciones.vista');
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      const f = TestBed.createComponent(QuoteListComponent);
+      f.detectChanges();
+      mockQuotesService.getQuotesPorRango.calls.reset();
+
+      f.componentInstance.cambiarVista('lista');
+      f.detectChanges();
+
+      expect(f.componentInstance.vista).toBe('lista');
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledTimes(1);
+      expect(llamadasConTipo()[0].length).toBe(4); // la lista pide sin tipo
+      expect(localStorage.getItem('cotizaciones.vista')).toBe('lista');
+      expect(f.nativeElement.querySelector('table')).not.toBeNull();
+    });
+
+    it('Volver_al_tablero_no_pide_la_lista_de_nuevo_y_el_tablero_se_arma_otra_vez', () => {
+      component.cambiarVista('tablero');
+      fixture.detectChanges();
+
+      expect(component.vista).toBe('tablero');
+      expect(localStorage.getItem('cotizaciones.vista')).toBe('tablero');
+      expect(fixture.nativeElement.querySelector('table')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="tablero-cotizaciones"]')).not.toBeNull();
+    });
+
+    it('Una_vista_invalida_o_la_misma_no_hace_nada', () => {
+      mockQuotesService.getQuotesPorRango.calls.reset();
+      component.cambiarVista('lista');
+      component.cambiarVista('otra' as any);
+
+      expect(component.vista).toBe('lista');
+      expect(mockQuotesService.getQuotesPorRango).not.toHaveBeenCalled();
+    });
+
+    it('La_vista_guardada_en_el_navegador_se_respeta', () => {
+      localStorage.setItem('cotizaciones.vista', 'lista');
+      const f = TestBed.createComponent(QuoteListComponent);
+      expect(f.componentInstance.vista).toBe('lista');
+    });
+
+    it('Sin_almacenamiento_la_vista_es_tablero_y_no_se_rompe', () => {
+      spyOn(Storage.prototype, 'getItem').and.throwError('bloqueado');
+      spyOn(Storage.prototype, 'setItem').and.throwError('bloqueado');
+      const f = TestBed.createComponent(QuoteListComponent);
+
+      expect(f.componentInstance.vista).toBe('tablero');
+      expect(() => f.componentInstance.cambiarVista('lista')).not.toThrow();
+      expect(f.componentInstance.vista).toBe('lista');
+    });
+
+    it('Cambiar_las_fechas_con_el_tablero_actualiza_las_del_tablero_y_no_pide_la_lista', fakeAsync(() => {
+      component.cambiarVista('tablero');
+      fixture.detectChanges();
+      mockQuotesService.getQuotesPorRango.calls.reset();
+
+      component.fechaDesde = '2026-10-01';
+      component.onDateChange();
+      tick(400);
+      fixture.detectChanges();
+
+      expect(component.boardDesde).toBe('2026-10-01');
+      // Solo piden las tres columnas del tablero (con tipo); la lista no
+      expect(llamadasConTipo().every(a => a.length === 5)).toBeTrue();
+      expect(llamadasConTipo().map(a => a[4]).sort()).toEqual(['CE', 'CS', 'CT']);
+      expect(llamadasConTipo().every(a => a[2] === '2026-10-01')).toBeTrue();
+    }));
+
+    it('Una_fecha_invalida_no_llega_al_tablero', fakeAsync(() => {
+      component.cambiarVista('tablero');
+      fixture.detectChanges();
+      const antes = component.boardDesde;
+      mockQuotesService.getQuotesPorRango.calls.reset();
+
+      component.fechaDesde = '2026-12-01';
+      component.fechaHasta = '2026-11-01';
+      component.onDateChange();
+      tick(400);
+      fixture.detectChanges();
+
+      expect(component.errorFechas).toContain('no puede ser posterior');
+      expect(component.boardDesde).toBe(antes);
+      expect(mockQuotesService.getQuotesPorRango).not.toHaveBeenCalled();
+    }));
+
+    it('El_encabezado_cuenta_las_cotizaciones_de_las_tres_columnas', async () => {
+      localStorage.removeItem('cotizaciones.vista');
+      const f = TestBed.createComponent(QuoteListComponent);
+      f.detectChanges();
+      await f.whenStable();
+      f.detectChanges();
+
+      expect(f.componentInstance.quotesCount).toBe(6); // 3 columnas × totalCount 2 del mock
+      expect((f.nativeElement.textContent as string).replace(/\s+/g, ' ')).toContain('6 cotizaciones');
+    });
+
+    it('Una_cotizacion_sin_capa_SGC_se_ve_como_CS_informativa_en_la_lista', () => {
+      mockQuotesService.getQuotesPorRango.and.returnValue(of({
+        code: 200, totalCount: 1,
+        data: [{ cotizacionProductosId: 999, nombreCliente: 'Cliente CONTPAQ', unidadDeNegocio: { nombre: 'Baja Tensión' },
+          createdDate: '2026-11-14', requisitosEspeciales: false, total: 500, estatus: 1, tipoSgc: null, informativa: true }]
+      }));
+      component.getQuotes();
+      fixture.detectChanges();
+
+      const etiqueta = fixture.nativeElement.querySelector('.etiqueta-informativa');
+      expect(etiqueta).not.toBeNull();
+      expect(etiqueta.textContent).toContain('Informativa');
+      expect(fixture.nativeElement.querySelector('tr.mat-mdc-row')?.textContent).toContain('CS');
+    });
   });
 
   it('La_lista_muestra_folio_tipo_y_total_del_resumen', () => {
