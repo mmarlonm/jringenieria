@@ -272,7 +272,6 @@ export class QuoteDetailsComponent implements OnInit {
       tipoCambio: [null],
       vigenciaDias: [15, [Validators.required, Validators.min(1), Validators.max(365)]],
       penalizacionCancelacion: [null, [Validators.maxLength(500)]],
-      formaPago: [null, [Validators.maxLength(200)]],
       condicionesPago: [null, [Validators.maxLength(1000)]],
       puntoEntrega: [null, [Validators.maxLength(300)]],
       condicionesEntrega: [null, [Validators.maxLength(1000)]],

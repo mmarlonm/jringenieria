@@ -171,7 +171,6 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(component.sgcForm.get('tipo')).toBeDefined();
     expect(component.sgcForm.get('moneda')).toBeDefined();
     expect(component.sgcForm.get('vigenciaDias')).toBeDefined();
-    expect(component.sgcForm.get('formaPago')).toBeDefined();
     expect(component.sgcForm.get('condicionesPago')).toBeDefined();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -179,6 +178,10 @@ describe('QuoteDetailsComponent SGC', () => {
       .map((el) => el.textContent?.trim());
     const tienePestana = tabLabels.some((lbl) => lbl?.includes('Clasificación y condiciones'));
     expect(tienePestana).toBeTrue();
+  });
+
+  it('El_formulario_SGC_no_tiene_control_formaPago', () => {
+    expect(component.sgcForm.get('formaPago')).toBeNull();
   });
 
   it('El_tipo_de_cambio_solo_se_pide_en_USD', () => {
@@ -508,7 +511,7 @@ describe('QuoteDetailsComponent SGC', () => {
   it('La_pestana_Resumen_muestra_totales_y_faltantes', async () => {
     component.folio = 'COT-2026-0042';
     component.version = 1;
-    component.faltantes = ['Falta la forma de pago.', 'Falta el punto de entrega.'];
+    component.faltantes = ['Falta el punto de entrega.'];
     component.partidas = [
       {
         partida: 1,
@@ -530,7 +533,6 @@ describe('QuoteDetailsComponent SGC', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Pendiente para poder emitir');
-    expect(compiled.textContent).toContain('Falta la forma de pago.');
     expect(compiled.textContent).toContain('Falta el punto de entrega.');
     expect(compiled.textContent).toContain('COT-2026-0042');
   });
@@ -1212,7 +1214,6 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(component.sgcForm.get('tipoCambio')?.value).toBe(19.5);
       expect(component.sgcForm.get('vigenciaDias')?.value).toBe(15);
       expect(component.sgcForm.get('penalizacionCancelacion')?.value).toBe('10% anticipo');
-      expect(component.sgcForm.get('formaPago')?.value).toBe('Transferencia');
       expect(component.sgcForm.get('condicionesPago')?.value).toBe('30 días de crédito');
       expect(component.sgcForm.get('puntoEntrega')?.value).toBe('Planta Querétaro');
       expect(component.sgcForm.get('condicionesEntrega')?.value).toBe('FOB');
@@ -1308,7 +1309,7 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(dto.sgc.requerimientoId).toBe(42);
       expect(dto.sgc.vigenciaDias).toBe(15);
       expect(dto.sgc.penalizacionCancelacion).toBe('10% anticipo');
-      expect(dto.sgc.formaPago).toBe('Transferencia');
+      expect(dto.sgc.formaPago).toBeUndefined();
       expect(dto.sgc.condicionesPago).toBe('30 días de crédito');
       expect(dto.sgc.puntoEntrega).toBe('Planta Querétaro');
       expect(dto.sgc.condicionesEntrega).toBe('FOB');
@@ -1335,6 +1336,22 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(dto.partidas[0].materialServicio).toBe('Cable uso rudo 3x10');
       expect(dto.partidas[0].precioUnitario).toBe(10);
       expect(dto.partidas[0].costoUnitario).toBe(6);
+    });
+
+    it('Guardar_no_manda_formaPago', () => {
+      const sgcVal = component.sgcForm.getRawValue();
+      expect(sgcVal.formaPago).toBeUndefined();
+    });
+
+    it('Una_cotizacion_con_formaPago_guardado_carga_sin_errores', () => {
+      expect(() => {
+        component.sgcForm.patchValue({
+          tipo: 'CS',
+          moneda: 'MXN',
+          formaPago: 'Transferencia electrónica guardada previamente'
+        });
+      }).not.toThrow();
+      expect(component.sgcForm.get('formaPago')).toBeNull();
     });
 
     it('El_selector_de_cliente_muestra_el_cliente_aunque_la_lista_llegue_despues', async () => {

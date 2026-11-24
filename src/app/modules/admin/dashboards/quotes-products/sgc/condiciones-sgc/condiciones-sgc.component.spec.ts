@@ -38,7 +38,6 @@ describe('CondicionesSgcComponent', () => {
       moneda: ['MXN'],
       tipoCambio: [null],
       vigenciaDias: [15],
-      formaPago: [''],
       condicionesPago: [''],
       penalizacionCancelacion: [''],
       puntoEntrega: [''],
@@ -57,6 +56,11 @@ describe('CondicionesSgcComponent', () => {
 
   it('debe crearse correctamente', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('La_pantalla_de_condiciones_ya_no_tiene_el_campo_forma_de_pago', () => {
+    expect(fixture.nativeElement.querySelector('input[formControlName="formaPago"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Forma de Pago');
   });
 
   it('muestra el campo de tipo de cambio solo cuando la moneda es USD', () => {

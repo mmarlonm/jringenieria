@@ -139,6 +139,19 @@ describe('QuotePdfDialogComponent', () => {
     expect(compiled.textContent).not.toContain('22.92%');
   });
 
+  it('El_PDF_no_muestra_Forma_de_pago_aunque_el_dato_exista', async () => {
+    await createComponent({
+      ...mockFullData,
+      sgc: {
+        ...mockFullData.sgc,
+        formaPago: 'Transferencia electrónica 30 días'
+      }
+    });
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).not.toContain('Forma de pago:');
+    expect(compiled.textContent).not.toContain('Transferencia electrónica 30 días');
+  });
+
   it('El_PDF_en_USD_muestra_el_tipo_de_cambio', async () => {
     const usdData = {
       ...mockFullData,

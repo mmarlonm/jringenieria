@@ -78,6 +78,7 @@ export interface CotizacionSgcDatos {
     tipoCambio?: number | null;
     vigenciaDias: number;
     penalizacionCancelacion?: string | null;
+    /** obsoleto: ya no se muestra ni se envía (§5.3 contrato v1.8) */
     formaPago?: string | null;
     condicionesPago?: string | null;
     puntoEntrega?: string | null;
