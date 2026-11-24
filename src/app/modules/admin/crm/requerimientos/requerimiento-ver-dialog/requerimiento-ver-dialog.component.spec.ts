@@ -348,6 +348,26 @@ describe('RequerimientoVerDialogComponent', () => {
       expect(botonConvertir()).toBeNull();
     });
 
+    it('Con_cotizacionVinculada_muestra_folio_SGC_folio_CONTPAQ_tipo_y_enlace_a_la_cotizacion', () => {
+      reiniciar(mockRequerimiento({
+        estatus: 'Aprobado para cotización',
+        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: 'COT-1234', tipo: 'CT', etapa: 'Borrador' }
+      }));
+
+      const banner = fixture.nativeElement.querySelector('[data-testid="banner-cotizacion-vinculada"]');
+      expect(banner).not.toBeNull();
+      expect(banner.textContent).toContain('COT-2026-0042');
+      expect(banner.textContent).toContain('CONTPAQ COT-1234');
+      expect(banner.textContent).toContain('Técnico-comercial');
+      expect(banner.textContent).toContain('Borrador');
+      expect(banner.querySelector('[data-testid="btn-ver-cotizacion"]').getAttribute('href')).toBe('#/dashboards/quote-products/311');
+    });
+
+    it('Sin_cotizacionVinculada_no_muestra_el_banner_de_cotizacion', () => {
+      reiniciar(mockRequerimiento({ estatus: 'Aprobado para cotización', cotizacionVinculada: null }));
+      expect(fixture.nativeElement.querySelector('[data-testid="banner-cotizacion-vinculada"]')).toBeNull();
+    });
+
     it('Convertir_abre_el_dialogo_con_el_requerimiento_y_cierra_el_ver_con_accion_convertido', () => {
       const req = mockRequerimiento({ estatus: 'Aprobado para cotización' });
       configurar({ id: 10 }, of(req));

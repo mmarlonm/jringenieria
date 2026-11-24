@@ -10,7 +10,8 @@ import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-
 import {
   ConvertirCotizacionDialogData,
   ConvertirCotizacionDialogResult,
-  RequerimientoConvertirCotizacionDialogComponent
+  RequerimientoConvertirCotizacionDialogComponent,
+  TIPOS_COTIZACION
 } from '../requerimiento-convertir-cotizacion-dialog/requerimiento-convertir-cotizacion-dialog.component';
 import Swal from 'sweetalert2';
 
@@ -90,6 +91,10 @@ export class RequerimientoVerDialogComponent implements OnInit {
     return !!this.requerimiento
       && this.requerimiento.estatus === 'Aprobado para cotización'
       && !this.requerimiento.cotizacionVinculada;
+  }
+
+  etiquetaTipo(codigo: string): string {
+    return TIPOS_COTIZACION.find(t => t.codigo === codigo)?.nombre ?? codigo;
   }
 
   get esNoViable(): boolean {

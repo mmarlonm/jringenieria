@@ -215,6 +215,49 @@ describe('RequerimientosComponent - Aprobados', () => {
     expect(btnsFilaNoViable[0].getAttribute('mattooltip')).toBe('Ver requerimiento');
   });
 
+  it('Tras_convertir_el_tablero_se_recarga_una_vez_y_avisa_el_folio', () => {
+    const resultado = { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CS', etapa: 'Borrador', folioContpaq: 'COT-1234', requerimientoId: 3, requerimientoFolio: 'REQ-2026-0003' };
+    spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of({ accion: 'convertido', resultado }) } as any);
+    const aviso = spyOn((component as any).snackBar, 'open');
+    const recargar = spyOn(component, 'loadRequerimientos');
+
+    component.openVerDialog(mockRequerimientos[2]);
+
+    expect(recargar).toHaveBeenCalledTimes(1);
+    expect(aviso).toHaveBeenCalledWith(jasmine.stringContaining('COT-2026-0042'), 'OK', jasmine.anything());
+  });
+
+  it('Cerrar_el_ver_sin_convertir_no_recarga_el_tablero', () => {
+    spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as any);
+    const recargar = spyOn(component, 'loadRequerimientos');
+
+    component.openVerDialog(mockRequerimientos[2]);
+
+    expect(recargar).not.toHaveBeenCalled();
+  });
+
+  it('La_tarjeta_aprobada_muestra_la_etiqueta_de_cotizacion_con_enlace', () => {
+    component.requerimientos = mockRequerimientos.map(r => r.id === 3
+      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: 'COT-1234', tipo: 'CS' as const, etapa: 'Borrador' } }
+      : r);
+    component.applyFilters();
+    fixture.detectChanges();
+
+    const chip = fixture.nativeElement.querySelector('#kanban-aprobados [data-id="3"] [data-testid="chip-cotizacion"]');
+    expect(chip).toBeTruthy();
+    expect(chip.textContent).toContain('COT-2026-0042');
+    expect(chip.querySelector('a').getAttribute('href')).toBe('#/dashboards/quote-products/311');
+  });
+
+  it('Si_cotizacionVinculada_es_null_o_no_viene_no_se_rompe_nada_ni_aparece_la_etiqueta', () => {
+    component.requerimientos = mockRequerimientos.map(r => r.id === 3 ? { ...r, cotizacionVinculada: null } : r);
+    component.applyFilters();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="chip-cotizacion"]')).toBeNull();
+    expect(component.aprobados.length).toBe(1);
+  });
+
   it('No_se_arrastra_desde_No_Viable', () => {
     const swalSpy = spyOn(Swal, 'fire');
     const reloadSpy = spyOn(component, 'loadRequerimientos');

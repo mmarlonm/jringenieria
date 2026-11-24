@@ -423,6 +423,11 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
       if (res?.accion === 'calificar' || res === 'calificar') {
         const target = res?.requerimiento || req;
         this.openCalificarDialog(target);
+      } else if (res?.accion === 'convertido') {
+        // Texto plano: el snackbar no interpreta HTML.
+        this.snackBar.open(`Requerimiento convertido en la cotización ${res.resultado?.folioSgc ?? ''}.`, 'OK', { duration: 5000 });
+        this.loadRequerimientos();
+        this.loadKpis();
       }
     });
   }
