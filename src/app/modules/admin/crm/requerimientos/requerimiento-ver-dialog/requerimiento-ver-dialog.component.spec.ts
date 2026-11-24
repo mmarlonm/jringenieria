@@ -343,22 +343,21 @@ describe('RequerimientoVerDialogComponent', () => {
       // Ya convertido: se oculta
       reiniciar(mockRequerimiento({
         estatus: 'Aprobado para cotización',
-        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: null, tipo: 'CS', etapa: 'Borrador' }
+        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: null, tipo: 'CS', etapa: 'Borrador' }
       }));
       expect(botonConvertir()).toBeNull();
     });
 
-    it('El_banner_de_cotizacion_vinculada_muestra_el_folio_SGC_y_el_folio_de_la_cotizacion', () => {
+    it('El_banner_muestra_folio_SGC_y_folio_de_CONTPAQ_si_lo_hay', () => {
       reiniciar(mockRequerimiento({
         estatus: 'Aprobado para cotización',
-        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: 'COT-1234', tipo: 'CT', etapa: 'Borrador' }
+        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: '1234', tipo: 'CT', etapa: 'Borrador' }
       }));
 
       const banner = fixture.nativeElement.querySelector('[data-testid="banner-cotizacion-vinculada"]');
       expect(banner).not.toBeNull();
       expect(banner.textContent).toContain('COT-2026-0042');
-      expect(banner.textContent).toContain('COT-1234');
-      expect(banner.textContent).not.toContain('CONTPAQ');
+      expect(banner.textContent).toContain('CONTPAQ 1234');
       expect(banner.textContent).toContain('Técnico-comercial');
       expect(banner.textContent).toContain('Borrador');
       expect(banner.querySelector('[data-testid="btn-ver-cotizacion"]').getAttribute('href')).toBe('#/dashboards/quote-products/311');
@@ -374,7 +373,7 @@ describe('RequerimientoVerDialogComponent', () => {
       configurar({ id: 10 }, of(req));
       const resultado = {
         cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CS', etapa: 'Borrador',
-        folioCotizacion: 'COT-1234', requerimientoId: 10, requerimientoFolio: 'REQ-2026-0010'
+        folioContpaq: '1234', requerimientoId: 10, requerimientoFolio: 'REQ-2026-0010'
       };
       const abrir = spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of({ convertido: true, resultado }) } as any);
 

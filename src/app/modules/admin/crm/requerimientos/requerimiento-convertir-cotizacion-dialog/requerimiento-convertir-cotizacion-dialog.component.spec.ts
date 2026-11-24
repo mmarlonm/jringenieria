@@ -1,388 +1,339 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatIconTestingModule } from '@angular/material/icon/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
-import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import {
+  RequerimientoConvertirCotizacionDialogComponent
+} from './requerimiento-convertir-cotizacion-dialog.component';
+import {
+  BuscarFolioRespuesta,
+  CoincidenciaFolio,
   ConvertirRequerimientoResultado,
   Requerimiento,
   RequerimientosService
 } from '../requerimientos.service';
-import { RequerimientoConvertirCotizacionDialogComponent } from './requerimiento-convertir-cotizacion-dialog.component';
 
-function req(overrides: Partial<Requerimiento> = {}): Requerimiento {
-  return {
+describe('RequerimientoConvertirCotizacionDialogComponent', () => {
+  let reqService: jasmine.SpyObj<RequerimientosService>;
+  let dialogRef: jasmine.SpyObj<MatDialogRef<RequerimientoConvertirCotizacionDialogComponent>>;
+  let fixture: ComponentFixture<RequerimientoConvertirCotizacionDialogComponent>;
+  let component: RequerimientoConvertirCotizacionDialogComponent;
+
+  const baseReq: Requerimiento = {
     id: 57,
     folio: 'REQ-2026-0057',
     fechaRecepcion: '2026-11-20T10:00:00',
     nombreContacto: 'Contacto Ficticio',
     empresa: 'Cliente Ficticio SA de CV',
-    descripcion: 'Suministro de tableros',
     estatus: 'Aprobado para cotización',
-    fechaRegistro: '2026-11-20T10:00:00',
-    faltaPlano: false, faltaFotografia: false, faltaCantidad: false, faltaUbicacion: false,
-    faltaDatosElectricos: false, faltaCapacidad: false, faltaFechaEjecucion: false, faltaCondicionesSitio: false,
-    faltaNormativa: false, faltaEvidenciaFalla: false, faltaMarcaModelo: false, faltaVisita: false, faltaOtros: false,
-    ...overrides
+    rutaAtencion: 'Comercial',
+    titulo: 'Tablero'
+  } as Requerimiento;
+
+  const coincidencia1: CoincidenciaFolio = {
+    cotizacionProductosId: 311,
+    unidadDeNegocioId: 2,
+    unidadDeNegocioNombre: 'Querétaro',
+    folioContpaq: '1234',
+    nombreCliente: 'Cliente Ficticio SA de CV',
+    rfc: 'XAXX010101000',
+    total: 15234.5,
+    fecha: '2026-11-20T00:00:00',
+    tieneCapaSgc: false,
+    yaVinculadaARequerimiento: false,
+    requerimientoFolio: null
   };
-}
 
-const UNIDADES = [
-  { unidadId: 1, nombre: 'Unidad Uno Ficticia', descripcion: 'x' },
-  { unidadId: 2, nombre: 'Unidad Dos Ficticia', descripcion: 'x' }
-];
+  const coincidencia2: CoincidenciaFolio = {
+    cotizacionProductosId: 312,
+    unidadDeNegocioId: 1,
+    unidadDeNegocioNombre: 'Matriz',
+    folioContpaq: '1234',
+    nombreCliente: 'Cliente Ficticio SA de CV',
+    rfc: 'XAXX010101000',
+    total: 18500,
+    fecha: '2026-11-21T00:00:00',
+    tieneCapaSgc: false,
+    yaVinculadaARequerimiento: false,
+    requerimientoFolio: null
+  };
 
-const RESULTADO: ConvertirRequerimientoResultado = {
-  cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: 'COT-1234', tipo: 'CT', etapa: 'Borrador',
-  requerimientoId: 57, requerimientoFolio: 'REQ-2026-0057'
-};
+  const resultadoOk: ConvertirRequerimientoResultado = {
+    cotizacionProductosId: 311,
+    folioSgc: 'COT-2026-0042',
+    folioContpaq: '1234',
+    tipo: 'CT',
+    etapa: 'Borrador',
+    requerimientoId: 57,
+    requerimientoFolio: 'REQ-2026-0057'
+  };
 
-describe('RequerimientoConvertirCotizacionDialogComponent', () => {
-  let fixture: ComponentFixture<RequerimientoConvertirCotizacionDialogComponent>;
-  let component: RequerimientoConvertirCotizacionDialogComponent;
-  let servicio: jasmine.SpyObj<RequerimientosService>;
-  let proyecto: jasmine.SpyObj<ProjectService>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<RequerimientoConvertirCotizacionDialogComponent>>;
+  const q = (testId: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
-  function configurar(
-    requerimiento: Requerimiento = req(),
-    unidades$: Observable<any[]> = of(UNIDADES)
-  ): void {
-    servicio = jasmine.createSpyObj('RequerimientosService', ['convertirACotizacion']);
-    proyecto = jasmine.createSpyObj('ProjectService', ['getUnidadesDeNegocio']);
-    proyecto.getUnidadesDeNegocio.and.returnValue(unidades$);
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
-
+  function crear(req: Requerimiento = baseReq): void {
     TestBed.configureTestingModule({
-      imports: [RequerimientoConvertirCotizacionDialogComponent, NoopAnimationsModule, MatIconTestingModule],
+      imports: [RequerimientoConvertirCotizacionDialogComponent, NoopAnimationsModule],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { requerimiento } },
+        { provide: MAT_DIALOG_DATA, useValue: { requerimiento: req } },
         { provide: MatDialogRef, useValue: dialogRef },
-        { provide: RequerimientosService, useValue: servicio },
-        { provide: ProjectService, useValue: proyecto }
+        { provide: RequerimientosService, useValue: reqService }
       ]
     });
+
     fixture = TestBed.createComponent(RequerimientoConvertirCotizacionDialogComponent);
     component = fixture.componentInstance;
-    fixture.autoDetectChanges(true);
+    fixture.detectChanges();
   }
 
-  const q = (testid: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
-  const boton = (testid: string): HTMLButtonElement => q(testid) as HTMLButtonElement;
-
-  function confirmar(aceptar = true): jasmine.Spy {
-    return spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: aceptar } as any));
-  }
-
-  describe('unidades de negocio', () => {
-    it('Carga_las_unidades_y_las_ofrece_para_elegir', () => {
-      configurar();
-
-      expect(proyecto.getUnidadesDeNegocio).toHaveBeenCalledTimes(1);
-      expect(component.unidades.map(u => u.unidadId)).toEqual([1, 2]);
-      expect(component.cargandoUnidades).toBeFalse();
-    });
-
-    it('Con_varias_unidades_hay_que_elegir_una_antes_de_convertir', () => {
-      configurar();
-      component.folioControl.setValue('COT-1234');
-
-      expect(component.unidadControl.value).toBeNull();
-      expect(boton('btn-convertir').disabled).toBeTrue();
-
-      component.unidadControl.setValue(2);
-      fixture.detectChanges();
-
-      expect(boton('btn-convertir').disabled).toBeFalse();
-    });
-
-    it('Con_una_sola_unidad_queda_elegida_sola', () => {
-      configurar(req(), of([UNIDADES[1]]));
-
-      expect(component.unidadControl.value).toBe(2);
-      component.folioControl.setValue('COT-1234');
-      expect(component.puedeConvertir).toBeTrue();
-    });
-
-    it('Mientras_cargan_las_unidades_no_se_puede_convertir', () => {
-      const pendiente = new Subject<any[]>();
-      configurar(req(), pendiente);
-      component.unidadControl.setValue(2);
-      component.folioControl.setValue('COT-1234');
-
-      expect(component.cargandoUnidades).toBeTrue();
-      expect(component.puedeConvertir).toBeFalse();
-
-      pendiente.next(UNIDADES);
-      pendiente.complete();
-      expect(component.puedeConvertir).toBeTrue();
-    });
-
-    it('Un_error_al_cargar_las_unidades_avisa_y_permite_reintentar', () => {
-      configurar(req(), throwError(() => new HttpErrorResponse({ status: 500 })));
-      fixture.detectChanges();
-
-      expect(q('error-unidades')).not.toBeNull();
-      expect(component.puedeConvertir).toBeFalse();
-
-      proyecto.getUnidadesDeNegocio.and.returnValue(of(UNIDADES));
-      boton('btn-reintentar-unidades').click();
-      fixture.detectChanges();
-
-      expect(q('error-unidades')).toBeNull();
-      expect(component.unidades.length).toBe(2);
-    });
-
-    it('Ignora_las_filas_sin_id_en_el_catalogo', () => {
-      configurar(req(), of([{ nombre: 'Sin id' }, null, UNIDADES[0], UNIDADES[1]] as any[]));
-
-      expect(component.unidades.map(u => u.unidadId)).toEqual([1, 2]);
-    });
+  beforeEach(() => {
+    reqService = jasmine.createSpyObj('RequerimientosService', ['buscarFolioContpaq', 'convertirACotizacion']);
+    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
   });
 
-  describe('folio de la cotización', () => {
-    it('Pide_el_folio_de_la_cotizacion_con_su_etiqueta_y_ayuda', () => {
-      configurar();
-
-      expect(q('input-folio')).not.toBeNull();
-      const texto = fixture.nativeElement.textContent;
-      expect(texto).toContain('Folio de la cotización');
-      expect(texto).toContain('Escribe el folio que ya le diste a esta cotización. No se consulta en ningún sistema.');
-      expect(texto).not.toContain('CONTPAQ');
-    });
-
-    it('Convertir_esta_deshabilitado_sin_folio', () => {
-      configurar();
-      component.unidadControl.setValue(2);
-      component.folioControl.setValue('');
-      fixture.detectChanges();
-
-      expect(component.puedeConvertir).toBeFalse();
-      expect(boton('btn-convertir').disabled).toBeTrue();
-    });
-
-    it('Un_folio_de_solo_espacios_no_es_valido', () => {
-      configurar();
-      component.unidadControl.setValue(2);
-      component.folioControl.setValue('   ');
-      fixture.detectChanges();
-
-      expect(component.folioControl.valid).toBeFalse();
-      expect(component.puedeConvertir).toBeFalse();
-    });
-
-    it('Un_folio_de_mas_de_50_caracteres_no_es_valido', () => {
-      configurar();
-      component.unidadControl.setValue(2);
-      component.folioControl.setValue('A'.repeat(51));
-      fixture.detectChanges();
-
-      expect(component.folioControl.valid).toBeFalse();
-      expect(component.puedeConvertir).toBeFalse();
-
-      component.folioControl.setValue('A'.repeat(50));
-      fixture.detectChanges();
-      expect(component.folioControl.valid).toBeTrue();
-    });
-
-    it('Un_folio_con_tabulador_o_salto_de_linea_no_es_valido', () => {
-      configurar();
-      component.folioControl.setValue('COT\t1234');
-      expect(component.folioControl.valid).toBeFalse();
-
-      component.folioControl.setValue('COT\n1234');
-      expect(component.folioControl.valid).toBeFalse();
-    });
+  it('Pide_el_folio_de_CONTPAQ_con_su_etiqueta_y_ayuda', () => {
+    crear();
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('Folio de CONTPAQ');
+    expect(texto).toContain('Escribe el folio de la cotización en CONTPAQ. Debe estar ya sincronizada.');
   });
 
-  describe('tipo sugerido', () => {
-    it('Tipo_sugerido_CS_si_no_hay_caso_ni_ruta_tecnica', () => {
-      configurar(req({ seguimientoProyectoId: undefined, rutaAtencion: 'Comercial' }));
-      expect(component.tipoControl.value).toBe('CS');
-    });
+  it('Buscar_esta_deshabilitado_con_folio_vacio_o_invalido', () => {
+    crear();
+    const btn = () => q('btn-buscar') as HTMLButtonElement;
 
-    it('Tipo_sugerido_CT_si_hay_caso_en_ingenieria', () => {
-      configurar(req({ seguimientoProyectoId: 42 }));
-      expect(component.tipoControl.value).toBe('CT');
-    });
+    component.folioControl.setValue('');
+    fixture.detectChanges();
+    expect(btn().disabled).toBeTrue();
 
-    it('Tipo_sugerido_CT_si_la_ruta_es_tecnica', () => {
-      configurar(req({ rutaAtencion: 'Técnica' }));
-      expect(component.tipoControl.value).toBe('CT');
-    });
+    component.folioControl.setValue('   ');
+    fixture.detectChanges();
+    expect(btn().disabled).toBeTrue();
+
+    component.folioControl.setValue('abc def');
+    fixture.detectChanges();
+    expect(btn().disabled).toBeTrue();
+
+    component.folioControl.setValue('A'.repeat(31));
+    fixture.detectChanges();
+    expect(btn().disabled).toBeTrue();
+
+    component.folioControl.setValue('COT-1234');
+    fixture.detectChanges();
+    expect(btn().disabled).toBeFalse();
   });
 
-  describe('conversión', () => {
-    beforeEach(() => {
-      configurar();
-      component.unidadControl.setValue(2);
-      component.folioControl.setValue('COT-1234');
-      fixture.detectChanges();
+  it('Buscar_manda_el_folio_recortado', () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    crear();
+
+    component.folioControl.setValue('  1234  ');
+    fixture.detectChanges();
+    (q('btn-buscar') as HTMLButtonElement).click();
+
+    expect(reqService.buscarFolioContpaq).toHaveBeenCalledWith('1234');
+  });
+
+  it('Una_sola_coincidencia_no_vinculada_queda_elegida', () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    crear();
+
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
+
+    expect(component.seleccionada).toEqual(coincidencia1);
+    expect((q('btn-convertir') as HTMLButtonElement).disabled).toBeFalse();
+  });
+
+  it('Varias_coincidencias_obligan_a_elegir', () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1, coincidencia2] }));
+    crear();
+
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
+
+    expect(component.seleccionada).toBeNull();
+    expect((q('btn-convertir') as HTMLButtonElement).disabled).toBeTrue();
+
+    const lista = q('lista-coincidencias')!.textContent!;
+    expect(lista).toContain('Cliente Ficticio SA de CV');
+    expect(lista).toContain('XAXX010101000');
+    expect(lista).toContain('1234');
+    expect(lista).toContain('Querétaro');
+    expect(lista).toContain('Matriz');
+
+    (q('coincidencia-1') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.seleccionada).toEqual(coincidencia2);
+    expect((q('btn-convertir') as HTMLButtonElement).disabled).toBeFalse();
+  });
+
+  it('Una_ya_vinculada_se_ve_deshabilitada_con_el_folio_del_requerimiento', () => {
+    const vinculada: CoincidenciaFolio = {
+      ...coincidencia1,
+      tieneCapaSgc: true,
+      yaVinculadaARequerimiento: true,
+      requerimientoFolio: 'REQ-2026-0001'
+    };
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [vinculada] }));
+    crear();
+
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
+
+    const btnCoinc = q('coincidencia-0') as HTMLButtonElement;
+    expect(btnCoinc.disabled).toBeTrue();
+    expect(q('ya-vinculada')?.textContent).toContain('REQ-2026-0001');
+    expect((q('btn-convertir') as HTMLButtonElement).disabled).toBeTrue();
+  });
+
+  it('Sin_coincidencias_dice_que_no_esta_sincronizada_y_que_se_trae_lo_de_los_ultimos_15_dias', () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '9999', coincidencias: [] } as BuscarFolioRespuesta));
+    crear();
+
+    component.folioControl.setValue('9999');
+    component.buscar();
+    fixture.detectChanges();
+
+    const msg = q('sin-coincidencias')?.textContent;
+    expect(msg).toContain('No se encontró una cotización sincronizada con ese folio.');
+    expect(msg).toContain('últimos 15 días');
+  });
+
+  it('Editar_el_folio_descarta_los_resultados', () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    crear();
+
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
+    expect(component.seleccionada).toEqual(coincidencia1);
+
+    component.folioControl.setValue('1235');
+    fixture.detectChanges();
+
+    expect(component.coincidencias).toBeNull();
+    expect(component.seleccionada).toBeNull();
+    expect(q('lista-coincidencias')).toBeNull();
+  });
+
+  it('Convertir_esta_deshabilitado_sin_eleccion', () => {
+    crear();
+    expect((q('btn-convertir') as HTMLButtonElement).disabled).toBeTrue();
+  });
+
+  it('Convertir_envia_la_cotizacion_elegida_y_el_tipo', async () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    reqService.convertirACotizacion.and.returnValue(of(resultadoOk));
+    crear();
+
+    component.folioControl.setValue('1234');
+    component.buscar();
+    component.tipoControl.setValue('CE');
+    fixture.detectChanges();
+
+    await component.convertir();
+
+    expect(reqService.convertirACotizacion).toHaveBeenCalledWith({
+      requerimientoId: 57,
+      tipo: 'CE',
+      cotizacionProductosId: 311
     });
+    expect(dialogRef.close).toHaveBeenCalledWith({ convertido: true, resultado: resultadoOk });
+  });
 
-    it('Convertir_envia_el_folio_recortado_junto_con_tipo_y_unidad', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
-      component.tipoControl.setValue('CE'); // Se puede elegir Estratégica
-      component.folioControl.setValue('   COT-1234   ');
-
-      component.convertir();
-      flushMicrotasks();
-
-      expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith({
-        requerimientoId: 57, tipo: 'CE', unidadDeNegocioId: 2, folioCotizacion: 'COT-1234'
-      });
-    }));
-
-    it('409_de_folio_repetido_muestra_el_mensaje_y_conserva_lo_escrito_y_deja_reintentar', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
+  it('409_ya_vinculada_muestra_el_mensaje', async () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    reqService.convertirACotizacion.and.returnValue(
+      throwError(() => new HttpErrorResponse({
         status: 409,
-        error: { mensaje: 'La cotización COT-2026-0010 de esta sucursal ya tiene el folio COT-1234.' }
-      })));
+        error: { mensaje: 'La cotización ya está vinculada al requerimiento REQ-2026-0001.' }
+      }))
+    );
+    crear();
 
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
 
-      expect(q('error-convertir')?.textContent).toContain('ya tiene el folio COT-1234');
-      expect(component.folioControl.value).toBe('COT-1234');
-      expect(boton('btn-convertir').disabled).toBeFalse();
-      expect(dialogRef.close).not.toHaveBeenCalled();
-    }));
+    await component.convertir();
+    fixture.detectChanges();
 
-    it('Doble_clic_en_Convertir_envia_una_sola_peticion', fakeAsync(() => {
-      const swal = confirmar();
-      servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
+    expect(q('error-convertir')?.textContent).toContain('La cotización ya está vinculada al requerimiento REQ-2026-0001.');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
 
-      component.convertir();
-      component.convertir(); // segundo clic mientras se decide
-      flushMicrotasks();
-
-      expect(swal).toHaveBeenCalledTimes(1);
-      expect(servicio.convertirACotizacion).toHaveBeenCalledTimes(1);
-    }));
-
-    it('Cancelar_en_la_confirmacion_no_envia_nada_y_deja_convertir_de_nuevo', fakeAsync(() => {
-      confirmar(false);
-
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
-
-      expect(servicio.convertirACotizacion).not.toHaveBeenCalled();
-      expect(boton('btn-convertir').disabled).toBeFalse();
-      expect(dialogRef.disableClose).toBeFalse();
-    }));
-
-    it('Mientras_se_convierte_no_se_puede_cerrar_ni_cancelar_y_si_falla_se_libera', fakeAsync(() => {
-      confirmar();
-      const respuesta = new Subject<ConvertirRequerimientoResultado>();
-      servicio.convertirACotizacion.and.returnValue(respuesta);
-
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
-
-      expect(dialogRef.disableClose).toBeTrue();
-      expect(boton('btn-cancelar').disabled).toBeTrue();
-      component.cancelar();
-      expect(dialogRef.close).not.toHaveBeenCalled();
-
-      respuesta.error(new HttpErrorResponse({ status: 500, error: { mensaje: 'Falló.' } }));
-      fixture.detectChanges();
-
-      expect(dialogRef.disableClose).toBeFalse();
-      expect(boton('btn-cancelar').disabled).toBeFalse();
-    }));
-
-    it('Exito_cierra_con_convertido_true_y_el_resultado', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
-
-      component.convertir();
-      flushMicrotasks();
-
-      expect(dialogRef.close).toHaveBeenCalledOnceWith({ convertido: true, resultado: RESULTADO });
-    }));
-
-    it('409_con_cotizacionVinculada_muestra_el_folio_existente_y_no_permite_convertir', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
+  it('409_con_cotizacionVinculada_muestra_el_folio_SGC_existente', async () => {
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    reqService.convertirACotizacion.and.returnValue(
+      throwError(() => new HttpErrorResponse({
         status: 409,
         error: {
           mensaje: 'El requerimiento ya tiene una cotización vinculada.',
-          cotizacionVinculada: { cotizacionProductosId: 300, folioSgc: 'COT-2026-0040', folioCotizacion: 'COT-1234', tipo: 'CS', etapa: 'Borrador' }
+          cotizacionVinculada: { cotizacionProductosId: 300, folioSgc: 'COT-2026-0040', folioContpaq: '1234', tipo: 'CS', etapa: 'Borrador' }
         }
-      })));
+      }))
+    );
+    crear();
 
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
 
-      expect(q('aviso-ya-convertida')?.textContent).toContain('COT-2026-0040');
-      expect(q('error-convertir')?.textContent).toContain('ya tiene una cotización');
-      expect(boton('btn-convertir').disabled).toBeTrue();
-      expect(dialogRef.close).not.toHaveBeenCalled();
-    }));
+    await component.convertir();
+    fixture.detectChanges();
 
-    it('409_de_conversion_en_curso_muestra_el_mensaje_y_deja_reintentar', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
-        status: 409, error: { mensaje: 'Hay otra conversión en curso. Intenta de nuevo.' }
-      })));
+    expect(q('aviso-ya-convertida')?.textContent).toContain('COT-2026-0040');
+    expect(q('aviso-ya-convertida')?.textContent).toContain('1234');
+  });
 
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
+  it('Doble_clic_envia_una_sola_peticion', async () => {
+    const subj = new Subject<ConvertirRequerimientoResultado>();
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    reqService.convertirACotizacion.and.returnValue(subj.asObservable());
+    crear();
 
-      expect(q('error-convertir')?.textContent).toContain('Hay otra conversión en curso');
-      expect(boton('btn-convertir').disabled).toBeFalse();
-    }));
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
 
-    it('404_de_unidad_inexistente_muestra_el_mensaje_y_conserva_lo_elegido', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
-        status: 404, error: { mensaje: 'La unidad de negocio no existe.' }
-      })));
+    const p1 = component.convertir();
+    const p2 = component.convertir();
+    await Promise.all([p1, p2]);
 
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
+    expect(reqService.convertirACotizacion).toHaveBeenCalledTimes(1);
+    subj.next(resultadoOk);
+    subj.complete();
+  });
 
-      expect(q('error-convertir')?.textContent).toContain('La unidad de negocio no existe.');
-      expect(component.unidadControl.value).toBe(2);
-      expect(component.tipoControl.value).toBe('CS');
-      expect(dialogRef.close).not.toHaveBeenCalled();
-    }));
+  it('Mientras_convierte_no_se_puede_cerrar', async () => {
+    const subj = new Subject<ConvertirRequerimientoResultado>();
+    reqService.buscarFolioContpaq.and.returnValue(of({ folio: '1234', coincidencias: [coincidencia1] }));
+    reqService.convertirACotizacion.and.returnValue(subj.asObservable());
+    crear();
 
-    it('Error_del_API_muestra_el_mensaje_dentro_del_dialogo', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
-        status: 400, error: { mensaje: 'El tipo de cotización no es válido.' }
-      })));
+    component.folioControl.setValue('1234');
+    component.buscar();
+    fixture.detectChanges();
 
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
+    const promesa = component.convertir();
+    await promesa;
+    fixture.detectChanges();
 
-      expect(q('error-convertir')?.textContent).toContain('El tipo de cotización no es válido.');
-      expect(dialogRef.close).not.toHaveBeenCalled();
-    }));
+    expect(component.convirtiendo).toBeTrue();
+    expect(dialogRef.disableClose).toBeTrue();
+    expect((q('btn-cancelar') as HTMLButtonElement).disabled).toBeTrue();
 
-    it('Un_error_sin_mensaje_muestra_un_texto_generico_en_espanol', fakeAsync(() => {
-      confirmar();
-      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: 'Internal Server Error <b>x</b>' })));
+    component.cancelar();
+    expect(dialogRef.close).not.toHaveBeenCalled();
 
-      component.convertir();
-      flushMicrotasks();
-      fixture.detectChanges();
-
-      expect(q('error-convertir')?.textContent).toContain('No se pudo convertir el requerimiento');
-      expect(q('error-convertir')?.textContent).not.toContain('Internal Server Error');
-    }));
+    subj.next(resultadoOk);
+    subj.complete();
   });
 });
