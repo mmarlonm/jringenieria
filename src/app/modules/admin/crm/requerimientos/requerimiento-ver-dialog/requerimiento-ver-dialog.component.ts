@@ -120,7 +120,7 @@ export class RequerimientoVerDialogComponent implements OnInit {
     });
   }
 
-  /** Abre el diálogo del folio de CONTPAQ; si se convirtió, cierra este con la acción para que el tablero se recargue. */
+  /** Abre el diálogo de conversión (tipo y unidad); si se convirtió, cierra este con la acción para que el tablero se recargue. */
   convertir(): void {
     if (!this.requerimiento) {
       return;

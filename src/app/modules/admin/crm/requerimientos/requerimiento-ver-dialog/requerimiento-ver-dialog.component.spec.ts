@@ -343,21 +343,21 @@ describe('RequerimientoVerDialogComponent', () => {
       // Ya convertido: se oculta
       reiniciar(mockRequerimiento({
         estatus: 'Aprobado para cotización',
-        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: 'COT-1234', tipo: 'CS', etapa: 'Borrador' }
+        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: null, tipo: 'CS', etapa: 'Borrador' }
       }));
       expect(botonConvertir()).toBeNull();
     });
 
-    it('Con_cotizacionVinculada_muestra_folio_SGC_folio_CONTPAQ_tipo_y_enlace_a_la_cotizacion', () => {
+    it('Con_cotizacionVinculada_muestra_folio_SGC_tipo_y_enlace_sin_folio_de_CONTPAQ', () => {
       reiniciar(mockRequerimiento({
         estatus: 'Aprobado para cotización',
-        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: 'COT-1234', tipo: 'CT', etapa: 'Borrador' }
+        cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: null, tipo: 'CT', etapa: 'Borrador' }
       }));
 
       const banner = fixture.nativeElement.querySelector('[data-testid="banner-cotizacion-vinculada"]');
       expect(banner).not.toBeNull();
       expect(banner.textContent).toContain('COT-2026-0042');
-      expect(banner.textContent).toContain('CONTPAQ COT-1234');
+      expect(banner.textContent).not.toContain('CONTPAQ');
       expect(banner.textContent).toContain('Técnico-comercial');
       expect(banner.textContent).toContain('Borrador');
       expect(banner.querySelector('[data-testid="btn-ver-cotizacion"]').getAttribute('href')).toBe('#/dashboards/quote-products/311');
