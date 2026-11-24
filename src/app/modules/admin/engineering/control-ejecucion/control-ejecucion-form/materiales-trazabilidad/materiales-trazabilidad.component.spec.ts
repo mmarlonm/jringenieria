@@ -371,11 +371,22 @@ describe('MaterialesTrazabilidadComponent', () => {
       expect(Array.from(component.seleccionados)).toEqual([2]);
     });
 
-    it('Cambio_masivo_confirma_envia_los_ids_y_aplica_la_trazabilidad_devuelta', fakeAsync(() => {
-      configurar();
+    it('Cambio_masivo_confirma_envia_los_ids_y_aplica_el_conteo_y_los_estatus_sin_perder_compras_ni_almacen', fakeAsync(() => {
+      // Dos filas con datos de compras y almacén que la respuesta ligera NO trae: deben conservarse.
+      configurar(resumen([
+        mat(1, { estatus: 'EnProceso', cantidadComprada: 3, costoTotalComprado: 300, cantidadSurtida: 2, cantidadPendienteSurtir: 0, semaforo: 'En Almacén' }),
+        mat(2, { estatus: 'Listo' }),
+        mat(3, { estatus: 'PendienteRecoleccion', cantidadSurtida: 1, cantidadPendienteSurtir: 1 })
+      ]));
       confirmar();
-      const nueva = resumen(productos().map(m => (m.idMaterial === 1 || m.idMaterial === 3) ? { ...m, estatus: 'Recolectado' as MaterialEstatus } : m));
-      servicio.cambiarEstatusMasivo.and.returnValue(of(nueva));
+      servicio.cambiarEstatusMasivo.and.returnValue(of({
+        idSeguimiento: 4,
+        conteoPorEstatus: { total: 3, enProceso: 0, listo: 1, pendienteRecoleccion: 0, anulado: 0, recolectado: 2 },
+        materiales: [
+          { idMaterial: 1, estatus: 'Recolectado', fechaEstatus: '2026-11-23T10:15:00' },
+          { idMaterial: 3, estatus: 'Recolectado', fechaEstatus: '2026-11-23T10:15:00' }
+        ]
+      }));
       component.toggleSeleccion(component.materiales[0]);
       component.toggleSeleccion(component.materiales[2]);
       component.estatusMasivo = 'Recolectado';
@@ -386,7 +397,16 @@ describe('MaterialesTrazabilidadComponent', () => {
 
       expect(servicio.cambiarEstatusMasivo).toHaveBeenCalledOnceWith(4, [1, 3], 'Recolectado');
       expect(component.seleccionados.size).toBe(0);
-      expect(q('valor-Recolectado')?.textContent?.trim()).toBe('3');
+      expect(q('valor-Recolectado')?.textContent?.trim()).toBe('2');
+      expect(q('valor-EnProceso')?.textContent?.trim()).toBe('0');
+      expect(component.materiales[0].estatus).toBe('Recolectado');
+      expect(component.materiales[0].fechaEstatus).toBe('2026-11-23T10:15:00');
+      expect(component.materiales[1].estatus).toBe('Listo'); // no pedido: no cambia
+      // Lo que la respuesta ligera no trae se conserva
+      expect(component.materiales[0].cantidadComprada).toBe(3);
+      expect(component.materiales[0].costoTotalComprado).toBe(300);
+      expect(component.materiales[0].cantidadSurtida).toBe(2);
+      expect(component.materiales[0].semaforo).toBe('En Almacén');
     }));
 
     it('Cancelar_la_confirmacion_no_envia_nada_y_conserva_la_seleccion', fakeAsync(() => {
@@ -434,10 +454,16 @@ describe('MaterialesTrazabilidadComponent', () => {
     });
 
     it('Al_guardar_solo_se_actualiza_esa_fila_y_se_conserva_el_detalle_abierto', () => {
-      configurar();
+      configurar(resumen([
+        mat(1, { estatus: 'EnProceso', seccion: 'TABLERO PRINCIPAL', marca: 'Marca A', cantidadComprada: 3, costoTotalComprado: 300, cantidadSurtida: 2, semaforo: 'En Almacén',
+          comprasRelacionadas: [{ idSolicitud: 7, folioOC: 'OC-7', cantidad: 3, costoUnitario: 100, importeTotal: 300, proveedor: 'Prov OC' }] }),
+        mat(2, { estatus: 'Listo', seccion: 'TABLERO PRINCIPAL', proveedorId: 31, proveedorNombre: 'Proveedor Ficticio', notas: 'Entrega en obra' })
+      ]));
       (q('expandir-1') as HTMLElement).click();
       fixture.detectChanges();
-      const guardado = mat(1, { estatus: 'EnProceso', seccion: 'TABLERO PRINCIPAL', marca: 'Marca A', proveedorId: 32, proveedorNombre: 'Solo Razon Social SA', notas: 'Llamar antes' });
+      // El API devuelve el material con lo calculado de compras/almacén EN CERO (contrato v1.3): no debe pisar la fila
+      const guardado = mat(1, { estatus: 'EnProceso', seccion: 'TABLERO PRINCIPAL', marca: 'Marca A', proveedorId: 32, proveedorNombre: 'Solo Razon Social SA', notas: 'Llamar antes',
+        cantidadComprada: 0, costoTotalComprado: 0, cantidadSurtida: 0, semaforo: 'Por Comprar', comprasRelacionadas: [] });
       spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(guardado) } as any);
       const peticiones = servicio.getMaterialesTrazabilidad.calls.count();
 
@@ -449,7 +475,15 @@ describe('MaterialesTrazabilidadComponent', () => {
       expect(q('proveedor-2')?.textContent).toContain('Proveedor Ficticio'); // la otra fila no cambia
       expect(q('detalle-1')).not.toBeNull();
       expect(servicio.getMaterialesTrazabilidad.calls.count()).toBe(peticiones); // no se recarga la lista
-      expect(q('valor-TODOS')?.textContent?.trim()).toBe('5');
+      expect(q('valor-TODOS')?.textContent?.trim()).toBe('2');
+      // Lo calculado de compras y almacén no se pierde
+      const fila = component.materiales[0];
+      expect(fila.cantidadComprada).toBe(3);
+      expect(fila.costoTotalComprado).toBe(300);
+      expect(fila.cantidadSurtida).toBe(2);
+      expect(fila.semaforo).toBe('En Almacén');
+      expect(fila.comprasRelacionadas?.length).toBe(1);
+      expect(q('detalle-1')?.textContent).toContain('OC-7');
     });
 
     it('Si_se_cierra_sin_guardar_no_cambia_nada', () => {

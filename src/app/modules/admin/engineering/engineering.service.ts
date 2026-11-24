@@ -396,8 +396,8 @@ export class EngineeringService {
         });
     }
 
-    cambiarEstatusMasivo(idSeguimiento: number, idsMaterial: number[], estatus: MaterialEstatus, comentario?: string | null): Observable<ResumenTrazabilidadProyecto> {
-        return this._http.put<ResumenTrazabilidadProyecto>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/materiales/estatus-masivo`, {
+    cambiarEstatusMasivo(idSeguimiento: number, idsMaterial: number[], estatus: MaterialEstatus, comentario?: string | null): Observable<ResumenEstatusMasivo> {
+        return this._http.put<ResumenEstatusMasivo>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/materiales/estatus-masivo`, {
             idsMaterial,
             estatus,
             comentario: comentario ?? null
@@ -580,6 +580,13 @@ export interface GuardarSeguimientoMaterial {
 export interface ResponsableCompraRespuesta {
     idSeguimiento: number;
     responsableCompra: ResponsableCompra | null;
+}
+
+/** Respuesta ligera del cambio masivo (contrato v1.3): conteo de todo el proyecto y el estatus de los productos pedidos. */
+export interface ResumenEstatusMasivo {
+    idSeguimiento: number;
+    conteoPorEstatus: ConteoPorEstatus;
+    materiales: { idMaterial: number; estatus: MaterialEstatus; fechaEstatus?: string | null }[];
 }
 
 export interface EstatusHistorialItem {

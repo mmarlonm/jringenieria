@@ -61,18 +61,22 @@ describe('EngineeringService - Material y trazabilidad (contrato v1.1)', () => {
         req.flush({ idMaterial: 901, estatus: 'Anulado' });
     });
 
-    it('cambiarEstatusMasivo_hace_PUT_con_los_ids_y_devuelve_la_trazabilidad', () => {
+    it('cambiarEstatusMasivo_hace_PUT_con_los_ids_y_devuelve_la_respuesta_ligera', () => {
         service.cambiarEstatusMasivo(4, [901, 902], 'Recolectado').subscribe(r => {
             expect(r.conteoPorEstatus.recolectado).toBe(2);
+            expect(r.materiales.map(m => m.idMaterial)).toEqual([901, 902]);
         });
 
         const req = httpMock.expectOne(`${api}/4/materiales/estatus-masivo`);
         expect(req.request.method).toBe('PUT');
         expect(req.request.body).toEqual({ idsMaterial: [901, 902], estatus: 'Recolectado', comentario: null });
         req.flush({
-            idSeguimiento: 4, responsableCompra: null,
+            idSeguimiento: 4,
             conteoPorEstatus: { total: 2, enProceso: 0, listo: 0, pendienteRecoleccion: 0, anulado: 0, recolectado: 2 },
-            materiales: []
+            materiales: [
+                { idMaterial: 901, estatus: 'Recolectado', fechaEstatus: '2026-11-23T10:15:00' },
+                { idMaterial: 902, estatus: 'Recolectado', fechaEstatus: '2026-11-23T10:15:00' }
+            ]
         });
     });
 

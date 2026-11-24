@@ -300,7 +300,17 @@ export class MaterialesTrazabilidadComponent implements OnChanges {
       next: (res) => {
         this.aplicandoMasivo = false;
         this.seleccionados.clear();
-        this.aplicar(res);
+        // Respuesta ligera (contrato v1.3): solo cambian estatus y fecha; costos, compras y salidas de la fila se conservan.
+        const nuevos = new Map((res?.materiales ?? []).map(m => [m.idMaterial, m]));
+        this.materiales.forEach(m => {
+          const n = nuevos.get(m.idMaterial);
+          if (n) {
+            m.estatus = n.estatus;
+            m.fechaEstatus = n.fechaEstatus ?? m.fechaEstatus;
+          }
+        });
+        this.conteo = res?.conteoPorEstatus ? { ...res.conteoPorEstatus } : contarPorEstatus(this.materiales);
+        this.recalcular();
       },
       error: (err: HttpErrorResponse) => {
         this.aplicandoMasivo = false;
@@ -333,10 +343,14 @@ export class MaterialesTrazabilidadComponent implements OnChanges {
     });
   }
 
-  /** Cambia solo la fila que devolvió el API; no se toca el resto ni se vuelve a pedir toda la lista. */
+  /**
+   * Cambia solo lo que `PUT compra` modificó (proveedor y observaciones) en esa fila. La respuesta trae en cero lo
+   * calculado de compras y almacén (contrato v1.3): mezclarla entera borraría el «Comprado» y el «Surtido» de la fila.
+   */
   private reemplazar(nuevo: SeguimientoMaterial): void {
-    this.materiales = this.materiales.map(m => m.idMaterial === nuevo.idMaterial ? { ...m, ...nuevo, expanded: m.expanded } : m);
-    this.conteo = contarPorEstatus(this.materiales);
+    this.materiales = this.materiales.map(m => m.idMaterial === nuevo.idMaterial
+      ? { ...m, proveedorId: nuevo.proveedorId ?? null, proveedorNombre: nuevo.proveedorNombre ?? null, notas: nuevo.notas ?? null }
+      : m);
     this.recalcular();
   }
 
