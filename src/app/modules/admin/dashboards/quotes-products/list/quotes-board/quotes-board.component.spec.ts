@@ -308,4 +308,45 @@ describe('QuotesBoardComponent', () => {
     expect(abiertos).toEqual([2]);
     expect(mockDialog.open).not.toHaveBeenCalled();
   });
+
+  it('Cada_tarjeta_eliminable_tiene_el_icono_papelera_si_hay_permiso', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).not.toBeNull();
+  });
+
+  it('Sin_permiso_btnDelete_no_hay_icono', () => {
+    component.permisoEliminar = false;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).toBeNull();
+  });
+
+  it('Una_tarjeta_que_no_se_puede_eliminar_no_tiene_icono', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Emitida', version: 1 })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).toBeNull();
+  });
+
+  it('La_papelera_emite_eliminar_con_el_id_y_no_abre_la_cotizacion', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+    const eliminados: number[] = [];
+    const abiertos: number[] = [];
+    component.eliminar.subscribe((id: number) => eliminados.push(id));
+    component.abrir.subscribe((id: number) => abiertos.push(id));
+
+    const btn = q('[data-testid="eliminar-tarjeta-2"]') as HTMLElement;
+    btn.click();
+    fixture.detectChanges();
+
+    expect(eliminados).toEqual([2]);
+    expect(abiertos.length).toBe(0);
+  });
 });

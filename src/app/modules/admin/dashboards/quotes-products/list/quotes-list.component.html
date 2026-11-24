@@ -115,7 +115,8 @@
     <!-- Tablero por tipo: cada columna pide su propia página -->
     <app-quotes-board *ngIf="vista === 'tablero'" class="flex flex-col flex-auto min-h-0"
       [desde]="boardDesde" [hasta]="boardHasta" [texto]="filterValue" [etapa]="filtroEtapa" [marcas]="filtroMarcas"
-      (abrir)="editQuote($event)" (totalChange)="onTotalTablero($event)"></app-quotes-board>
+      [permisoEliminar]="tienePermiso('btnDelete')" [refresco]="tableroRefresco"
+      (abrir)="editQuote($event)" (eliminar)="deleteQuote($event)" (totalChange)="onTotalTablero($event)"></app-quotes-board>
 
     <ng-container *ngIf="vista === 'lista'">
     <!-- Aviso de error en resumen SGC -->
@@ -311,7 +312,7 @@
                   <mat-icon>edit</mat-icon>
                 </button>
 
-                <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)"
+                <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId, quote)"
                   *ngIf="tienePermiso('btnDelete') && puedeEliminar(quote)" class="btn-delete">
                   <mat-icon>delete</mat-icon>
                 </button>
@@ -438,7 +439,7 @@
                 <mat-icon>edit</mat-icon>
               </button>
 
-              <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)"
+              <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId, quote)"
                 *ngIf="tienePermiso('btnDelete') && puedeEliminar(quote)" class="btn-delete">
                 <mat-icon>delete</mat-icon>
               </button>

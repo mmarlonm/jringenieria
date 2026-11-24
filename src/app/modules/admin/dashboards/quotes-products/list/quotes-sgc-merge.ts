@@ -19,3 +19,16 @@ export function aplicarResumenSgc(q: any, r: any): void {
   q.probabilidadPorcentaje = r.probabilidadPorcentaje;
   q.proximaAccionFecha = r.proximaAccionFecha;
 }
+
+export function tieneCapaSgc(q: any): boolean {
+  return !!(q?.tieneSgc || q?.folio || (q?.etapa && q?.version !== undefined));
+}
+
+export function puedeEliminarCotizacion(q: any): boolean {
+  if (!tieneCapaSgc(q)) {
+    return true;
+  }
+  const etapa = q.etapa || 'Borrador';
+  const version = q.version ?? 1;
+  return etapa === 'Borrador' && version <= 1;
+}

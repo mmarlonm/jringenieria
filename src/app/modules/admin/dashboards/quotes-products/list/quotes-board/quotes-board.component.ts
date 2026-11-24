@@ -8,7 +8,7 @@ import { QuotesService } from '../../quotes-products.service';
 import { TipoCotizacionSgc } from '../../quotes-products.types';
 import { EtapaChipComponent } from '../../sgc/etapa-chip/etapa-chip.component';
 import { CotizacionDetalleDialogComponent } from '../../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
-import { aplicarResumenSgc } from '../quotes-sgc-merge';
+import { aplicarResumenSgc, puedeEliminarCotizacion } from '../quotes-sgc-merge';
 
 export interface ColumnaCotizaciones {
   tipo: TipoCotizacionSgc;
@@ -44,9 +44,13 @@ export class QuotesBoardComponent implements OnChanges {
   @Input() texto = '';
   @Input() etapa = 'todas';
   @Input() marcas = 'todas';
+  @Input() permisoEliminar = false;
+  @Input() refresco = 0;
 
   /** Id de la cotización que se quiere abrir. */
   @Output() abrir = new EventEmitter<number>();
+  /** Id de la cotización que se quiere eliminar. */
+  @Output() eliminar = new EventEmitter<number>();
   /** Suma de los totales de las tres columnas (para el encabezado de la pantalla). */
   @Output() totalChange = new EventEmitter<number>();
 
@@ -77,6 +81,10 @@ export class QuotesBoardComponent implements OnChanges {
 
   ngOnChanges(cambios: SimpleChanges): void {
     if (cambios['desde'] || cambios['hasta']) {
+      this.recargarTodo();
+      return;
+    }
+    if (cambios['refresco'] && !cambios['refresco'].firstChange) {
       this.recargarTodo();
       return;
     }
@@ -138,6 +146,25 @@ export class QuotesBoardComponent implements OnChanges {
 
   trackPorId(_: number, q: any): number {
     return q.cotizacionProductosId;
+  }
+
+  puedeEliminar(q: any): boolean {
+    return this.permisoEliminar && puedeEliminarCotizacion(q);
+  }
+
+  solicitarEliminar(q: any, event: Event): void {
+    event.stopPropagation();
+    this.eliminar.emit(q.cotizacionProductosId);
+  }
+
+  buscarPorId(id: number): any | undefined {
+    for (const col of this.columnas) {
+      const encontrada = col.items.find((q: any) => q.cotizacionProductosId === id);
+      if (encontrada) {
+        return encontrada;
+      }
+    }
+    return undefined;
   }
 
   private cargarResumen(col: ColumnaCotizaciones, nuevos: any[], solicitud: number): void {
