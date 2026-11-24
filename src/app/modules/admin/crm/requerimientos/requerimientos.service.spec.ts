@@ -42,18 +42,19 @@ describe('RequerimientosService - Aprobación', () => {
     req.flush({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' });
   });
 
-  it('convertirACotizacion_hace_POST_solo_con_requerimiento_tipo_y_unidad', () => {
-    service.convertirACotizacion({ requerimientoId: 57, tipo: 'CT', unidadDeNegocioId: 2 }).subscribe(r => {
+  it('convertirACotizacion_hace_POST_con_requerimiento_tipo_unidad_y_folio', () => {
+    service.convertirACotizacion({ requerimientoId: 57, tipo: 'CT', unidadDeNegocioId: 2, folioCotizacion: 'COT-1234' }).subscribe(r => {
       expect(r.folioSgc).toBe('COT-2026-0042');
+      expect(r.folioCotizacion).toBe('COT-1234');
       expect(r.etapa).toBe('Borrador');
       expect((r as any).folioContpaq).toBeUndefined();
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/CotizacionProductos/convertir-desde-requerimiento`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ requerimientoId: 57, tipo: 'CT', unidadDeNegocioId: 2 });
+    expect(req.request.body).toEqual({ requerimientoId: 57, tipo: 'CT', unidadDeNegocioId: 2, folioCotizacion: 'COT-1234' });
     req.flush({
-      cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CT', etapa: 'Borrador',
+      cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: 'COT-1234', tipo: 'CT', etapa: 'Borrador',
       requerimientoId: 57, requerimientoFolio: 'REQ-2026-0057'
     });
   });
@@ -68,7 +69,7 @@ describe('RequerimientosService - Aprobación', () => {
     });
     httpMock.expectOne(`${environment.apiUrl}/Requerimiento/57`).flush({
       id: 57, folio: 'REQ-2026-0057',
-      cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: null, tipo: 'CT', etapa: 'Borrador' }
+      cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: 'COT-1234', tipo: 'CT', etapa: 'Borrador' }
     });
 
     service.getRequerimiento(58).subscribe(r => expect(r.cotizacionVinculada).toBeNull());

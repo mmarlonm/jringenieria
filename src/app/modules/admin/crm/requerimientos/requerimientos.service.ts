@@ -65,22 +65,24 @@ export interface Requerimiento {
 export interface CotizacionVinculada {
   cotizacionProductosId: number;
   folioSgc: string;
-  /** Contrato v1.7: las cotizaciones propias no tienen folio de CONTPAQ; el API lo manda siempre `null`. */
-  folioContpaq?: string | null;
+  /** Folio de la cotización que el usuario tecleó al convertir (§4 contrato v1.8). */
+  folioCotizacion?: string | null;
   tipo: TipoCotizacionSgc;
   etapa: string;
 }
 
-/** Contrato v1.7 §3: la cotización es propia; solo hace falta el tipo y la unidad de negocio. */
+/** Contrato v1.8 §3: pide el folio de la cotización, tipo y unidad de negocio. */
 export interface ConvertirRequerimientoDto {
   requerimientoId: number;
   tipo: TipoCotizacionSgc;
   unidadDeNegocioId: number;
+  folioCotizacion: string;
 }
 
 export interface ConvertirRequerimientoResultado {
   cotizacionProductosId: number;
   folioSgc: string;
+  folioCotizacion: string;
   tipo: TipoCotizacionSgc;
   etapa: string;
   requerimientoId: number;

@@ -127,6 +127,7 @@
           </div>
           <div class="text-sm text-blue-700 dark:text-blue-300">
             <span class="font-mono font-bold">{{ cot.folioSgc }}</span>
+            <span *ngIf="cot.folioCotizacion"> · <span class="font-mono font-semibold">{{ cot.folioCotizacion }}</span></span>
             · {{ etiquetaTipo(cot.tipo) }} · {{ cot.etapa }}
           </div>
         </div>

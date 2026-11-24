@@ -78,6 +78,7 @@ export interface CotizacionSgcDatos {
     tipoCambio?: number | null;
     vigenciaDias: number;
     penalizacionCancelacion?: string | null;
+    /** obsoleto: ya no se muestra ni se envía (§5.3 contrato v1.8) */
     formaPago?: string | null;
     condicionesPago?: string | null;
     puntoEntrega?: string | null;
@@ -405,4 +406,45 @@ export interface IndicadoresSgc {
     enTiempo: EnTiempoTipoDto;
     montos: MontoMonedaDto[];
     motivosPerdida: MotivoPerdidaDto[];
+}
+
+export interface OrigenRequerimiento {
+    id: number;
+    folio: string;
+    titulo?: string | null;
+    tipoProyecto?: string | null;
+    descripcion: string;
+    estatus: string;
+    rutaAtencion?: string | null;
+    empresa: string;
+    nombreContacto: string;
+    telefono?: string | null;
+    email?: string | null;
+    fechaRecepcion?: string | null;
+}
+
+export interface OrigenLead {
+    id: number;
+    nombreContacto: string;
+    empresa?: string | null;
+    telefono?: string | null;
+    email?: string | null;
+    fuenteLead?: string | null;
+    campana?: string | null;
+    necesidadInicial?: string | null;
+    sucursalQueRecibe?: string | null;
+    estatus?: string | null;
+    tipoCliente?: string | null;
+    tipoNecesidad?: string | null;
+    zonaAtencion?: string | null;
+    nivelPrioridad?: string | null;
+    fechaRegistro: string;
+}
+
+export interface CotizacionOrigen {
+    cotizacionProductosId: number;
+    folioCotizacion?: string | null;
+    puedeAgregarFolio?: boolean;
+    requerimiento?: OrigenRequerimiento | null;
+    lead?: OrigenLead | null;
 }

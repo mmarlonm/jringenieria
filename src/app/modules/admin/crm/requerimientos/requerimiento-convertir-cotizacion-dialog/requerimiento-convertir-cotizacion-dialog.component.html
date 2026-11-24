@@ -27,6 +27,15 @@
     </div>
 
     <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Folio de la cotización</mat-label>
+      <input matInput data-testid="input-folio" [formControl]="folioControl" placeholder="Ej. COT-1234">
+      <mat-hint>Escribe el folio que ya le diste a esta cotización. No se consulta en ningún sistema.</mat-hint>
+      <mat-error *ngIf="folioControl.hasError('required') || folioControl.hasError('soloEspacios')">Escribe el folio de la cotización</mat-error>
+      <mat-error *ngIf="folioControl.hasError('maxlength')">El folio admite hasta 50 caracteres</mat-error>
+      <mat-error *ngIf="folioControl.hasError('caracterControl')">El folio contiene caracteres no permitidos</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
       <mat-label>Tipo de cotización</mat-label>
       <mat-select data-testid="select-tipo" [formControl]="tipoControl">
         <mat-option *ngFor="let t of tipos" [value]="t.codigo">

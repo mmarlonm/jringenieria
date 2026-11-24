@@ -170,13 +170,13 @@ describe('RequerimientosComponent - Aprobados', () => {
     const swalSpy = spyOn(Swal, 'fire');
     const reqService = TestBed.inject(RequerimientosService);
     spyOn(reqService, 'calificarRequerimiento').and.returnValue(
-      throwError(() => ({ error: { mensaje: 'Falta capturar: Cantidades' } }))
+      throwError(() => ({ error: { mensaje: 'Error al calificar' } }))
     );
     const reloadSpy = spyOn(component, 'loadRequerimientos');
 
     (component as any).onCardMoved(1, 'Calificado Comercial', {});
 
-    expect(swalSpy).toHaveBeenCalledWith('Error', jasmine.stringMatching('Falta capturar: Cantidades'), 'error');
+    expect(swalSpy).toHaveBeenCalledWith('Error', jasmine.stringMatching('Error al calificar'), 'error');
     expect(reloadSpy).toHaveBeenCalled();
   });
 
@@ -238,7 +238,7 @@ describe('RequerimientosComponent - Aprobados', () => {
 
   it('La_tarjeta_aprobada_muestra_la_etiqueta_de_cotizacion_con_enlace', () => {
     component.requerimientos = mockRequerimientos.map(r => r.id === 3
-      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: null, tipo: 'CS' as const, etapa: 'Borrador' } }
+      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: 'COT-1234', tipo: 'CS' as const, etapa: 'Borrador' } }
       : r);
     component.applyFilters();
     fixture.detectChanges();

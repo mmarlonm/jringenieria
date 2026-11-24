@@ -11,7 +11,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
 import Swal from 'sweetalert2';
-import { CatalogosSgc, RespuestaObtenerSgc, EncabezadoCotizacionSgc, CotizacionSgcVista, PartidaSgc } from '../quotes-products.types';
+import { CatalogosSgc, RespuestaObtenerSgc, EncabezadoCotizacionSgc, CotizacionSgcVista, PartidaSgc, CotizacionOrigen } from '../quotes-products.types';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
 import { By } from '@angular/platform-browser';
@@ -46,6 +46,43 @@ describe('QuoteDetailsComponent SGC', () => {
     ivaTasa: 0.16,
   };
 
+  const mockOrigen: CotizacionOrigen = {
+    cotizacionProductosId: 10,
+    folioCotizacion: 'COT-1234',
+    puedeAgregarFolio: false,
+    requerimiento: {
+      id: 57,
+      folio: 'REQ-2026-0057',
+      titulo: 'Modernización de tablero',
+      tipoProyecto: 'Instalación',
+      descripcion: 'Suministro de tableros',
+      estatus: 'Aprobado para cotización',
+      rutaAtencion: 'Técnica',
+      empresa: 'Cliente Ficticio SA de CV',
+      nombreContacto: 'Contacto Ficticio',
+      telefono: '5512345678',
+      email: 'contacto@ficticio.test',
+      fechaRecepcion: '2026-11-20T10:00:00'
+    },
+    lead: {
+      id: 12,
+      nombreContacto: 'Contacto Ficticio',
+      empresa: 'Cliente Ficticio SA de CV',
+      telefono: '5512345678',
+      email: 'contacto@ficticio.test',
+      fuenteLead: 'WhatsApp',
+      campana: null,
+      necesidadInicial: 'Motor trifásico',
+      sucursalQueRecibe: 'Querétaro',
+      estatus: 'Oportunidad',
+      tipoCliente: 'Industrial',
+      tipoNecesidad: 'Producto',
+      zonaAtencion: 'Querétaro',
+      nivelPrioridad: 'Alta',
+      fechaRegistro: '2026-11-18T09:30:00'
+    }
+  };
+
   beforeEach(async () => {
     paramMapSubject = new BehaviorSubject(convertToParamMap({ id: 'new' }));
     mockProcesoService = { obtener: jasmine.createSpy('obtener').and.returnValue(of({ actual: 'cotizacion', mensaje: 'Va en Cotización', pasos: [] })) };
@@ -57,6 +94,8 @@ describe('QuoteDetailsComponent SGC', () => {
       getEstatus: jasmine.createSpy('getEstatus').and.returnValue(of({ data: [] })),
       getQuoteById: jasmine.createSpy('getQuoteById').and.returnValue(of({ code: 200, data: {} })),
       catalogosSgc: jasmine.createSpy('catalogosSgc').and.returnValue(of(mockCatalogos)),
+      origen: jasmine.createSpy('origen').and.returnValue(of(mockOrigen)),
+      agregarFolio: jasmine.createSpy('agregarFolio').and.returnValue(of({ cotizacionProductosId: 10, folioCotizacion: 'COT-1234' })),
       guardarSgc: jasmine.createSpy('guardarSgc').and.returnValue(
         of({
           code: 200,
@@ -171,7 +210,6 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(component.sgcForm.get('tipo')).toBeDefined();
     expect(component.sgcForm.get('moneda')).toBeDefined();
     expect(component.sgcForm.get('vigenciaDias')).toBeDefined();
-    expect(component.sgcForm.get('formaPago')).toBeDefined();
     expect(component.sgcForm.get('condicionesPago')).toBeDefined();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -179,6 +217,10 @@ describe('QuoteDetailsComponent SGC', () => {
       .map((el) => el.textContent?.trim());
     const tienePestana = tabLabels.some((lbl) => lbl?.includes('Clasificación y condiciones'));
     expect(tienePestana).toBeTrue();
+  });
+
+  it('El_formulario_SGC_no_tiene_control_formaPago', () => {
+    expect(component.sgcForm.get('formaPago')).toBeNull();
   });
 
   it('El_tipo_de_cambio_solo_se_pide_en_USD', () => {
@@ -508,7 +550,7 @@ describe('QuoteDetailsComponent SGC', () => {
   it('La_pestana_Resumen_muestra_totales_y_faltantes', async () => {
     component.folio = 'COT-2026-0042';
     component.version = 1;
-    component.faltantes = ['Falta la forma de pago.', 'Falta el punto de entrega.'];
+    component.faltantes = ['Falta el punto de entrega.'];
     component.partidas = [
       {
         partida: 1,
@@ -530,7 +572,6 @@ describe('QuoteDetailsComponent SGC', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Pendiente para poder emitir');
-    expect(compiled.textContent).toContain('Falta la forma de pago.');
     expect(compiled.textContent).toContain('Falta el punto de entrega.');
     expect(compiled.textContent).toContain('COT-2026-0042');
   });
@@ -1212,7 +1253,6 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(component.sgcForm.get('tipoCambio')?.value).toBe(19.5);
       expect(component.sgcForm.get('vigenciaDias')?.value).toBe(15);
       expect(component.sgcForm.get('penalizacionCancelacion')?.value).toBe('10% anticipo');
-      expect(component.sgcForm.get('formaPago')?.value).toBe('Transferencia');
       expect(component.sgcForm.get('condicionesPago')?.value).toBe('30 días de crédito');
       expect(component.sgcForm.get('puntoEntrega')?.value).toBe('Planta Querétaro');
       expect(component.sgcForm.get('condicionesEntrega')?.value).toBe('FOB');
@@ -1308,7 +1348,7 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(dto.sgc.requerimientoId).toBe(42);
       expect(dto.sgc.vigenciaDias).toBe(15);
       expect(dto.sgc.penalizacionCancelacion).toBe('10% anticipo');
-      expect(dto.sgc.formaPago).toBe('Transferencia');
+      expect(dto.sgc.formaPago).toBeUndefined();
       expect(dto.sgc.condicionesPago).toBe('30 días de crédito');
       expect(dto.sgc.puntoEntrega).toBe('Planta Querétaro');
       expect(dto.sgc.condicionesEntrega).toBe('FOB');
@@ -1335,6 +1375,22 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(dto.partidas[0].materialServicio).toBe('Cable uso rudo 3x10');
       expect(dto.partidas[0].precioUnitario).toBe(10);
       expect(dto.partidas[0].costoUnitario).toBe(6);
+    });
+
+    it('Guardar_no_manda_formaPago', () => {
+      const sgcVal = component.sgcForm.getRawValue();
+      expect(sgcVal.formaPago).toBeUndefined();
+    });
+
+    it('Una_cotizacion_con_formaPago_guardado_carga_sin_errores', () => {
+      expect(() => {
+        component.sgcForm.patchValue({
+          tipo: 'CS',
+          moneda: 'MXN',
+          formaPago: 'Transferencia electrónica guardada previamente'
+        });
+      }).not.toThrow();
+      expect(component.sgcForm.get('formaPago')).toBeNull();
     });
 
     it('El_selector_de_cliente_muestra_el_cliente_aunque_la_lista_llegue_despues', async () => {
@@ -1623,6 +1679,78 @@ describe('QuoteDetailsComponent SGC', () => {
       const texto = fixture.nativeElement.querySelector('.motivo-cierre-texto').textContent;
       expect(texto).toContain('Falta de presupuesto');
       expect(texto).not.toContain('FaltaPresupuesto');
+    });
+  });
+
+  describe('Origen y folio de cotización en el encabezado', () => {
+    it('El_editor_muestra_el_folio_o_la_opcion_de_agregarlo_en_el_encabezado', async () => {
+      const origenConFolio: CotizacionOrigen = {
+        ...mockOrigen,
+        folioCotizacion: 'COT-777',
+        puedeAgregarFolio: false
+      };
+      mockQuotesService.origen.and.returnValue(of(origenConFolio));
+
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(mockQuotesService.origen).toHaveBeenCalledWith(10);
+      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
+      expect(headerFolio).not.toBeNull();
+      expect(headerFolio.textContent).toContain('COT-777');
+    });
+
+    it('Sin_folio_y_sin_opcion_de_agregarlo_no_muestra_nada_en_el_encabezado', async () => {
+      mockQuotesService.origen.and.returnValue(of({ ...mockOrigen, folioCotizacion: null, puedeAgregarFolio: false } as CotizacionOrigen));
+
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]')).toBeNull();
+    });
+
+    it('Sin_folio_pero_con_la_opcion_de_agregarlo_muestra_el_boton_en_el_encabezado', async () => {
+      mockQuotesService.origen.and.returnValue(of({ ...mockOrigen, folioCotizacion: null, puedeAgregarFolio: true } as CotizacionOrigen));
+
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const header = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
+      expect(header).not.toBeNull();
+      expect(header.querySelector('[data-testid="btn-agregar-folio"]')).not.toBeNull();
+    });
+
+    it('Si_el_origen_falla_no_muestra_nada_ni_rompe_el_editor', async () => {
+      mockQuotesService.origen.and.returnValue(throwError(() => new Error('Error al cargar origen')));
+
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.origen).toBeNull();
+      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
+      expect(headerFolio).toBeNull();
+    });
+
+    it('No_pide_el_origen_en_una_cotizacion_nueva', async () => {
+      mockQuotesService.origen.calls.reset();
+
+      paramMapSubject.next(convertToParamMap({ id: 'new' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.quotesId).toBeNull();
+      expect(mockQuotesService.origen).not.toHaveBeenCalled();
+      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
+      expect(headerFolio).toBeNull();
     });
   });
 });

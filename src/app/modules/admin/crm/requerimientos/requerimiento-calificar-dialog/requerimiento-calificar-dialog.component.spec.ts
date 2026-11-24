@@ -372,7 +372,7 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(inputMarca.value).toBe('Siemens S7');
   });
 
-  it('Marcar_falta_apaga_el_texto_y_conserva_lo_escrito', () => {
+  it('Marcar_una_casilla_de_falta_sigue_deshabilitando_su_texto', () => {
     abrir(true, {
       cantidades: '10 piezas',
       faltaCantidad: false
@@ -398,27 +398,64 @@ describe('RequerimientoCalificarDialogComponent', () => {
     expect(form.get('cantidades')?.value).toBe('10 piezas');
   });
 
-  it('Calificado_exige_el_texto_de_lo_que_no_esta_marcado_como_faltante', () => {
+  it('Calificar_comercial_con_los_tres_textos_vacios_y_sin_casillas_es_valido', () => {
     abrir(true, {
       estatus: 'Calificado Comercial',
       faltaCantidad: false, cantidades: '',
-      faltaUbicacion: false, ubicacionExacta: 'Lugar X',
-      faltaMarcaModelo: false, marcaModelo: 'Marca Y'
+      faltaUbicacion: false, ubicacionExacta: '',
+      faltaMarcaModelo: false, marcaModelo: ''
     });
-    pestana('Información faltante').click();
     fixture.detectChanges();
 
     const form = fixture.componentInstance.calificarForm;
-    expect(form.invalid).toBeTrue();
-
-    const btnGuardar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
-    expect(btnGuardar.disabled).toBeTrue();
-    expect(fixture.nativeElement.textContent).toContain('Escríbelo o márcalo como faltante');
-
-    form.get('cantidades')?.setValue('5 tableros');
-    fixture.detectChanges();
     expect(form.valid).toBeTrue();
+    const btnGuardar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
     expect(btnGuardar.disabled).toBeFalse();
+  });
+
+  it('Calificar_tecnico_con_los_tres_textos_vacios_es_valido', () => {
+    abrir(true, {
+      estatus: 'Calificado Técnico',
+      faltaCantidad: false, cantidades: '',
+      faltaUbicacion: false, ubicacionExacta: '',
+      faltaMarcaModelo: false, marcaModelo: ''
+    });
+    fixture.detectChanges();
+
+    const form = fixture.componentInstance.calificarForm;
+    expect(form.valid).toBeTrue();
+    const btnGuardar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(btnGuardar.disabled).toBeFalse();
+  });
+
+  it('Sigue_validando_la_longitud_maxima_de_cantidades_ubicacion_y_marca', () => {
+    abrir(true, { estatus: 'Calificado Comercial' });
+    const form = fixture.componentInstance.calificarForm;
+
+    form.get('cantidades')?.setValue('a'.repeat(501));
+    expect(form.get('cantidades')?.valid).toBeFalse();
+    form.get('cantidades')?.setValue('a'.repeat(500));
+    expect(form.get('cantidades')?.valid).toBeTrue();
+
+    form.get('ubicacionExacta')?.setValue('b'.repeat(501));
+    expect(form.get('ubicacionExacta')?.valid).toBeFalse();
+    form.get('ubicacionExacta')?.setValue('b'.repeat(500));
+    expect(form.get('ubicacionExacta')?.valid).toBeTrue();
+
+    form.get('marcaModelo')?.setValue('c'.repeat(201));
+    expect(form.get('marcaModelo')?.valid).toBeFalse();
+    form.get('marcaModelo')?.setValue('c'.repeat(200));
+    expect(form.get('marcaModelo')?.valid).toBeTrue();
+  });
+
+  it('Ningun_texto_ni_etiqueta_de_esos_tres_campos_indica_que_sean_obligatorios', () => {
+    abrir(true, { estatus: 'Calificado Comercial' });
+    pestana('Información faltante').click();
+    fixture.detectChanges();
+
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Escríbelo o márcalo como faltante');
+    expect(texto).not.toContain('*');
   });
 
   it('Pendiente_no_exige_los_textos', () => {

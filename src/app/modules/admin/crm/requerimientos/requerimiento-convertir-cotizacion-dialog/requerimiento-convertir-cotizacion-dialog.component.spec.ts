@@ -36,7 +36,7 @@ const UNIDADES = [
 ];
 
 const RESULTADO: ConvertirRequerimientoResultado = {
-  cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CT', etapa: 'Borrador',
+  cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: 'COT-1234', tipo: 'CT', etapa: 'Borrador',
   requerimientoId: 57, requerimientoFolio: 'REQ-2026-0057'
 };
 
@@ -88,6 +88,7 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
 
     it('Con_varias_unidades_hay_que_elegir_una_antes_de_convertir', () => {
       configurar();
+      component.folioControl.setValue('COT-1234');
 
       expect(component.unidadControl.value).toBeNull();
       expect(boton('btn-convertir').disabled).toBeTrue();
@@ -102,6 +103,7 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
       configurar(req(), of([UNIDADES[1]]));
 
       expect(component.unidadControl.value).toBe(2);
+      component.folioControl.setValue('COT-1234');
       expect(component.puedeConvertir).toBeTrue();
     });
 
@@ -109,6 +111,7 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
       const pendiente = new Subject<any[]>();
       configurar(req(), pendiente);
       component.unidadControl.setValue(2);
+      component.folioControl.setValue('COT-1234');
 
       expect(component.cargandoUnidades).toBeTrue();
       expect(component.puedeConvertir).toBeFalse();
@@ -140,13 +143,58 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
     });
   });
 
-  describe('lo que ya no hay', () => {
-    it('No_pide_folio_ni_busca_en_CONTPAQ', () => {
+  describe('folio de la cotización', () => {
+    it('Pide_el_folio_de_la_cotizacion_con_su_etiqueta_y_ayuda', () => {
       configurar();
 
-      expect(q('input-folio')).toBeNull();
-      expect(q('btn-buscar')).toBeNull();
-      expect(fixture.nativeElement.textContent).not.toContain('CONTPAQ');
+      expect(q('input-folio')).not.toBeNull();
+      const texto = fixture.nativeElement.textContent;
+      expect(texto).toContain('Folio de la cotización');
+      expect(texto).toContain('Escribe el folio que ya le diste a esta cotización. No se consulta en ningún sistema.');
+      expect(texto).not.toContain('CONTPAQ');
+    });
+
+    it('Convertir_esta_deshabilitado_sin_folio', () => {
+      configurar();
+      component.unidadControl.setValue(2);
+      component.folioControl.setValue('');
+      fixture.detectChanges();
+
+      expect(component.puedeConvertir).toBeFalse();
+      expect(boton('btn-convertir').disabled).toBeTrue();
+    });
+
+    it('Un_folio_de_solo_espacios_no_es_valido', () => {
+      configurar();
+      component.unidadControl.setValue(2);
+      component.folioControl.setValue('   ');
+      fixture.detectChanges();
+
+      expect(component.folioControl.valid).toBeFalse();
+      expect(component.puedeConvertir).toBeFalse();
+    });
+
+    it('Un_folio_de_mas_de_50_caracteres_no_es_valido', () => {
+      configurar();
+      component.unidadControl.setValue(2);
+      component.folioControl.setValue('A'.repeat(51));
+      fixture.detectChanges();
+
+      expect(component.folioControl.valid).toBeFalse();
+      expect(component.puedeConvertir).toBeFalse();
+
+      component.folioControl.setValue('A'.repeat(50));
+      fixture.detectChanges();
+      expect(component.folioControl.valid).toBeTrue();
+    });
+
+    it('Un_folio_con_tabulador_o_salto_de_linea_no_es_valido', () => {
+      configurar();
+      component.folioControl.setValue('COT\t1234');
+      expect(component.folioControl.valid).toBeFalse();
+
+      component.folioControl.setValue('COT\n1234');
+      expect(component.folioControl.valid).toBeFalse();
     });
   });
 
@@ -171,20 +219,39 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
     beforeEach(() => {
       configurar();
       component.unidadControl.setValue(2);
+      component.folioControl.setValue('COT-1234');
       fixture.detectChanges();
     });
 
-    it('Convertir_envia_solo_requerimientoId_tipo_y_unidad_elegida', fakeAsync(() => {
+    it('Convertir_envia_el_folio_recortado_junto_con_tipo_y_unidad', fakeAsync(() => {
       confirmar();
       servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
       component.tipoControl.setValue('CE'); // Se puede elegir Estratégica
+      component.folioControl.setValue('   COT-1234   ');
 
       component.convertir();
       flushMicrotasks();
 
       expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith({
-        requerimientoId: 57, tipo: 'CE', unidadDeNegocioId: 2
+        requerimientoId: 57, tipo: 'CE', unidadDeNegocioId: 2, folioCotizacion: 'COT-1234'
       });
+    }));
+
+    it('409_de_folio_repetido_muestra_el_mensaje_y_conserva_lo_escrito_y_deja_reintentar', fakeAsync(() => {
+      confirmar();
+      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { mensaje: 'La cotización COT-2026-0010 de esta sucursal ya tiene el folio COT-1234.' }
+      })));
+
+      component.convertir();
+      flushMicrotasks();
+      fixture.detectChanges();
+
+      expect(q('error-convertir')?.textContent).toContain('ya tiene el folio COT-1234');
+      expect(component.folioControl.value).toBe('COT-1234');
+      expect(boton('btn-convertir').disabled).toBeFalse();
+      expect(dialogRef.close).not.toHaveBeenCalled();
     }));
 
     it('Doble_clic_en_Convertir_envia_una_sola_peticion', fakeAsync(() => {
@@ -248,7 +315,7 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
         status: 409,
         error: {
           mensaje: 'El requerimiento ya tiene una cotización vinculada.',
-          cotizacionVinculada: { cotizacionProductosId: 300, folioSgc: 'COT-2026-0040', folioContpaq: null, tipo: 'CS', etapa: 'Borrador' }
+          cotizacionVinculada: { cotizacionProductosId: 300, folioSgc: 'COT-2026-0040', folioCotizacion: 'COT-1234', tipo: 'CS', etapa: 'Borrador' }
         }
       })));
 

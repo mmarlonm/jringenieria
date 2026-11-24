@@ -2,9 +2,12 @@ import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, S
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { QuotesService } from '../../quotes-products.service';
 import { TipoCotizacionSgc } from '../../quotes-products.types';
 import { EtapaChipComponent } from '../../sgc/etapa-chip/etapa-chip.component';
+import { CotizacionDetalleDialogComponent } from '../../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
 import { aplicarResumenSgc } from '../quotes-sgc-merge';
 
 export interface ColumnaCotizaciones {
@@ -32,7 +35,7 @@ export const TAM_PAGINA_TABLERO = 15;
 @Component({
   selector: 'app-quotes-board',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, EtapaChipComponent],
+  imports: [CommonModule, MatButtonModule, MatIconModule, EtapaChipComponent, MatTooltipModule],
   templateUrl: './quotes-board.component.html'
 })
 export class QuotesBoardComponent implements OnChanges {
@@ -56,7 +59,21 @@ export class QuotesBoardComponent implements OnChanges {
   /** Una respuesta tardía de una carga vieja no debe pisar a la nueva. */
   private readonly solicitudes: Record<TipoCotizacionSgc, number> = { CS: 0, CT: 0, CE: 0 };
 
-  constructor(private quotesService: QuotesService, private cdr: ChangeDetectorRef) { }
+  constructor(private quotesService: QuotesService, private cdr: ChangeDetectorRef, private dialog: MatDialog) { }
+
+  verDetalle(q: any, event: MouseEvent): void {
+    event.stopPropagation();
+    this.dialog.open(CotizacionDetalleDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      data: {
+        cotizacionProductosId: q.cotizacionProductosId,
+        informativa: !!q.informativa,
+        unidadNombre: q.unidadDeNegocio?.nombre || null
+      }
+    });
+  }
 
   ngOnChanges(cambios: SimpleChanges): void {
     if (cambios['desde'] || cambios['hasta']) {
