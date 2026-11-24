@@ -198,6 +198,9 @@
 
                 <td class="py-3 px-3 text-center">
                   <div class="flex items-center justify-center gap-1">
+                    <button type="button" mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-indigo-600" [attr.data-testid]="'compra-' + item.idMaterial" (click)="abrirCompra(item)" matTooltip="Proveedor y observaciones">
+                      <mat-icon class="icon-size-4">storefront</mat-icon>
+                    </button>
                     <button type="button" mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-indigo-600" [attr.data-testid]="'editar-' + item.idMaterial" (click)="editarMaterial(item)" matTooltip="Editar producto">
                       <mat-icon class="icon-size-4">edit</mat-icon>
                     </button>

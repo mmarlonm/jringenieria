@@ -420,6 +420,62 @@ describe('MaterialesTrazabilidadComponent', () => {
     }));
   });
 
+  describe('proveedor y observaciones', () => {
+    it('El_boton_de_cada_fila_abre_el_dialogo_con_el_producto_y_sus_valores_actuales', () => {
+      configurar();
+      const abrir = spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as any);
+
+      (q('compra-2') as HTMLElement).click();
+
+      const datos = abrir.calls.mostRecent().args[1] as any;
+      expect(datos.data.material.idMaterial).toBe(2);
+      expect(datos.data.material.proveedorNombre).toBe('Proveedor Ficticio');
+      expect(datos.data.material.notas).toBe('Entrega en obra');
+    });
+
+    it('Al_guardar_solo_se_actualiza_esa_fila_y_se_conserva_el_detalle_abierto', () => {
+      configurar();
+      (q('expandir-1') as HTMLElement).click();
+      fixture.detectChanges();
+      const guardado = mat(1, { estatus: 'EnProceso', seccion: 'TABLERO PRINCIPAL', marca: 'Marca A', proveedorId: 32, proveedorNombre: 'Solo Razon Social SA', notas: 'Llamar antes' });
+      spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(guardado) } as any);
+      const peticiones = servicio.getMaterialesTrazabilidad.calls.count();
+
+      (q('compra-1') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(q('proveedor-1')?.textContent).toContain('Solo Razon Social SA');
+      expect(q('observaciones-1')?.textContent).toContain('Llamar antes');
+      expect(q('proveedor-2')?.textContent).toContain('Proveedor Ficticio'); // la otra fila no cambia
+      expect(q('detalle-1')).not.toBeNull();
+      expect(servicio.getMaterialesTrazabilidad.calls.count()).toBe(peticiones); // no se recarga la lista
+      expect(q('valor-TODOS')?.textContent?.trim()).toBe('5');
+    });
+
+    it('Si_se_cierra_sin_guardar_no_cambia_nada', () => {
+      configurar();
+      spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as any);
+      const antes = component.materiales;
+
+      (q('compra-1') as HTMLElement).click();
+
+      expect(component.materiales).toBe(antes);
+    });
+
+    it('Quitar_el_proveedor_deja_el_guion_en_la_fila', () => {
+      configurar();
+      spyOn((component as any).dialog, 'open').and.returnValue({
+        afterClosed: () => of(mat(2, { estatus: 'Listo', seccion: 'TABLERO PRINCIPAL', proveedorId: null, proveedorNombre: null, notas: null }))
+      } as any);
+
+      (q('compra-2') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(q('proveedor-2')?.textContent?.trim()).toBe('—');
+      expect(q('observaciones-2')?.textContent?.trim()).toBe('—');
+    });
+  });
+
   describe('detalle expandible', () => {
     it('Expandir_muestra_el_detalle_y_se_conserva_al_recargar', () => {
       configurar();

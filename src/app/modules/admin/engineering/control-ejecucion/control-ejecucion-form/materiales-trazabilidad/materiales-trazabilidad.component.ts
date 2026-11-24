@@ -21,6 +21,7 @@ import {
   MaterialesImportarExcelDialogData,
   MaterialesImportarExcelDialogResult
 } from '../dialogs/materiales-importar-excel-dialog.component';
+import { MaterialCompraDialogComponent, MaterialCompraDialogData } from '../dialogs/material-compra-dialog.component';
 import { CLASES_ESTATUS, CLAVE_CONTEO, CONTEO_VACIO, contarPorEstatus } from './material-estatus';
 
 export interface GrupoMateriales {
@@ -317,6 +318,26 @@ export class MaterialesTrazabilidadComponent implements OnChanges {
       this.expandidos.delete(item.idMaterial);
     }
     this.cdr.markForCheck();
+  }
+
+  // ------------------------------------------- proveedor y observaciones
+  abrirCompra(item: SeguimientoMaterial): void {
+    const ref = this.dialog.open<MaterialCompraDialogComponent, MaterialCompraDialogData, SeguimientoMaterial>(
+      MaterialCompraDialogComponent,
+      { width: '560px', maxWidth: '95vw', autoFocus: false, data: { material: item } }
+    );
+    ref.afterClosed().subscribe(nuevo => {
+      if (nuevo) {
+        this.reemplazar(nuevo);
+      }
+    });
+  }
+
+  /** Cambia solo la fila que devolvió el API; no se toca el resto ni se vuelve a pedir toda la lista. */
+  private reemplazar(nuevo: SeguimientoMaterial): void {
+    this.materiales = this.materiales.map(m => m.idMaterial === nuevo.idMaterial ? { ...m, ...nuevo, expanded: m.expanded } : m);
+    this.conteo = contarPorEstatus(this.materiales);
+    this.recalcular();
   }
 
   // ---------------------------------------------------------- Excel
