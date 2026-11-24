@@ -1,7 +1,7 @@
 import { Component, Inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AbstractControl, FormControl, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,23 +18,6 @@ import {
   Requerimiento,
   RequerimientosService
 } from '../requerimientos.service';
-
-export function folioCotizacionValidator(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const valor = control.value;
-    if (valor === null || valor === undefined || valor === '') {
-      return null;
-    }
-    const str = String(valor);
-    if (str.length > 0 && str.trim().length === 0) {
-      return { soloEspacios: true };
-    }
-    if (/[\u0000-\u001F\u007F]/.test(str)) {
-      return { caracterControl: true };
-    }
-    return null;
-  };
-}
 
 export interface ConvertirCotizacionDialogData {
   requerimiento: Requerimiento;

@@ -102,8 +102,6 @@ describe('CotizacionDetalleDialogComponent', () => {
 
   const mockOrigen: CotizacionOrigen = {
     cotizacionProductosId: 311,
-    folioCotizacion: 'COT-1234',
-    puedeAgregarFolio: false,
     requerimiento: {
       id: 57,
       folio: 'REQ-2026-0057',
@@ -138,7 +136,7 @@ describe('CotizacionDetalleDialogComponent', () => {
   };
 
   function crearComponente(data: any = { cotizacionProductosId: 311, unidadNombre: 'Querétaro' }): void {
-    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen', 'agregarFolio']);
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
     dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
     router = jasmine.createSpyObj('Router', ['navigate']);
 
@@ -481,22 +479,22 @@ describe('CotizacionDetalleDialogComponent', () => {
     expect(q('unidad-negocio')?.textContent?.trim()).toBe('Sucursal Matriz');
   });
 
-  it('La_celda_del_folio_usa_el_componente_y_ofrece_agregar_solo_si_el_origen_lo_permite', () => {
+  it('La_celda_muestra_Folio_CONTPAQ_o_Sin_folio', () => {
+    crearComponente();
+    expect(q('folio-cotizacion')?.textContent?.trim()).toBe('COT-1234');
+    expect(q('btn-agregar-folio')).toBeNull();
+
+    TestBed.resetTestingModule();
     const cabeceraSinFolio = {
       ...mockCabecera,
       data: { ...mockCabecera.data, folioContpaq: null }
     };
-    const origenSinFolio: CotizacionOrigen = {
-      ...mockOrigen,
-      folioCotizacion: null,
-      puedeAgregarFolio: true
-    };
-    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen', 'agregarFolio']);
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
     dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
     router = jasmine.createSpyObj('Router', ['navigate']);
     quotesService.getQuoteById.and.returnValue(of(cabeceraSinFolio));
     quotesService.obtenerSgc.and.returnValue(of(mockSgc));
-    quotesService.origen.and.returnValue(of(origenSinFolio));
+    quotesService.origen.and.returnValue(of(mockOrigen));
 
     TestBed.configureTestingModule({
       imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
@@ -512,47 +510,7 @@ describe('CotizacionDetalleDialogComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    expect(q('folio-sin-folio')?.textContent?.trim()).toBe('Sin folio');
-    expect(q('btn-agregar-folio')).not.toBeNull();
-  });
-
-  it('Al_agregar_el_folio_se_actualiza_la_celda', () => {
-    const cabeceraSinFolio = {
-      ...mockCabecera,
-      data: { ...mockCabecera.data, folioContpaq: null }
-    };
-    const origenSinFolio: CotizacionOrigen = {
-      ...mockOrigen,
-      folioCotizacion: null,
-      puedeAgregarFolio: true
-    };
-    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen', 'agregarFolio']);
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
-    router = jasmine.createSpyObj('Router', ['navigate']);
-    quotesService.getQuoteById.and.returnValue(of(cabeceraSinFolio));
-    quotesService.obtenerSgc.and.returnValue(of(mockSgc));
-    quotesService.origen.and.returnValue(of(origenSinFolio));
-
-    TestBed.configureTestingModule({
-      imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
-      providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
-        { provide: MatDialogRef, useValue: dialogRef },
-        { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
-      ]
-    });
-
-    fixture = TestBed.createComponent(CotizacionDetalleDialogComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    component.onFolioAgregado('COT-NUEVO-FOLIO');
-    fixture.detectChanges();
-
-    expect(component.cabecera.folioContpaq).toBe('COT-NUEVO-FOLIO');
-    expect(component.origen?.puedeAgregarFolio).toBeFalse();
-    expect(component.origen?.folioCotizacion).toBe('COT-NUEVO-FOLIO');
-    expect(q('folio-valor')?.textContent?.trim()).toBe('COT-NUEVO-FOLIO');
+    expect(q('folio-cotizacion')?.textContent?.trim()).toBe('Sin folio');
+    expect(q('btn-agregar-folio')).toBeNull();
   });
 });
