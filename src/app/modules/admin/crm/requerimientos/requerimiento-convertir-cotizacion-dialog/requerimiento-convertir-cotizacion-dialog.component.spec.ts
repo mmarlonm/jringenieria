@@ -101,6 +101,48 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
     expect(texto).toContain('Escribe el folio de la cotización en CONTPAQ. Debe estar ya sincronizada.');
   });
 
+  describe('distribución (sin letras encimadas)', () => {
+    it('La_ayuda_va_fuera_del_campo_para_no_encimarse_con_lo_de_abajo', () => {
+      crear();
+      const ayuda = q('ayuda-folio') as HTMLElement;
+
+      expect(ayuda).not.toBeNull();
+      expect(ayuda.textContent).toContain('Debe estar ya sincronizada.');
+      expect(ayuda.closest('mat-form-field')).toBeNull();
+      expect(fixture.nativeElement.querySelector('mat-form-field mat-hint')).toBeNull();
+    });
+
+    it('El_campo_del_folio_crece_con_sus_errores_en_vez_de_encimarlos', () => {
+      crear();
+      const campo = (q('input-folio') as HTMLElement).closest('mat-form-field') as HTMLElement;
+
+      const subindice = campo.querySelector('.mat-mdc-form-field-subscript-wrapper') as HTMLElement;
+
+      expect(subindice).not.toBeNull();
+      expect(subindice.classList).toContain('mat-mdc-form-field-subscript-dynamic-size');
+    });
+
+    it('El_campo_y_el_boton_Buscar_se_apilan_en_celular_y_van_en_linea_en_pantallas_amplias', () => {
+      crear();
+      const fila = q('fila-folio') as HTMLElement;
+
+      expect(fila.classList).toContain('flex-col');
+      expect(fila.classList).toContain('sm:flex-row');
+      expect((q('btn-buscar') as HTMLElement).classList).toContain('w-full');
+    });
+
+    it('Un_folio_invalido_muestra_su_error_dentro_del_campo_y_la_ayuda_sigue_aparte', () => {
+      crear();
+      component.folioControl.setValue('abc def');
+      component.folioControl.markAsTouched();
+      fixture.detectChanges();
+
+      const campo = (q('input-folio') as HTMLElement).closest('mat-form-field') as HTMLElement;
+      expect(campo.textContent).toContain('Solo letras, números y guion');
+      expect((q('ayuda-folio') as HTMLElement).textContent).toContain('Escribe el folio');
+    });
+  });
+
   it('Buscar_esta_deshabilitado_con_folio_vacio_o_invalido', () => {
     crear();
     const btn = () => q('btn-buscar') as HTMLButtonElement;

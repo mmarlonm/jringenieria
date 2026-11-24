@@ -1,13 +1,13 @@
-<div class="p-6 max-w-2xl">
-  <h2 mat-dialog-title class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+<div class="p-2 sm:p-6 max-w-2xl">
+  <h2 mat-dialog-title class="!px-3 sm:!px-6 text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
     <mat-icon class="text-primary">request_quote</mat-icon>
     Convertir a cotización
   </h2>
-  <p class="text-xs text-slate-500 mb-3">
+  <p class="px-3 sm:px-6 text-xs text-slate-500 mb-3">
     Requerimiento <span class="font-mono font-semibold">{{ data.requerimiento.folio }}</span> · {{ data.requerimiento.empresa }}
   </p>
 
-  <mat-dialog-content class="dialogo-alto">
+  <mat-dialog-content class="dialogo-alto !px-3 sm:!px-6">
     <!-- Error: se muestra aquí mismo, sin perder lo escrito -->
     <div *ngIf="errorMensaje" data-testid="error-convertir" class="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
       {{ errorMensaje }}
@@ -20,22 +20,25 @@
       <span *ngIf="cotizacionExistente.folioContpaq"> (CONTPAQ {{ cotizacionExistente.folioContpaq }})</span>.
     </div>
 
-    <div class="flex items-start gap-2 mb-4">
-      <mat-form-field appearance="outline" class="flex-1">
+    <div class="flex flex-col sm:flex-row sm:items-start gap-2" data-testid="fila-folio">
+      <mat-form-field appearance="outline" class="w-full sm:flex-1" subscriptSizing="dynamic">
         <mat-label>Folio de CONTPAQ</mat-label>
         <input matInput data-testid="input-folio" [formControl]="folioControl" maxlength="30"
                placeholder="Ej. 1234" autocomplete="off" (keyup.enter)="buscar()" />
-        <mat-hint>Escribe el folio de la cotización en CONTPAQ. Debe estar ya sincronizada.</mat-hint>
         <mat-error *ngIf="folioControl.hasError('required')">Escribe el folio</mat-error>
         <mat-error *ngIf="folioControl.hasError('pattern')">Solo letras, números y guion (hasta 30)</mat-error>
       </mat-form-field>
-      <button mat-stroked-button color="primary" type="button" data-testid="btn-buscar" class="mt-1 h-[56px]"
+      <button mat-stroked-button color="primary" type="button" data-testid="btn-buscar" class="w-full sm:w-auto h-[48px] sm:h-[56px]"
               [disabled]="!puedeBuscar" (click)="buscar()">
         <mat-icon *ngIf="!buscando" class="mr-1">search</mat-icon>
         <mat-icon *ngIf="buscando" class="mr-1 animate-spin">autorenew</mat-icon>
         Buscar
       </button>
     </div>
+    <!-- La ayuda va FUERA del campo: dentro, su texto largo se desbordaba y se encimaba con lo de abajo -->
+    <p data-testid="ayuda-folio" class="text-xs text-slate-500 mt-1 mb-4">
+      Escribe el folio de la cotización en CONTPAQ. Debe estar ya sincronizada.
+    </p>
 
     <!-- Resultado de la búsqueda -->
     <ng-container *ngIf="coincidencias">
@@ -53,7 +56,7 @@
                 class="w-full text-left p-3 rounded-xl border transition-all"
                 [ngClass]="seleccionada === c ? 'border-primary bg-primary-50/40 ring-1 ring-primary' : 'border-slate-200 hover:border-slate-300'"
                 [disabled]="c.yaVinculadaARequerimiento || convirtiendo" (click)="seleccionar(c)">
-          <div class="flex items-center justify-between gap-3">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3">
             <div class="min-w-0">
               <div class="text-sm font-bold text-slate-800 truncate">{{ c.nombreCliente || 'Sin cliente' }}</div>
               <div class="text-[11px] text-slate-500">
@@ -62,7 +65,7 @@
                 <span *ngIf="c.unidadDeNegocioNombre"> · {{ c.unidadDeNegocioNombre }}</span>
               </div>
             </div>
-            <div class="text-right shrink-0">
+            <div class="sm:text-right sm:shrink-0">
               <div class="text-sm font-black tabular-nums">{{ c.total || 0 | currency:'MXN':'symbol':'1.2-2' }}</div>
               <div *ngIf="c.fecha" class="text-[11px] text-slate-500">{{ c.fecha | date:'dd/MM/yyyy' }}</div>
             </div>
@@ -85,7 +88,7 @@
     </mat-form-field>
   </mat-dialog-content>
 
-  <mat-dialog-actions align="end" class="gap-2 pt-4">
+  <mat-dialog-actions align="end" class="!px-3 sm:!px-6 gap-2 pt-4">
     <button mat-button type="button" data-testid="btn-cancelar" [disabled]="convirtiendo" (click)="cancelar()">Cancelar</button>
     <button mat-flat-button color="primary" type="button" data-testid="btn-convertir"
             [disabled]="!puedeConvertir" (click)="convertir()">
