@@ -1156,7 +1156,7 @@
             </div>
 
             <!-- Panel de KPIs Financieros -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-6">
 
               <!-- KPI 1: Total Cotizado -->
               <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all">
@@ -1258,6 +1258,9 @@
                   <div class="h-full transition-all duration-500" [ngClass]="balanceProyecto >= 0 ? 'bg-emerald-500' : 'bg-rose-500'" [style.width.%]="porcentajeConsumidoMateriales"></div>
                 </div>
               </div>
+
+              <!-- KPI 6: Total de salidas de almacén del proyecto (suma de los folios registrados) -->
+              <app-finanzas-kpi-salidas [salidas]="salidasAlmacen" [error]="errorSalidasAlmacen"></app-finanzas-kpi-salidas>
 
             </div>
 

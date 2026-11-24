@@ -21,6 +21,7 @@ import { SubcontratacionService } from '../../subcontratacion.service';
 import { ImagePreviewDialogComponent } from 'app/modules/admin/dashboards/tasks/task-media-dialog/task-media-dialog-viewer.component';
 import { EvidenciasEtapasComponent } from '../../cotizacion-etapas/evidencias-etapas/evidencias-etapas.component';
 import { MaterialesTrazabilidadComponent } from './materiales-trazabilidad/materiales-trazabilidad.component';
+import { FinanzasKpiSalidasComponent } from './finanzas-kpi-salidas/finanzas-kpi-salidas.component';
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
 import { environment } from 'environments/environment';
 import Swal from 'sweetalert2';
@@ -68,7 +69,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatAutocompleteModule,
     ImportarCronogramaDialogComponent,
     EvidenciasEtapasComponent,
-    MaterialesTrazabilidadComponent
+    MaterialesTrazabilidadComponent,
+    FinanzasKpiSalidasComponent
   ],
   templateUrl: './control-ejecucion-form.component.html',
   styles: [`
@@ -165,6 +167,7 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   
   // Salidas de Almacén
   salidasAlmacen: SalidaAlmacen[] = [];
+  errorSalidasAlmacen: boolean = false;
   nuevoFolioAlmacen: string = '';
   isSearchingSalida: boolean = false;
   isSavingSalida: boolean = false;
@@ -735,7 +738,9 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
   loadFinanzas(): void {
     if (!this.idSeguimiento) return;
     this.isLoadingFinanzas = true;
-    
+    // El KPI de salidas de almacén sale de los folios registrados: «Actualizar datos» también los vuelve a pedir.
+    this.loadSalidasAlmacen();
+
     // Call endpoints
     forkJoin({
       materiales: this._engineeringService.getSolicitudesCompraProyecto(this.idSeguimiento),
@@ -2291,10 +2296,14 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
     this._engineeringService.getSalidasAlmacen(this.idSeguimiento).subscribe({
       next: (data) => {
         this.salidasAlmacen = data || [];
+        this.errorSalidasAlmacen = false;
         this._cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error al cargar salidas de almacén:', err);
+        // El KPI de Finanzas lo avisa en vez de mostrar un cero que parecería real.
+        this.errorSalidasAlmacen = true;
+        this._cdr.markForCheck();
       }
     });
   }
