@@ -308,4 +308,84 @@ describe('QuotesBoardComponent', () => {
     expect(abiertos).toEqual([2]);
     expect(mockDialog.open).not.toHaveBeenCalled();
   });
+
+  it('Cada_tarjeta_eliminable_tiene_el_icono_papelera_si_hay_permiso', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).not.toBeNull();
+  });
+
+  it('Sin_permiso_btnDelete_no_hay_icono', () => {
+    component.permisoEliminar = false;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).toBeNull();
+  });
+
+  it('Una_tarjeta_que_no_se_puede_eliminar_no_tiene_icono', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Emitida', version: 1 })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).toBeNull();
+  });
+
+  it('Si_informativa_es_false_y_aun_no_llega_resumen_no_hay_icono_eliminar', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { informativa: false })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).toBeNull();
+  });
+
+  it('La_papelera_emite_eliminar_con_el_id_y_no_abre_la_cotizacion', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+    const eliminados: number[] = [];
+    const abiertos: number[] = [];
+    component.eliminar.subscribe((id: number) => eliminados.push(id));
+    component.abrir.subscribe((id: number) => abiertos.push(id));
+
+    const btn = q('[data-testid="eliminar-tarjeta-2"]') as HTMLElement;
+    btn.click();
+    fixture.detectChanges();
+
+    expect(eliminados).toEqual([2]);
+    expect(abiertos.length).toBe(0);
+  });
+
+  it('La_tarjeta_muestra_CONTPAQ_y_su_folio_cuando_lo_tiene', () => {
+    respuestas.CS = () => pagina([cot(2, { folioContpaq: '842' })]);
+    iniciar();
+
+    const chip = q('[data-testid="chip-folio-contpaq"]');
+    expect(chip).not.toBeNull();
+    expect(chip?.textContent?.trim()).toBe('CONTPAQ 842');
+  });
+
+  it('Si_folioContpaq_es_null_no_se_pinta_el_chip', () => {
+    respuestas.CS = () => pagina([cot(2, { folioContpaq: null })]);
+    iniciar();
+
+    expect(q('[data-testid="chip-folio-contpaq"]')).toBeNull();
+  });
+
+  it('El_filtro_por_texto_encuentra_tarjetas_por_folio_CONTPAQ', () => {
+    respuestas.CS = () => pagina([
+      cot(2, { folioContpaq: '842', nombreCliente: 'Uno' }),
+      cot(3, { folioContpaq: '999', nombreCliente: 'Dos' })
+    ]);
+    iniciar();
+
+    component.texto = '842';
+    component.ngOnChanges({ texto: { currentValue: '842', previousValue: '', firstChange: false, isFirstChange: () => false } });
+    fixture.detectChanges();
+
+    expect(q('[data-testid="tarjeta-2"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).toBeNull();
+  });
 });

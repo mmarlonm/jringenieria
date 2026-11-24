@@ -4,16 +4,9 @@
       <h1 class="text-2xl font-bold flex items-center gap-2 m-0">
         <span>{{ quotesId ? "Editar Cotización" : "Nueva Cotización" }}</span>
         <span *ngIf="folio" class="text-gray-500 font-normal text-lg ml-2">{{ folio }} v{{ version || 1 }}</span>
+        <span *ngIf="folioContpaq" data-testid="folio-contpaq-header" class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">CONTPAQ {{ folioContpaq }}</span>
       </h1>
       <app-etapa-chip *ngIf="quotesId" [etapa]="etapa" class="etapa-chip-header"></app-etapa-chip>
-      <app-folio-cotizacion
-        *ngIf="quotesId && origen && (origen.folioCotizacion || origen.puedeAgregarFolio)"
-        data-testid="folio-cotizacion-header"
-        [cotizacionProductosId]="quotesId"
-        [folio]="origen.folioCotizacion"
-        [puedeAgregar]="origen.puedeAgregarFolio || false"
-        (folioAgregado)="onFolioAgregado($event)">
-      </app-folio-cotizacion>
     </div>
 
     <button mat-flat-button color="accent" (click)="openCotizacionPreview()">

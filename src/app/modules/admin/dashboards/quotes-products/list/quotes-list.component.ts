@@ -23,7 +23,7 @@ import { SendSurveyComponent } from '../send-survey/send-survey.component';
 import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
 import { QuotesBoardComponent } from './quotes-board/quotes-board.component';
 import { CotizacionDetalleDialogComponent } from '../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
-import { aplicarResumenSgc } from './quotes-sgc-merge';
+import { aplicarResumenSgc, tieneCapaSgc, puedeEliminarCotizacion } from './quotes-sgc-merge';
 import moment from 'moment';
 
 export type VistaCotizaciones = 'tablero' | 'lista';
@@ -55,6 +55,7 @@ const CLAVE_VISTA = 'cotizaciones.vista';
 export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   displayedColumns: string[] = [
     'cotizacionProductosId',
+    'folioContpaq',
     'tipo',
     'nombreCliente',
     'unidadDeNegocioNombre',
@@ -110,11 +111,13 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   // Fechas que ve el tablero: solo se actualizan cuando ya son válidas y la persona terminó de teclear.
   boardDesde: string = this.fechaDesde;
   boardHasta: string = this.fechaHasta;
+  tableroRefresco: number = 0;
   private temporizadorFechas: any = null;
   private solicitudListado = 0;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatMenuTrigger) menuTrigger: MatMenuTrigger;  // Añadir la referencia a MatMenuTrigger
+  @ViewChild(QuotesBoardComponent) boardComponent?: QuotesBoardComponent;
 
   currentFilterColumn: string = '';
   filterValue: string = '';
@@ -411,7 +414,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   tieneRegistroSgc(quote: any): boolean {
-    return !!(quote?.tieneSgc || quote?.folio || (quote?.etapa && quote?.version !== undefined));
+    return tieneCapaSgc(quote);
   }
 
   obtenerTextoFolio(quote: any): string {
@@ -422,12 +425,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   puedeEliminar(quote: any): boolean {
-    if (!this.tieneRegistroSgc(quote)) {
-      return true;
-    }
-    const etapa = quote.etapa || 'Borrador';
-    const version = quote.version ?? 1;
-    return etapa === 'Borrador' && version <= 1;
+    return puedeEliminarCotizacion(quote);
   }
 
   filtrarPorEtapa(etapa: string): void {
@@ -480,21 +478,26 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataSource.data = filtradas;
   }
 
-  async deleteQuote(projectId: number) {
-    const confirmed = await this.showConfirmation();
+  async deleteQuote(projectId: number, quote?: any) {
+    const cotizacion = quote
+      || this.todasLasQuotesDePagina.find(q => q.cotizacionProductosId === projectId)
+      || this.boardComponent?.buscarPorId(projectId);
+    const confirmed = await this.showConfirmation(cotizacion);
     if (confirmed) {
       this.quotesService.deleteQuote(projectId).subscribe({
         next: (res: any) => {
-          if (res && res.code == 200) {
+          if (!res || res.code == 200) {
             this.getQuotes();
-            this._chatNotificationService.showSuccess('Éxito', 'Cotizacion eliminada correctamente', 3000);
+            this.tableroRefresco++;
+            this._chatNotificationService.showSuccess('Éxito', 'Cotización eliminada correctamente.', 3000);
           } else {
             const msg = res?.mensaje || res?.message || 'Hubo un error en el sistema, contacte al administrador del sistema.';
             this._chatNotificationService.showError('Error', msg, 5000);
           }
         },
         error: (err: any) => {
-          const msg = err?.error?.mensaje || err?.error?.message || 'Hubo un error al eliminar la cotización.';
+          const msgApi = err?.status === 409 ? (err?.error?.mensaje || err?.error?.message) : null;
+          const msg = msgApi || 'Hubo un error al eliminar la cotización.';
           this._chatNotificationService.showError('Error', msg, 5000);
         }
       });
@@ -581,7 +584,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
    * Determina si el filtro es de tipo texto.
    */
   isTextFilter(column: string): boolean {
-    return column === 'nombreCliente' || column === 'requisitosEspeciales' || column === 'cotizacionProductosId';
+    return column === 'nombreCliente' || column === 'requisitosEspeciales' || column === 'cotizacionProductosId' || column === 'folioContpaq';
   }
 
   /**
@@ -611,10 +614,17 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.applyFilter();  // Aplica filtro vacío si es necesario (esto dependerá de cómo se maneje en tu aplicación)
   }
 
-  showConfirmation(): Promise<boolean> {
+  showConfirmation(quote?: any): Promise<boolean> {
+    let text = 'Esta acción no se puede revertir.';
+    if (quote && !this.tieneRegistroSgc(quote)) {
+      text += ' Si esta cotización sigue en CONTPAQ dentro de los últimos 15 días, la próxima sincronización la volverá a traer.';
+    }
+    if (quote?.requerimientoFolio) {
+      text += ` El requerimiento ${quote.requerimientoFolio} conservará el aviso de la eliminación en su historial.`;
+    }
     return Swal.fire({
       title: 'Seguro que desea eliminar',
-      text: 'Esta accion no se puede revertir',
+      text,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Eliminar',

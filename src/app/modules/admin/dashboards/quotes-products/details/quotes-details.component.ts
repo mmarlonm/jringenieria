@@ -48,13 +48,11 @@ import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.compon
 import { SeguimientoSgcComponent } from "../sgc/seguimiento-sgc/seguimiento-sgc.component";
 import { EmisionDialogComponent } from "../sgc/emision-dialog/emision-dialog.component";
 import { CierreDialogComponent, CierreDialogResultado, MOTIVOS_CIERRE_DEFECTO, TIPOS_EVIDENCIA_DEFECTO } from "../sgc/cierre-dialog/cierre-dialog.component";
-import { FolioCotizacionComponent } from "../folio-cotizacion/folio-cotizacion.component";
 import Swal from 'sweetalert2';
 import {
   AccionesSgc,
   CatalogoItem,
   CatalogosSgc,
-  CotizacionOrigen,
   CotizacionSgcCabecera,
   CotizacionSgcDatos,
   CotizacionSgcVista,
@@ -97,7 +95,6 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     VersionesSgcComponent,
     SeguimientoSgcComponent,
     ProcesoComercialComponent,
-    FolioCotizacionComponent,
   ],
   providers: [
     { provide: LOCALE_ID, useValue: "es-ES" }, // Idioma general Angular
@@ -109,7 +106,7 @@ export class QuoteDetailsComponent implements OnInit {
   estatus: any[] = [];
   unidadesDeNegocio: any[] = [];
   quotesId: number | null = null;
-  origen: CotizacionOrigen | null = null;
+  folioContpaq: string | null = null;
   /** Cambia cada vez que se cargan los datos SGC: hace que el panel del proceso vuelva a consultar. */
   procesoRefresco = 0;
 
@@ -232,11 +229,10 @@ export class QuoteDetailsComponent implements OnInit {
       const id = params.get("id");
       if (!id || id === "new") {
         this.quotesId = null; // Se trata de un nuevo proyecto
-        this.origen = null;
+        this.folioContpaq = null;
       } else {
         this.quotesId = Number(id);
         this.loadQuotes(this.quotesId);
-        this.cargarOrigen(this.quotesId);
       }
     });
 
@@ -345,24 +341,6 @@ export class QuoteDetailsComponent implements OnInit {
     });
   }
 
-  cargarOrigen(id: number): void {
-    this.quotesService.origen(id).subscribe({
-      next: (res) => {
-        this.origen = res;
-      },
-      error: () => {
-        this.origen = null;
-      }
-    });
-  }
-
-  onFolioAgregado(nuevoFolio: string): void {
-    if (this.origen) {
-      this.origen.folioCotizacion = nuevoFolio;
-      this.origen.puedeAgregarFolio = false;
-    }
-  }
-
   loadQuotes(id: number): void {
     this.quotesService.obtenerSgc(id).subscribe({
       next: (sgcRes) => {
@@ -407,6 +385,7 @@ export class QuoteDetailsComponent implements OnInit {
         this.revisionesVigentes = sgcRes.revisiones || [];
         this.revisionesRequeridas = sgcRes.revisionesRequeridas || [];
         this.sgcVista = sgcRes.sgc || null;
+        this.folioContpaq = sgcRes.cotizacion?.folioContpaq || null;
         this.seguimiento = sgcRes.seguimiento || null;
 
         this.acciones = sgcRes.acciones || {

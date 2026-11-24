@@ -238,7 +238,7 @@ describe('RequerimientosComponent - Aprobados', () => {
 
   it('La_tarjeta_aprobada_muestra_la_etiqueta_de_cotizacion_con_enlace', () => {
     component.requerimientos = mockRequerimientos.map(r => r.id === 3
-      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioCotizacion: 'COT-1234', tipo: 'CS' as const, etapa: 'Borrador' } }
+      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: '1234', tipo: 'CS' as const, etapa: 'Borrador' } }
       : r);
     component.applyFilters();
     fixture.detectChanges();

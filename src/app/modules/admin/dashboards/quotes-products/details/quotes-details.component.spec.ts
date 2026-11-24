@@ -48,8 +48,6 @@ describe('QuoteDetailsComponent SGC', () => {
 
   const mockOrigen: CotizacionOrigen = {
     cotizacionProductosId: 10,
-    folioCotizacion: 'COT-1234',
-    puedeAgregarFolio: false,
     requerimiento: {
       id: 57,
       folio: 'REQ-2026-0057',
@@ -1682,75 +1680,54 @@ describe('QuoteDetailsComponent SGC', () => {
     });
   });
 
-  describe('Origen y folio de cotización en el encabezado', () => {
-    it('El_editor_muestra_el_folio_o_la_opcion_de_agregarlo_en_el_encabezado', async () => {
-      const origenConFolio: CotizacionOrigen = {
-        ...mockOrigen,
-        folioCotizacion: 'COT-777',
-        puedeAgregarFolio: false
-      };
-      mockQuotesService.origen.and.returnValue(of(origenConFolio));
-
-      paramMapSubject.next(convertToParamMap({ id: '10' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(mockQuotesService.origen).toHaveBeenCalledWith(10);
-      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
-      expect(headerFolio).not.toBeNull();
-      expect(headerFolio.textContent).toContain('COT-777');
-    });
-
-    it('Sin_folio_y_sin_opcion_de_agregarlo_no_muestra_nada_en_el_encabezado', async () => {
-      mockQuotesService.origen.and.returnValue(of({ ...mockOrigen, folioCotizacion: null, puedeAgregarFolio: false } as CotizacionOrigen));
-
-      paramMapSubject.next(convertToParamMap({ id: '10' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]')).toBeNull();
-    });
-
-    it('Sin_folio_pero_con_la_opcion_de_agregarlo_muestra_el_boton_en_el_encabezado', async () => {
-      mockQuotesService.origen.and.returnValue(of({ ...mockOrigen, folioCotizacion: null, puedeAgregarFolio: true } as CotizacionOrigen));
-
-      paramMapSubject.next(convertToParamMap({ id: '10' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      const header = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
-      expect(header).not.toBeNull();
-      expect(header.querySelector('[data-testid="btn-agregar-folio"]')).not.toBeNull();
-    });
-
-    it('Si_el_origen_falla_no_muestra_nada_ni_rompe_el_editor', async () => {
-      mockQuotesService.origen.and.returnValue(throwError(() => new Error('Error al cargar origen')));
-
-      paramMapSubject.next(convertToParamMap({ id: '10' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.origen).toBeNull();
-      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
-      expect(headerFolio).toBeNull();
-    });
-
-    it('No_pide_el_origen_en_una_cotizacion_nueva', async () => {
+  describe('Folio de CONTPAQ en el encabezado', () => {
+    it('El_encabezado_muestra_el_folio_de_CONTPAQ_si_el_SGC_lo_trae', async () => {
       mockQuotesService.origen.calls.reset();
+      mockQuotesService.obtenerSgc.and.returnValue(of({
+        cotizacionProductosId: 10,
+        cotizacion: { cotizacionProductosId: 10, clienteId: 1, unidadDeNegocioId: 2, requisitosEspeciales: false, folioContpaq: '1234' },
+        sgc: {
+          folio: 'COT-2026-0001', version: 1, etapa: 'Borrador', tipo: 'CT', moneda: 'MXN', vigenciaDias: 15, entregables: [],
+          subtotal: 0, iva: 0, total: 0, creadoPorUsuarioId: 7, fechaCreacion: '2026-11-10T10:00:00Z'
+        },
+        partidas: [], partidasHeredadas: false,
+        totales: { subtotal: 0, iva: 0, total: 0, costoDirecto: 0, utilidad: 0, margenPorcentaje: 0, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: []
+      }));
 
-      paramMapSubject.next(convertToParamMap({ id: 'new' }));
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
 
-      expect(component.quotesId).toBeNull();
+      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-contpaq-header"]');
+      expect(headerFolio).not.toBeNull();
+      expect(headerFolio.textContent).toContain('CONTPAQ 1234');
       expect(mockQuotesService.origen).not.toHaveBeenCalled();
-      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
+    });
+
+    it('Sin_folio_no_muestra_nada_en_el_encabezado', async () => {
+      mockQuotesService.origen.calls.reset();
+      mockQuotesService.obtenerSgc.and.returnValue(of({
+        cotizacionProductosId: 10,
+        cotizacion: { cotizacionProductosId: 10, clienteId: 1, unidadDeNegocioId: 2, requisitosEspeciales: false, folioContpaq: null },
+        sgc: {
+          folio: 'COT-2026-0001', version: 1, etapa: 'Borrador', tipo: 'CT', moneda: 'MXN', vigenciaDias: 15, entregables: [],
+          subtotal: 0, iva: 0, total: 0, creadoPorUsuarioId: 7, fechaCreacion: '2026-11-10T10:00:00Z'
+        },
+        partidas: [], partidasHeredadas: false,
+        totales: { subtotal: 0, iva: 0, total: 0, costoDirecto: 0, utilidad: 0, margenPorcentaje: 0, margenBajo: false, partidasSinCosto: 0 },
+        faltantes: []
+      }));
+
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const headerFolio = fixture.nativeElement.querySelector('[data-testid="folio-contpaq-header"]');
       expect(headerFolio).toBeNull();
+      expect(mockQuotesService.origen).not.toHaveBeenCalled();
     });
   });
 });

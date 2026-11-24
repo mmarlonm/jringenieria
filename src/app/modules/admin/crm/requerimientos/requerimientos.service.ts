@@ -62,27 +62,45 @@ export interface Requerimiento {
   cotizacionVinculada?: CotizacionVinculada | null;
 }
 
+export interface CoincidenciaFolio {
+  cotizacionProductosId: number;
+  unidadDeNegocioId?: number | null;
+  unidadDeNegocioNombre?: string | null;
+  folioContpaq?: string | null;
+  nombreCliente?: string | null;
+  rfc?: string | null;
+  total?: number | null;
+  fecha?: string | null;
+  tieneCapaSgc: boolean;
+  yaVinculadaARequerimiento: boolean;
+  requerimientoFolio?: string | null;
+}
+
+export interface BuscarFolioRespuesta {
+  folio: string;
+  coincidencias: CoincidenciaFolio[];
+}
+
 export interface CotizacionVinculada {
   cotizacionProductosId: number;
   folioSgc: string;
-  /** Folio de la cotización que el usuario tecleó al convertir (§4 contrato v1.8). */
-  folioCotizacion?: string | null;
+  /** Folio de CONTPAQ de la cotización sincronizada (§4 contrato v2.0). */
+  folioContpaq?: string | null;
   tipo: TipoCotizacionSgc;
   etapa: string;
 }
 
-/** Contrato v1.8 §3: pide el folio de la cotización, tipo y unidad de negocio. */
+/** Contrato v2.0 §3: vincula el requerimiento a una cotización sincronizada existente. */
 export interface ConvertirRequerimientoDto {
   requerimientoId: number;
   tipo: TipoCotizacionSgc;
-  unidadDeNegocioId: number;
-  folioCotizacion: string;
+  cotizacionProductosId: number;
 }
 
 export interface ConvertirRequerimientoResultado {
   cotizacionProductosId: number;
   folioSgc: string;
-  folioCotizacion: string;
+  folioContpaq?: string | null;
   tipo: TipoCotizacionSgc;
   etapa: string;
   requerimientoId: number;
@@ -288,7 +306,15 @@ export class RequerimientosService {
     return this.http.post<AprobarRequerimientoResultadoDto>(`${this.apiUrl}/${id}/aprobar`, datos ?? {});
   }
 
-  // Convertir a cotización propia (contrato v1.7 §3): no consulta CONTPAQ.
+  // Buscar folio de CONTPAQ entre las cotizaciones sincronizadas (contrato v2.0 §2).
+  buscarFolioContpaq(folio: string): Observable<BuscarFolioRespuesta> {
+    return this.http.get<BuscarFolioRespuesta>(
+      `${environment.apiUrl}/CotizacionProductos/buscar-folio`,
+      { params: { folio } }
+    );
+  }
+
+  // Convertir = vincular requerimiento a la cotización sincronizada elegida (contrato v2.0 §3).
   convertirACotizacion(dto: ConvertirRequerimientoDto): Observable<ConvertirRequerimientoResultado> {
     return this.http.post<ConvertirRequerimientoResultado>(`${environment.apiUrl}/CotizacionProductos/convertir-desde-requerimiento`, dto);
   }

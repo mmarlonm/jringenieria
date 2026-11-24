@@ -43,6 +43,10 @@
             <span class="text-[10px] text-gray-400">{{ q.createdDate | date:'dd/MM/yyyy' }}</span>
           </div>
           <div class="mt-2 flex flex-wrap gap-1">
+            <span *ngIf="q.folioContpaq" data-testid="chip-folio-contpaq"
+                  class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+              CONTPAQ {{ q.folioContpaq }}
+            </span>
             <span *ngIf="q.requerimientoFolio" class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-700">
               {{ q.requerimientoFolio }}
             </span>
@@ -55,13 +59,22 @@
           </div>
         </button>
 
-        <button mat-icon-button type="button"
-                [attr.data-testid]="'ver-tarjeta-' + q.cotizacionProductosId"
-                matTooltip="Ver detalle"
-                class="absolute top-2 right-2 text-slate-400 hover:text-primary z-10"
-                (click)="verDetalle(q, $event)">
-          <mat-icon class="icon-size-4">visibility</mat-icon>
-        </button>
+        <div class="absolute top-2 right-2 flex items-center gap-0.5 z-10">
+          <button mat-icon-button type="button"
+                  [attr.data-testid]="'ver-tarjeta-' + q.cotizacionProductosId"
+                  matTooltip="Ver detalle"
+                  class="text-slate-400 hover:text-primary"
+                  (click)="verDetalle(q, $event)">
+            <mat-icon class="icon-size-4">visibility</mat-icon>
+          </button>
+          <button *ngIf="puedeEliminar(q)" mat-icon-button type="button" color="warn"
+                  [attr.data-testid]="'eliminar-tarjeta-' + q.cotizacionProductosId"
+                  matTooltip="Eliminar"
+                  aria-label="Eliminar"
+                  (click)="solicitarEliminar(q, $event)">
+            <mat-icon class="icon-size-4">delete</mat-icon>
+          </button>
+        </div>
       </div>
 
       <div *ngIf="col.cargando" class="py-4 text-center text-xs text-gray-400" data-testid="cargando-columna">Cargando…</div>

@@ -11,6 +11,7 @@ import { CotizacionDetalleDialogComponent } from '../cotizacion-detalle-dialog/c
 import { ResumenSgc } from '../quotes-products.types';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
+import Swal from 'sweetalert2';
 
 registerLocaleData(localeEs);
 
@@ -681,6 +682,126 @@ describe('QuoteListComponent', () => {
         })
       );
       expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Eliminar cotización (204, errores y tablero)', () => {
+    it('Eliminar_con_204_muestra_exito_y_recarga', async () => {
+      spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
+      mockQuotesService.deleteQuote.and.returnValue(of(null));
+      mockQuotesService.getQuotesPorRango.calls.reset();
+
+      await component.deleteQuote(101);
+
+      expect(mockQuotesService.deleteQuote).toHaveBeenCalledWith(101);
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalled();
+      expect(mockChatService.showSuccess).toHaveBeenCalled();
+    });
+
+    it('Eliminar_con_409_muestra_el_mensaje_del_API', async () => {
+      spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
+      mockQuotesService.deleteQuote.and.returnValue(
+        throwError(() => ({ status: 409, error: { mensaje: 'Solo se puede eliminar en borrador.' } }))
+      );
+
+      await component.deleteQuote(101);
+
+      expect(mockChatService.showError).toHaveBeenCalledWith(
+        'Error',
+        'Solo se puede eliminar en borrador.',
+        5000
+      );
+    });
+
+    it('Eliminar_con_404_o_error_de_red_muestra_texto_generico', async () => {
+      spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
+      mockQuotesService.deleteQuote.and.returnValue(
+        throwError(() => ({ status: 404, error: { message: 'Not Found' } }))
+      );
+
+      await component.deleteQuote(101);
+
+      expect(mockChatService.showError).toHaveBeenCalledWith(
+        'Error',
+        'Hubo un error al eliminar la cotización.',
+        5000
+      );
+    });
+
+    it('Cancelar_la_confirmacion_no_llama_al_API', async () => {
+      spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: false } as any);
+
+      await component.deleteQuote(101);
+
+      expect(mockQuotesService.deleteQuote).not.toHaveBeenCalled();
+    });
+
+    it('Para_una_informativa_la_confirmacion_avisa_que_se_vuelve_a_sincronizar_si_esta_en_los_ultimos_15_dias', async () => {
+      const fireSpy = spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: false } as any);
+      const informativa = { cotizacionProductosId: 102, tieneSgc: false };
+
+      await component.deleteQuote(102, informativa);
+
+      const args = fireSpy.calls.mostRecent().args[0] as any;
+      expect(args.text).toContain('15 días');
+      expect(args.text).toContain('sincronización');
+    });
+
+    it('Si_viene_de_un_requerimiento_la_confirmacion_avisa_del_historial', async () => {
+      const fireSpy = spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: false } as any);
+      const conReq = { cotizacionProductosId: 101, tieneSgc: true, folio: 'COT-2026-0001', etapa: 'Borrador', version: 1, requerimientoFolio: 'REQ-2026-0005' };
+
+      await component.deleteQuote(101, conReq);
+
+      const args = fireSpy.calls.mostRecent().args[0] as any;
+      expect(args.text).toContain('REQ-2026-0005');
+      expect(args.text).toContain('historial');
+    });
+
+    it('Tras_eliminar_el_tablero_se_recarga', async () => {
+      spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
+      mockQuotesService.deleteQuote.and.returnValue(of(null));
+      const refrescoAntes = component.tableroRefresco;
+
+      await component.deleteQuote(101);
+
+      expect(component.tableroRefresco).toBe(refrescoAntes + 1);
+    });
+  });
+
+  describe('Folio CONTPAQ en lista', () => {
+    it('Muestra_columna_folio_CONTPAQ_con_el_valor_cuando_viene', () => {
+      mockQuotesService.getQuotesPorRango.and.returnValue(
+        of({
+          code: 200,
+          data: [{ ...mockQuotesData[0], folioContpaq: '842' }],
+          totalCount: 1,
+        })
+      );
+      component.vista = 'lista';
+      component.getQuotes();
+      fixture.detectChanges();
+
+      const header = fixture.nativeElement.querySelector('th.mat-column-folioContpaq')?.textContent || '';
+      const celda = fixture.nativeElement.querySelector('td.mat-column-folioContpaq')?.textContent?.trim();
+      expect(header).toContain('Folio CONTPAQ');
+      expect(celda).toBe('842');
+    });
+
+    it('Muestra_guion_cuando_folioContpaq_es_null', () => {
+      mockQuotesService.getQuotesPorRango.and.returnValue(
+        of({
+          code: 200,
+          data: [{ ...mockQuotesData[0], folioContpaq: null }],
+          totalCount: 1,
+        })
+      );
+      component.vista = 'lista';
+      component.getQuotes();
+      fixture.detectChanges();
+
+      const celda = fixture.nativeElement.querySelector('td.mat-column-folioContpaq')?.textContent?.trim();
+      expect(celda).toBe('—');
     });
   });
 });

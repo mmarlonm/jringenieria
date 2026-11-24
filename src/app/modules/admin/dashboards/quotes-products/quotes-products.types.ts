@@ -69,6 +69,7 @@ export interface EncabezadoCotizacionSgc {
     estado?: string | null;
     estatus?: number | null;
     observaciones?: string | null;
+    folioContpaq?: string | null;
 }
 
 export interface CotizacionSgcDatos {
@@ -443,8 +444,6 @@ export interface OrigenLead {
 
 export interface CotizacionOrigen {
     cotizacionProductosId: number;
-    folioCotizacion?: string | null;
-    puedeAgregarFolio?: boolean;
     requerimiento?: OrigenRequerimiento | null;
     lead?: OrigenLead | null;
 }

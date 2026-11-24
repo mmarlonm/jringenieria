@@ -1,39 +1,23 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AbstractControl, FormControl, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TipoCotizacionSgc } from 'app/modules/admin/dashboards/quotes-products/quotes-products.types';
-import { ProjectService } from 'app/modules/admin/dashboards/project/project.service';
 import {
+  CoincidenciaFolio,
   ConvertirRequerimientoResultado,
   CotizacionVinculada,
   Requerimiento,
   RequerimientosService
 } from '../requerimientos.service';
-
-export function folioCotizacionValidator(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const valor = control.value;
-    if (valor === null || valor === undefined || valor === '') {
-      return null;
-    }
-    const str = String(valor);
-    if (str.length > 0 && str.trim().length === 0) {
-      return { soloEspacios: true };
-    }
-    if (/[\u0000-\u001F\u007F]/.test(str)) {
-      return { caracterControl: true };
-    }
-    return null;
-  };
-}
 
 export interface ConvertirCotizacionDialogData {
   requerimiento: Requerimiento;
@@ -45,10 +29,8 @@ export interface ConvertirCotizacionDialogResult {
   resultado: ConvertirRequerimientoResultado;
 }
 
-export interface UnidadDeNegocioOpcion {
-  unidadId: number;
-  nombre: string;
-}
+/** Mismo criterio que el API (contrato §2): letras, dígitos y guion, de 1 a 30; se toleran espacios alrededor. */
+const PATRON_FOLIO = /^\s*[A-Za-z0-9-]{1,30}\s*$/;
 
 export const TIPOS_COTIZACION: ReadonlyArray<{ codigo: TipoCotizacionSgc; nombre: string }> = [
   { codigo: 'CS', nombre: 'Comercial' },
@@ -56,10 +38,6 @@ export const TIPOS_COTIZACION: ReadonlyArray<{ codigo: TipoCotizacionSgc; nombre
   { codigo: 'CE', nombre: 'Estratégica' }
 ];
 
-/**
- * Convierte un requerimiento aprobado en una cotización PROPIA (contrato v1.7): no se pide ni se trae nada de CONTPAQ.
- * Solo se elige el tipo y la unidad de negocio; el API copia el cliente, el contacto y la descripción del requerimiento.
- */
 @Component({
   selector: 'app-requerimiento-convertir-cotizacion-dialog',
   standalone: true,
@@ -75,38 +53,41 @@ export const TIPOS_COTIZACION: ReadonlyArray<{ codigo: TipoCotizacionSgc; nombre
   ],
   templateUrl: './requerimiento-convertir-cotizacion-dialog.component.html'
 })
-export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
+export class RequerimientoConvertirCotizacionDialogComponent implements OnDestroy {
   readonly tipos = TIPOS_COTIZACION;
   readonly tipoSugerido: TipoCotizacionSgc;
 
   readonly folioControl = new FormControl<string>('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(50), folioCotizacionValidator()]
+    validators: [Validators.required, Validators.pattern(PATRON_FOLIO)]
   });
   readonly tipoControl: FormControl<TipoCotizacionSgc>;
-  readonly unidadControl = new FormControl<number | null>(null, { validators: [Validators.required] });
 
-  unidades: UnidadDeNegocioOpcion[] = [];
-  cargandoUnidades = true;
-  errorUnidades = false;
-
+  /** `null` = todavía no se ha buscado; lista vacía = se buscó y no hay nada. */
+  coincidencias: CoincidenciaFolio[] | null = null;
+  seleccionada: CoincidenciaFolio | null = null;
   /** Si el API contesta que el requerimiento ya tiene cotización. */
   cotizacionExistente: CotizacionVinculada | null = null;
   errorMensaje: string | null = null;
+  buscando = false;
   convirtiendo = false;
+
+  private readonly suscripciones = new Subscription();
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: ConvertirCotizacionDialogData,
     private dialogRef: MatDialogRef<RequerimientoConvertirCotizacionDialogComponent, ConvertirCotizacionDialogResult>,
-    private reqService: RequerimientosService,
-    private projectService: ProjectService
+    private reqService: RequerimientosService
   ) {
     this.tipoSugerido = RequerimientoConvertirCotizacionDialogComponent.sugerirTipo(data.requerimiento);
     this.tipoControl = new FormControl<TipoCotizacionSgc>(this.tipoSugerido, { nonNullable: true });
+
+    // Si se edita el folio, lo que se mostró ya no corresponde: se descarta para no convertir otro documento.
+    this.suscripciones.add(this.folioControl.valueChanges.subscribe(() => this.descartarResultados()));
   }
 
-  ngOnInit(): void {
-    this.cargarUnidades();
+  ngOnDestroy(): void {
+    this.suscripciones.unsubscribe();
   }
 
   /** Con caso en Ingeniería o ruta técnica se sugiere Técnico-comercial; si no, Comercial. */
@@ -115,49 +96,59 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
     return req?.seguimientoProyectoId || ruta.includes('técnic') || ruta.includes('tecnic') ? 'CT' : 'CS';
   }
 
-  get puedeConvertir(): boolean {
-    return this.folioControl.valid
-      && this.unidadControl.valid
-      && !this.cotizacionExistente
-      && !this.convirtiendo
-      && !this.cargandoUnidades;
+  get puedeBuscar(): boolean {
+    return this.folioControl.valid && !this.buscando && !this.convirtiendo;
   }
 
-  cargarUnidades(): void {
-    this.cargandoUnidades = true;
-    this.errorUnidades = false;
-    this.projectService.getUnidadesDeNegocio().subscribe({
-      next: (lista) => {
-        this.unidades = (lista ?? [])
-          .filter((u) => u && typeof u.unidadId === 'number')
-          .map((u) => ({ unidadId: u.unidadId, nombre: u.nombre }));
-        // Con una sola unidad no hay nada que elegir.
-        if (this.unidades.length === 1) {
-          this.unidadControl.setValue(this.unidades[0].unidadId);
-        }
-        this.cargandoUnidades = false;
+  get puedeConvertir(): boolean {
+    return !!this.seleccionada
+      && !this.seleccionada.yaVinculadaARequerimiento
+      && !this.cotizacionExistente
+      && !this.convirtiendo
+      && !this.buscando;
+  }
+
+  buscar(): void {
+    if (!this.puedeBuscar) {
+      return;
+    }
+    const folio = this.folioControl.value.trim();
+    this.descartarResultados();
+    this.buscando = true;
+    this.reqService.buscarFolioContpaq(folio).subscribe({
+      next: (res) => {
+        this.buscando = false;
+        this.coincidencias = res?.coincidencias ?? [];
+        // Una sola coincidencia no vinculada se selecciona sola; con varias el usuario elige.
+        this.seleccionada =
+          this.coincidencias.length === 1 && !this.coincidencias[0].yaVinculadaARequerimiento
+            ? this.coincidencias[0]
+            : null;
       },
-      error: () => {
-        this.cargandoUnidades = false;
-        this.errorUnidades = true;
+      error: (err: HttpErrorResponse) => {
+        this.buscando = false;
+        this.errorMensaje = this.mensajeDe(err, 'No se pudo buscar el folio. Intenta de nuevo.');
       }
     });
   }
 
-  async convertir(): Promise<void> {
-    const unidadDeNegocioId = this.unidadControl.value;
-    const folio = this.folioControl.value?.trim();
-    if (!this.puedeConvertir || unidadDeNegocioId === null || !folio) {
+  seleccionar(c: CoincidenciaFolio): void {
+    if (this.convirtiendo || c.yaVinculadaARequerimiento) {
       return;
     }
-    // Se marca antes de la confirmación: un segundo clic mientras se decide no abre otra.
-    // Y no se puede cerrar con Esc ni clic afuera: la conversión en vuelo debe poder avisar su resultado.
+    this.seleccionada = c;
+  }
+
+  async convertir(): Promise<void> {
+    if (!this.puedeConvertir || !this.seleccionada) {
+      return;
+    }
     this.bloquear(true);
     this.errorMensaje = null;
 
     const confirmacion = await Swal.fire({
       title: '¿Convertir a cotización?',
-      text: 'Se creará una cotización propia en borrador con el cliente, el contacto y la descripción de este requerimiento. Después podrás capturar las partidas.',
+      text: 'Se vinculará la cotización sincronizada de CONTPAQ a este requerimiento.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, convertir',
@@ -168,11 +159,11 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
       return;
     }
 
+    const elegida = this.seleccionada;
     this.reqService.convertirACotizacion({
       requerimientoId: this.data.requerimiento.id,
       tipo: this.tipoControl.value,
-      unidadDeNegocioId,
-      folioCotizacion: folio
+      cotizacionProductosId: elegida.cotizacionProductosId
     }).subscribe({
       next: (resultado) => {
         this.dialogRef.close({ convertido: true, resultado });
@@ -201,12 +192,22 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnInit {
   }
 
   private manejarErrorDeConversion(err: HttpErrorResponse): void {
+    const mensaje = this.mensajeDe(err, 'No se pudo convertir el requerimiento. Intenta de nuevo.');
     if (err.status === 409 && err.error?.cotizacionVinculada) {
       this.cotizacionExistente = err.error.cotizacionVinculada;
     }
+    this.errorMensaje = mensaje;
+  }
+
+  private mensajeDe(err: HttpErrorResponse, generico: string): string {
     const mensaje = err?.error?.mensaje;
-    this.errorMensaje = typeof mensaje === 'string' && mensaje.trim()
-      ? mensaje
-      : 'No se pudo convertir el requerimiento. Intenta de nuevo.';
+    return typeof mensaje === 'string' && mensaje.trim() ? mensaje : generico;
+  }
+
+  private descartarResultados(): void {
+    this.coincidencias = null;
+    this.seleccionada = null;
+    this.cotizacionExistente = null;
+    this.errorMensaje = null;
   }
 }

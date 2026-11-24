@@ -115,7 +115,8 @@
     <!-- Tablero por tipo: cada columna pide su propia página -->
     <app-quotes-board *ngIf="vista === 'tablero'" class="flex flex-col flex-auto min-h-0"
       [desde]="boardDesde" [hasta]="boardHasta" [texto]="filterValue" [etapa]="filtroEtapa" [marcas]="filtroMarcas"
-      (abrir)="editQuote($event)" (totalChange)="onTotalTablero($event)"></app-quotes-board>
+      [permisoEliminar]="tienePermiso('btnDelete')" [refresco]="tableroRefresco"
+      (abrir)="editQuote($event)" (eliminar)="deleteQuote($event)" (totalChange)="onTotalTablero($event)"></app-quotes-board>
 
     <ng-container *ngIf="vista === 'lista'">
     <!-- Aviso de error en resumen SGC -->
@@ -144,6 +145,21 @@
               </th>
               <td mat-cell *matCellDef="let quote">
                 {{ obtenerTextoFolio(quote) }}
+              </td>
+            </ng-container>
+
+            <!-- Folio CONTPAQ -->
+            <ng-container matColumnDef="folioContpaq">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                Folio CONTPAQ
+                <button mat-icon-button [matMenuTriggerFor]="filterMenu"
+                  (click)="openFilterMenu('folioContpaq')">
+                  <mat-icon>filter_list</mat-icon>
+                </button>
+              </th>
+              <td mat-cell *matCellDef="let quote" class="whitespace-nowrap">
+                <span *ngIf="quote.folioContpaq; else sinFolioContpaq" class="font-medium">{{ quote.folioContpaq }}</span>
+                <ng-template #sinFolioContpaq><span class="text-gray-400">—</span></ng-template>
               </td>
             </ng-container>
 
@@ -311,7 +327,7 @@
                   <mat-icon>edit</mat-icon>
                 </button>
 
-                <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)"
+                <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId, quote)"
                   *ngIf="tienePermiso('btnDelete') && puedeEliminar(quote)" class="btn-delete">
                   <mat-icon>delete</mat-icon>
                 </button>
@@ -361,6 +377,9 @@
           <div *ngFor="let quote of dataSource.data" class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm bg-white dark:bg-card">
             <div class="text-xs text-gray-500">Folio</div>
             <div class="font-semibold">{{ obtenerTextoFolio(quote) }}</div>
+
+            <div *ngIf="quote.folioContpaq" class="mt-2 text-xs text-gray-500">Folio CONTPAQ</div>
+            <div *ngIf="quote.folioContpaq" class="font-medium">{{ quote.folioContpaq }}</div>
 
             <div *ngIf="quote.tipo" class="mt-2 text-xs text-gray-500">Tipo</div>
             <div *ngIf="quote.tipo" class="font-medium">{{ quote.tipo }}</div>
@@ -438,7 +457,7 @@
                 <mat-icon>edit</mat-icon>
               </button>
 
-              <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId)"
+              <button mat-icon-button color="warn" (click)="deleteQuote(quote.cotizacionProductosId, quote)"
                 *ngIf="tienePermiso('btnDelete') && puedeEliminar(quote)" class="btn-delete">
                 <mat-icon>delete</mat-icon>
               </button>
