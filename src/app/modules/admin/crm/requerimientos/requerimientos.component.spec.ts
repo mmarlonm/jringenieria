@@ -216,7 +216,7 @@ describe('RequerimientosComponent - Aprobados', () => {
   });
 
   it('Tras_convertir_el_tablero_se_recarga_una_vez_y_avisa_el_folio', () => {
-    const resultado = { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CS', etapa: 'Borrador', folioContpaq: 'COT-1234', requerimientoId: 3, requerimientoFolio: 'REQ-2026-0003' };
+    const resultado = { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CS', etapa: 'Borrador', requerimientoId: 3, requerimientoFolio: 'REQ-2026-0003' };
     spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of({ accion: 'convertido', resultado }) } as any);
     const aviso = spyOn((component as any).snackBar, 'open');
     const recargar = spyOn(component, 'loadRequerimientos');
@@ -238,7 +238,7 @@ describe('RequerimientosComponent - Aprobados', () => {
 
   it('La_tarjeta_aprobada_muestra_la_etiqueta_de_cotizacion_con_enlace', () => {
     component.requerimientos = mockRequerimientos.map(r => r.id === 3
-      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: 'COT-1234', tipo: 'CS' as const, etapa: 'Borrador' } }
+      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: null, tipo: 'CS' as const, etapa: 'Borrador' } }
       : r);
     component.applyFilters();
     fixture.detectChanges();

@@ -101,7 +101,7 @@
         </a>
       </div>
 
-      <!-- Convertir a cotización: pide el folio de CONTPAQ y pasa el requerimiento al módulo de Cotizaciones -->
+      <!-- Convertir a cotización: crea una cotización propia en borrador con los datos del requerimiento -->
       <div *ngIf="puedeConvertir"
            class="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between gap-4 banner-convertir-cotizacion">
         <div>
@@ -109,7 +109,7 @@
             Convertir a cotización
           </div>
           <div class="text-sm text-blue-700 dark:text-blue-300">
-            Captura el folio de la cotización de CONTPAQ y pasa con todos sus datos al módulo de Cotizaciones.
+            Crea una cotización propia, en borrador, con el cliente, el contacto y la descripción de este requerimiento.
           </div>
         </div>
         <button mat-flat-button color="primary" type="button" data-testid="btn-convertir-cotizacion" class="shrink-0" (click)="convertir()">
@@ -127,7 +127,6 @@
           </div>
           <div class="text-sm text-blue-700 dark:text-blue-300">
             <span class="font-mono font-bold">{{ cot.folioSgc }}</span>
-            <span *ngIf="cot.folioContpaq"> · CONTPAQ {{ cot.folioContpaq }}</span>
             · {{ etiquetaTipo(cot.tipo) }} · {{ cot.etapa }}
           </div>
         </div>

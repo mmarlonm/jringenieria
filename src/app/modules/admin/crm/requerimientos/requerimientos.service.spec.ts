@@ -42,47 +42,24 @@ describe('RequerimientosService - Aprobación', () => {
     req.flush({ idSeguimiento: 42, folio: '#42', estatus: 'Aprobado para cotización' });
   });
 
-  it('buscarFolioContpaq_hace_GET_con_folio_y_sin_unidad_si_no_se_da', () => {
-    service.buscarFolioContpaq('1234').subscribe(r => {
-      expect(r.coincidencias.length).toBe(1);
-      expect(r.coincidencias[0].cliente).toBe('Cliente Ficticio SA de CV');
-    });
-
-    const req = httpMock.expectOne(r => r.url === `${environment.apiUrl}/CotizacionProductos/contpaq/buscar-folio`);
-    expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('folio')).toBe('1234');
-    expect(req.request.params.has('unidadDeNegocioId')).toBeFalse();
-    req.flush({
-      folio: '1234',
-      coincidencias: [{
-        unidadDeNegocioId: 2, unidadDeNegocioNombre: 'Unidad Ficticia', idDocumento: 98765, serie: 'COT', folio: '1234',
-        fecha: '2026-11-20T00:00:00', cliente: 'Cliente Ficticio SA de CV', rfc: 'XAXX010101000', total: 15234.5,
-        cotizacionProductosId: null, yaVinculadaARequerimiento: false, requerimientoFolio: null
-      }]
-    });
-  });
-
-  it('buscarFolioContpaq_con_unidad_manda_unidadDeNegocioId', () => {
-    service.buscarFolioContpaq('1234', 2).subscribe();
-
-    const req = httpMock.expectOne(r => r.url === `${environment.apiUrl}/CotizacionProductos/contpaq/buscar-folio`);
-    expect(req.request.params.get('unidadDeNegocioId')).toBe('2');
-    req.flush({ folio: '1234', coincidencias: [] });
-  });
-
-  it('convertirACotizacion_hace_POST_con_requerimiento_folio_tipo_y_unidad', () => {
-    service.convertirACotizacion({ requerimientoId: 57, folioContpaq: '1234', unidadDeNegocioId: 2, tipo: 'CT' }).subscribe(r => {
+  it('convertirACotizacion_hace_POST_solo_con_requerimiento_tipo_y_unidad', () => {
+    service.convertirACotizacion({ requerimientoId: 57, tipo: 'CT', unidadDeNegocioId: 2 }).subscribe(r => {
       expect(r.folioSgc).toBe('COT-2026-0042');
       expect(r.etapa).toBe('Borrador');
+      expect((r as any).folioContpaq).toBeUndefined();
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/CotizacionProductos/convertir-desde-requerimiento`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ requerimientoId: 57, folioContpaq: '1234', unidadDeNegocioId: 2, tipo: 'CT' });
+    expect(req.request.body).toEqual({ requerimientoId: 57, tipo: 'CT', unidadDeNegocioId: 2 });
     req.flush({
       cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', tipo: 'CT', etapa: 'Borrador',
-      folioContpaq: 'COT-1234', requerimientoId: 57, requerimientoFolio: 'REQ-2026-0057'
+      requerimientoId: 57, requerimientoFolio: 'REQ-2026-0057'
     });
+  });
+
+  it('El_servicio_ya_no_busca_folios_de_CONTPAQ', () => {
+    expect((service as any).buscarFolioContpaq).toBeUndefined();
   });
 
   it('getRequerimiento_conserva_cotizacionVinculada_y_acepta_null', () => {
@@ -91,7 +68,7 @@ describe('RequerimientosService - Aprobación', () => {
     });
     httpMock.expectOne(`${environment.apiUrl}/Requerimiento/57`).flush({
       id: 57, folio: 'REQ-2026-0057',
-      cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: 'COT-1234', tipo: 'CT', etapa: 'Borrador' }
+      cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: null, tipo: 'CT', etapa: 'Borrador' }
     });
 
     service.getRequerimiento(58).subscribe(r => expect(r.cotizacionVinculada).toBeNull());

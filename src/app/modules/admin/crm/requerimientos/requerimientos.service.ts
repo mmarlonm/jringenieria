@@ -65,37 +65,17 @@ export interface Requerimiento {
 export interface CotizacionVinculada {
   cotizacionProductosId: number;
   folioSgc: string;
+  /** Contrato v1.7: las cotizaciones propias no tienen folio de CONTPAQ; el API lo manda siempre `null`. */
   folioContpaq?: string | null;
   tipo: TipoCotizacionSgc;
   etapa: string;
 }
 
-export interface CoincidenciaFolioContpaq {
-  unidadDeNegocioId: number;
-  unidadDeNegocioNombre?: string | null;
-  idDocumento: number;
-  serie?: string | null;
-  folio: string;
-  fecha?: string | null;
-  cliente?: string | null;
-  rfc?: string | null;
-  total?: number | null;
-  cotizacionProductosId?: number | null;
-  yaVinculadaARequerimiento: boolean;
-  requerimientoFolio?: string | null;
-}
-
-export interface BuscarFolioContpaqRespuesta {
-  folio: string;
-  coincidencias: CoincidenciaFolioContpaq[];
-}
-
+/** Contrato v1.7 §3: la cotización es propia; solo hace falta el tipo y la unidad de negocio. */
 export interface ConvertirRequerimientoDto {
   requerimientoId: number;
-  folioContpaq: string;
-  /** Solo hace falta si el folio existe en más de una unidad de negocio. */
-  unidadDeNegocioId?: number | null;
   tipo: TipoCotizacionSgc;
+  unidadDeNegocioId: number;
 }
 
 export interface ConvertirRequerimientoResultado {
@@ -103,7 +83,6 @@ export interface ConvertirRequerimientoResultado {
   folioSgc: string;
   tipo: TipoCotizacionSgc;
   etapa: string;
-  folioContpaq: string;
   requerimientoId: number;
   requerimientoFolio: string;
 }
@@ -307,15 +286,7 @@ export class RequerimientosService {
     return this.http.post<AprobarRequerimientoResultadoDto>(`${this.apiUrl}/${id}/aprobar`, datos ?? {});
   }
 
-  // Convertir a cotización (contrato v1.1 §2 y §3). El API consulta CONTPAQ en solo lectura.
-  buscarFolioContpaq(folio: string, unidadDeNegocioId?: number | null): Observable<BuscarFolioContpaqRespuesta> {
-    let params = new HttpParams().set('folio', folio);
-    if (unidadDeNegocioId) {
-      params = params.set('unidadDeNegocioId', unidadDeNegocioId.toString());
-    }
-    return this.http.get<BuscarFolioContpaqRespuesta>(`${environment.apiUrl}/CotizacionProductos/contpaq/buscar-folio`, { params });
-  }
-
+  // Convertir a cotización propia (contrato v1.7 §3): no consulta CONTPAQ.
   convertirACotizacion(dto: ConvertirRequerimientoDto): Observable<ConvertirRequerimientoResultado> {
     return this.http.post<ConvertirRequerimientoResultado>(`${environment.apiUrl}/CotizacionProductos/convertir-desde-requerimiento`, dto);
   }
