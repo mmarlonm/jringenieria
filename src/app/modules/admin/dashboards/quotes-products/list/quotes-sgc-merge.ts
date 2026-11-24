@@ -5,6 +5,9 @@
 export function aplicarResumenSgc(q: any, r: any): void {
   q.tieneSgc = true;
   q.folio = r.folio;
+  if (r.folioContpaq !== undefined) {
+    q.folioContpaq = r.folioContpaq;
+  }
   q.tipo = r.tipo;
   q.version = r.version;
   q.totalSgc = r.total;

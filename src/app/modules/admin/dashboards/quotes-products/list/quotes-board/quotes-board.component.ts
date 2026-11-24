@@ -232,7 +232,7 @@ export class QuotesBoardComponent implements OnChanges {
       if (!texto) {
         return true;
       }
-      return [this.textoFolio(q), q.nombreCliente, q.unidadDeNegocio?.nombre, q.requerimientoFolio]
+      return [this.textoFolio(q), q.folioContpaq, q.nombreCliente, q.unidadDeNegocio?.nombre, q.requerimientoFolio]
         .some(v => (v ?? '').toString().toLowerCase().includes(texto));
     });
     this.cdr.markForCheck();

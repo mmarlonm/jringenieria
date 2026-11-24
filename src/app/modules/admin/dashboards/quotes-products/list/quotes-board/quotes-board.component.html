@@ -43,6 +43,10 @@
             <span class="text-[10px] text-gray-400">{{ q.createdDate | date:'dd/MM/yyyy' }}</span>
           </div>
           <div class="mt-2 flex flex-wrap gap-1">
+            <span *ngIf="q.folioContpaq" data-testid="chip-folio-contpaq"
+                  class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+              CONTPAQ {{ q.folioContpaq }}
+            </span>
             <span *ngIf="q.requerimientoFolio" class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-50 text-blue-700">
               {{ q.requerimientoFolio }}
             </span>

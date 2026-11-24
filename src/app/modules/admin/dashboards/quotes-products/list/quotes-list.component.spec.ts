@@ -768,4 +768,40 @@ describe('QuoteListComponent', () => {
       expect(component.tableroRefresco).toBe(refrescoAntes + 1);
     });
   });
+
+  describe('Folio CONTPAQ en lista', () => {
+    it('Muestra_columna_folio_CONTPAQ_con_el_valor_cuando_viene', () => {
+      mockQuotesService.getQuotesPorRango.and.returnValue(
+        of({
+          code: 200,
+          data: [{ ...mockQuotesData[0], folioContpaq: '842' }],
+          totalCount: 1,
+        })
+      );
+      component.vista = 'lista';
+      component.getQuotes();
+      fixture.detectChanges();
+
+      const header = fixture.nativeElement.querySelector('th.mat-column-folioContpaq')?.textContent || '';
+      const celda = fixture.nativeElement.querySelector('td.mat-column-folioContpaq')?.textContent?.trim();
+      expect(header).toContain('Folio CONTPAQ');
+      expect(celda).toBe('842');
+    });
+
+    it('Muestra_guion_cuando_folioContpaq_es_null', () => {
+      mockQuotesService.getQuotesPorRango.and.returnValue(
+        of({
+          code: 200,
+          data: [{ ...mockQuotesData[0], folioContpaq: null }],
+          totalCount: 1,
+        })
+      );
+      component.vista = 'lista';
+      component.getQuotes();
+      fixture.detectChanges();
+
+      const celda = fixture.nativeElement.querySelector('td.mat-column-folioContpaq')?.textContent?.trim();
+      expect(celda).toBe('—');
+    });
+  });
 });

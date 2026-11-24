@@ -55,6 +55,7 @@ const CLAVE_VISTA = 'cotizaciones.vista';
 export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   displayedColumns: string[] = [
     'cotizacionProductosId',
+    'folioContpaq',
     'tipo',
     'nombreCliente',
     'unidadDeNegocioNombre',
@@ -583,7 +584,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
    * Determina si el filtro es de tipo texto.
    */
   isTextFilter(column: string): boolean {
-    return column === 'nombreCliente' || column === 'requisitosEspeciales' || column === 'cotizacionProductosId';
+    return column === 'nombreCliente' || column === 'requisitosEspeciales' || column === 'cotizacionProductosId' || column === 'folioContpaq';
   }
 
   /**

@@ -349,4 +349,35 @@ describe('QuotesBoardComponent', () => {
     expect(eliminados).toEqual([2]);
     expect(abiertos.length).toBe(0);
   });
+
+  it('La_tarjeta_muestra_CONTPAQ_y_su_folio_cuando_lo_tiene', () => {
+    respuestas.CS = () => pagina([cot(2, { folioContpaq: '842' })]);
+    iniciar();
+
+    const chip = q('[data-testid="chip-folio-contpaq"]');
+    expect(chip).not.toBeNull();
+    expect(chip?.textContent?.trim()).toBe('CONTPAQ 842');
+  });
+
+  it('Si_folioContpaq_es_null_no_se_pinta_el_chip', () => {
+    respuestas.CS = () => pagina([cot(2, { folioContpaq: null })]);
+    iniciar();
+
+    expect(q('[data-testid="chip-folio-contpaq"]')).toBeNull();
+  });
+
+  it('El_filtro_por_texto_encuentra_tarjetas_por_folio_CONTPAQ', () => {
+    respuestas.CS = () => pagina([
+      cot(2, { folioContpaq: '842', nombreCliente: 'Uno' }),
+      cot(3, { folioContpaq: '999', nombreCliente: 'Dos' })
+    ]);
+    iniciar();
+
+    component.texto = '842';
+    component.ngOnChanges({ texto: { currentValue: '842', previousValue: '', firstChange: false, isFirstChange: () => false } });
+    fixture.detectChanges();
+
+    expect(q('[data-testid="tarjeta-2"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).toBeNull();
+  });
 });
