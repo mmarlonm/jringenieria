@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
+import { TipoCotizacionSgc } from 'app/modules/admin/dashboards/quotes-products/quotes-products.types';
 
 export interface Requerimiento {
   id: number;
@@ -56,6 +57,55 @@ export interface Requerimiento {
 
   archivos?: RequerimientoArchivo[];
   seguimientos?: RequerimientoSeguimiento[];
+
+  /** Cotización a la que se convirtió; `null` (o ausente en respuestas viejas) si aún no. Contrato v1.1 §4. */
+  cotizacionVinculada?: CotizacionVinculada | null;
+}
+
+export interface CotizacionVinculada {
+  cotizacionProductosId: number;
+  folioSgc: string;
+  folioContpaq?: string | null;
+  tipo: TipoCotizacionSgc;
+  etapa: string;
+}
+
+export interface CoincidenciaFolioContpaq {
+  unidadDeNegocioId: number;
+  unidadDeNegocioNombre?: string | null;
+  idDocumento: number;
+  serie?: string | null;
+  folio: string;
+  fecha?: string | null;
+  cliente?: string | null;
+  rfc?: string | null;
+  total?: number | null;
+  cotizacionProductosId?: number | null;
+  yaVinculadaARequerimiento: boolean;
+  requerimientoFolio?: string | null;
+}
+
+export interface BuscarFolioContpaqRespuesta {
+  folio: string;
+  coincidencias: CoincidenciaFolioContpaq[];
+}
+
+export interface ConvertirRequerimientoDto {
+  requerimientoId: number;
+  folioContpaq: string;
+  /** Solo hace falta si el folio existe en más de una unidad de negocio. */
+  unidadDeNegocioId?: number | null;
+  tipo: TipoCotizacionSgc;
+}
+
+export interface ConvertirRequerimientoResultado {
+  cotizacionProductosId: number;
+  folioSgc: string;
+  tipo: TipoCotizacionSgc;
+  etapa: string;
+  folioContpaq: string;
+  requerimientoId: number;
+  requerimientoFolio: string;
 }
 
 export interface RequerimientoArchivo {
@@ -255,6 +305,19 @@ export class RequerimientosService {
   /** Tipo de proyecto y titulo se capturan al aprobar (ya no en el requerimiento); si no se mandan, el API usa los guardados. */
   aprobarRequerimiento(id: number, datos?: AprobarRequerimientoDatos): Observable<AprobarRequerimientoResultadoDto> {
     return this.http.post<AprobarRequerimientoResultadoDto>(`${this.apiUrl}/${id}/aprobar`, datos ?? {});
+  }
+
+  // Convertir a cotización (contrato v1.1 §2 y §3). El API consulta CONTPAQ en solo lectura.
+  buscarFolioContpaq(folio: string, unidadDeNegocioId?: number | null): Observable<BuscarFolioContpaqRespuesta> {
+    let params = new HttpParams().set('folio', folio);
+    if (unidadDeNegocioId) {
+      params = params.set('unidadDeNegocioId', unidadDeNegocioId.toString());
+    }
+    return this.http.get<BuscarFolioContpaqRespuesta>(`${environment.apiUrl}/CotizacionProductos/contpaq/buscar-folio`, { params });
+  }
+
+  convertirACotizacion(dto: ConvertirRequerimientoDto): Observable<ConvertirRequerimientoResultado> {
+    return this.http.post<ConvertirRequerimientoResultado>(`${environment.apiUrl}/CotizacionProductos/convertir-desde-requerimiento`, dto);
   }
 
   // Archivos

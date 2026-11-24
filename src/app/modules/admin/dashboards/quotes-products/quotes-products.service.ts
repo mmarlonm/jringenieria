@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'environments/environment';
 import {
+  TipoCotizacionSgc,
   CatalogosSgc,
   GuardarCotizacionSgc,
   RespuestaObtenerSgc,
@@ -53,8 +54,12 @@ export class QuotesService {
 
   // Listado por rango de fechas de creación (inclusivas): GET listado. El API devuelve { code, message, data, totalCount }.
   // Una fecha vacía deja ese extremo abierto.
-  getQuotesPorRango(page: number, size: number, desde?: string | null, hasta?: string | null): Observable<any> {
+  // `tipo` (CS/CT/CE) filtra por tipo SGC; CS incluye además las cotizaciones de CONTPAQ sin capa SGC (informativas). Sin `tipo` trae todo.
+  getQuotesPorRango(page: number, size: number, desde?: string | null, hasta?: string | null, tipo?: TipoCotizacionSgc | null): Observable<any> {
     let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    if (tipo) {
+      params = params.set('tipo', tipo);
+    }
     if (desde) {
       params = params.set('desde', desde);
     }
