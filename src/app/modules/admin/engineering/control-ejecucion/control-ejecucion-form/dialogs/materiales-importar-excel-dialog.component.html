@@ -1,0 +1,133 @@
+<div class="p-6 max-w-5xl">
+  <h2 mat-dialog-title class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+    <mat-icon class="text-primary">upload_file</mat-icon>
+    Importar materiales desde Excel
+  </h2>
+  <p class="text-xs text-slate-500 mb-3">
+    Se lee la hoja «materiales» del archivo que subas a <strong>Archivos y evidencias → Materiales</strong>. Antes de guardar verás qué se agregaría o se actualizaría; no se borra nada ni se cambian los estatus.
+  </p>
+
+  <mat-dialog-content class="dialogo-alto">
+    <div *ngIf="errorMensaje" data-testid="error-importar" class="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
+      {{ errorMensaje }}
+    </div>
+
+    <!-- 1. Archivo -->
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-black text-slate-600 uppercase tracking-wide">1. Elige el archivo</span>
+      <div class="flex items-center gap-2">
+        <input #entradaArchivo type="file" class="hidden" accept=".xlsx,.xlsm,.xls" data-testid="input-subir" (change)="alElegirArchivo($event)" />
+        <button mat-stroked-button type="button" data-testid="btn-subir" [disabled]="subiendo || importando" (click)="entradaArchivo.click()">
+          <mat-icon *ngIf="!subiendo" class="mr-1">attach_file</mat-icon>
+          <mat-icon *ngIf="subiendo" class="mr-1 animate-spin">sync</mat-icon>
+          Subir archivo
+        </button>
+        <button mat-icon-button type="button" data-testid="btn-recargar-archivos" matTooltip="Actualizar lista" [disabled]="cargandoArchivos" (click)="cargarArchivos()">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="cargandoArchivos" class="py-4 text-center text-xs text-slate-400">Cargando archivos…</div>
+
+    <div *ngIf="errorArchivos" data-testid="error-archivos"
+         class="p-3 mb-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-2">
+      <span>{{ errorArchivos }}</span>
+      <button mat-stroked-button color="warn" type="button" data-testid="reintentar-archivos" (click)="cargarArchivos()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!cargandoArchivos && !errorArchivos && archivos.length === 0" data-testid="sin-archivos"
+         class="p-4 mb-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+      No hay archivos de Excel en la carpeta Materiales de este proyecto. Sube la lista con el botón «Subir archivo» (o desde Archivos y evidencias).
+    </div>
+
+    <div class="space-y-1 mb-4" data-testid="lista-archivos">
+      <button *ngFor="let a of archivos" type="button" [attr.data-testid]="'archivo-' + a"
+              class="w-full text-left px-3 py-2 rounded-xl border text-xs flex items-center gap-2 transition-all"
+              [ngClass]="seleccionado === a ? 'border-primary bg-primary-50/40 ring-1 ring-primary font-bold' : 'border-slate-200 hover:border-slate-300'"
+              [disabled]="importando" (click)="seleccionar(a)">
+        <mat-icon class="icon-size-4 text-emerald-600">table_chart</mat-icon>
+        <span class="truncate">{{ a }}</span>
+      </button>
+    </div>
+
+    <!-- 2. Vista previa -->
+    <div *ngIf="seleccionado">
+      <div class="text-xs font-black text-slate-600 uppercase tracking-wide mb-2">2. Vista previa</div>
+
+      <div *ngIf="previsualizando" data-testid="cargando-vista" class="py-6 text-center text-xs text-slate-400">Leyendo el archivo…</div>
+
+      <ng-container *ngIf="vista && !previsualizando">
+        <div class="flex flex-wrap gap-2 mb-3" data-testid="resumen-vista">
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Agregar: {{ vista.resumen.agregar }}</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">Actualizar: {{ vista.resumen.actualizar }}</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">Sin cambio: {{ vista.resumen.sinCambio }}</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800">Servicios: {{ vista.resumen.servicios }}</span>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Omitidas: {{ vista.resumen.omitidas }}</span>
+          <span *ngIf="vista.resumen.noEncontradosEnArchivo > 0" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700"
+                title="Ya estaban en el proyecto y no vienen en este archivo; se conservan tal cual">
+            No vienen en el archivo: {{ vista.resumen.noEncontradosEnArchivo }}
+          </span>
+        </div>
+
+        <div *ngIf="vista.advertencias.length > 0" data-testid="advertencias" class="p-3 mb-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-[11px] space-y-0.5">
+          <div *ngFor="let w of vista.advertencias">{{ w }}</div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left text-[11px]" data-testid="tabla-vista">
+            <thead class="bg-slate-100/80 text-slate-600 uppercase text-[10px] font-black tracking-wider">
+              <tr>
+                <th class="py-2 px-2">Fila</th><th class="py-2 px-2">Sección</th><th class="py-2 px-2 text-right">Cant.</th>
+                <th class="py-2 px-2">Unidad</th><th class="py-2 px-2">Concepto</th><th class="py-2 px-2">Código</th>
+                <th class="py-2 px-2">Marca</th><th class="py-2 px-2 text-right">P/U</th><th class="py-2 px-2 text-right">Subtotal</th>
+                <th class="py-2 px-2">Acción</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let f of vista.filas | slice:0:filasVisiblesMax">
+                <td class="py-1.5 px-2 text-slate-400">{{ f.fila }}</td>
+                <td class="py-1.5 px-2">{{ f.seccion || '—' }}</td>
+                <td class="py-1.5 px-2 text-right tabular-nums">{{ f.cantidad }}</td>
+                <td class="py-1.5 px-2">{{ f.unidad || '—' }}</td>
+                <td class="py-1.5 px-2 font-semibold">
+                  {{ f.concepto }}
+                  <span *ngIf="f.tipoItem === 2" class="ml-1 px-1 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-800">SERV</span>
+                  <div *ngFor="let w of f.advertencias" class="text-[10px] text-amber-700 font-normal">{{ w }}</div>
+                </td>
+                <td class="py-1.5 px-2 font-mono">{{ f.codigo || '—' }}</td>
+                <td class="py-1.5 px-2">{{ f.marca || '—' }}</td>
+                <td class="py-1.5 px-2 text-right tabular-nums">{{ f.precioUnitario | currency:'MXN':'symbol':'1.2-2' }}</td>
+                <td class="py-1.5 px-2 text-right tabular-nums">{{ f.subtotal | currency:'MXN':'symbol':'1.2-2' }}</td>
+                <td class="py-1.5 px-2">
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase"
+                        [ngClass]="{
+                          'bg-emerald-100 text-emerald-800': f.accion === 'agregar',
+                          'bg-blue-100 text-blue-800': f.accion === 'actualizar',
+                          'bg-slate-100 text-slate-600': f.accion === 'sinCambio'
+                        }">{{ f.accion === 'agregar' ? 'Agregar' : f.accion === 'actualizar' ? 'Actualizar' : 'Sin cambio' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="vista.filas.length > filasVisiblesMax" data-testid="mas-filas" class="mt-1 text-[11px] text-slate-400">
+          Se muestran las primeras {{ filasVisiblesMax }} de {{ vista.filas.length }} filas; el resumen incluye todas.
+        </div>
+        <div *ngIf="vista.resumen.agregar + vista.resumen.actualizar === 0" data-testid="nada-que-importar"
+             class="mt-3 p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-xs">
+          No hay nada que agregar ni actualizar con este archivo.
+        </div>
+      </ng-container>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="gap-2 pt-4">
+    <button mat-button type="button" data-testid="btn-cancelar" [disabled]="importando" (click)="cancelar()">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" data-testid="btn-importar" [disabled]="!puedeImportar" (click)="importar()">
+      <mat-icon *ngIf="!importando" class="mr-1">download_done</mat-icon>
+      <mat-icon *ngIf="importando" class="mr-1 animate-spin">sync</mat-icon>
+      Importar
+    </button>
+  </mat-dialog-actions>
+</div>

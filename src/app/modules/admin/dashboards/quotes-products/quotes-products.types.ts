@@ -5,6 +5,17 @@ export interface CatalogoItem {
     nombre: string;
 }
 
+/** Tipos de cotización SGC: CS comercial simple, CT técnico-comercial, CE estratégica. */
+export type TipoCotizacionSgc = 'CS' | 'CT' | 'CE';
+
+/** Campos que el listado trae por cada cotización (contrato v1.1 §5). */
+export interface CotizacionListadoSgcCampos {
+    /** `null` si la cotización solo viene de CONTPAQ y no tiene capa SGC. */
+    tipoSgc: TipoCotizacionSgc | null;
+    /** `true` ⇔ sin capa SGC: se muestra como Comercial, solo informativa y sin flujo. */
+    informativa: boolean;
+}
+
 export interface CatalogosSgc {
     tipos: CatalogoItem[];
     monedas: CatalogoItem[];
@@ -272,6 +283,8 @@ export interface RespuestaObtenerSgc {
     revisiones?: RevisionSgc[];
     acciones?: AccionesSgc;
     seguimiento?: ResumenSeguimiento | null;
+    /** Contrato v1.2: `true` ⇔ la cotización no tiene capa SGC (solo viene de CONTPAQ): se ve solo como consulta. Si no viene, es `false`. */
+    informativa?: boolean;
 }
 
 export interface ResumenSgc {

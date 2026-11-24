@@ -1,0 +1,407 @@
+<div class="max-w-7xl mx-auto space-y-6">
+
+  <!-- Cabecera de la sección -->
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+        <mat-icon class="icon-size-7">inventory_2</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Material y trazabilidad</h2>
+        <p class="text-xs text-slate-500 font-medium mt-0.5">
+          La lista sale del Excel que subas a Archivos y evidencias → Materiales. Cambia el estatus de cada producto conforme avanza la compra.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 flex-wrap">
+      <label class="flex items-center gap-2 text-xs font-bold text-slate-600">
+        Responsable de compra
+        <select data-testid="select-responsable" class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[12rem]"
+                [ngModel]="responsableId" (ngModelChange)="cambiarResponsable($event)" [disabled]="guardandoResponsable || cargando">
+          <option [ngValue]="null">Sin responsable</option>
+          <option *ngFor="let u of usuarios" [ngValue]="u.usuarioId">{{ u.nombreUsuario }}</option>
+        </select>
+      </label>
+
+      <button type="button" mat-stroked-button color="primary" class="!rounded-xl border-slate-200" data-testid="btn-actualizar" (click)="cargar()" [disabled]="cargando">
+        <mat-icon class="icon-size-4 mr-1">refresh</mat-icon>
+        Actualizar
+      </button>
+      <button type="button" mat-stroked-button color="accent" class="!rounded-xl border-slate-200" data-testid="btn-agregar-servicio" (click)="abrirModalNuevoMaterial(2)">
+        <mat-icon class="icon-size-4 mr-1 text-purple-600">miscellaneous_services</mat-icon>
+        + Servicio / Renta
+      </button>
+      <button type="button" mat-stroked-button class="!rounded-xl border-slate-200" data-testid="btn-agregar-manual" (click)="abrirModalNuevoMaterial(1)">
+        <mat-icon class="icon-size-4 mr-1">add_box</mat-icon>
+        + Agregar manual
+      </button>
+      <button type="button" mat-raised-button color="primary" class="!rounded-xl shadow-indigo-100 shadow-lg" data-testid="btn-importar-excel" (click)="abrirImportarExcel()">
+        <mat-icon class="icon-size-4 mr-1">upload_file</mat-icon>
+        Importar desde Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- KPIs: cantidad de productos y sus estatus (clic para filtrar) -->
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-4" data-testid="kpis-estatus">
+    <button type="button" data-testid="kpi-TODOS" (click)="filtrarPor('TODOS')"
+            class="text-left bg-white p-4 rounded-2xl shadow-sm border relative overflow-hidden transition-all hover:shadow-md"
+            [ngClass]="filtroEstatus === 'TODOS' ? 'border-indigo-300 ring-1 ring-indigo-300' : 'border-slate-100'">
+      <div class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Total de productos</div>
+      <div class="mt-2 text-3xl font-black text-slate-800 tabular-nums" data-testid="valor-TODOS">{{ conteo.total }}</div>
+      <div class="absolute bottom-0 left-0 right-0 h-1 bg-indigo-500"></div>
+    </button>
+
+    <button *ngFor="let e of estatus" type="button" [attr.data-testid]="'kpi-' + e.codigo" (click)="filtrarPor(e.codigo)"
+            class="text-left bg-white p-4 rounded-2xl shadow-sm border relative overflow-hidden transition-all hover:shadow-md"
+            [ngClass]="filtroEstatus === e.codigo ? 'border-indigo-300 ring-1 ring-indigo-300' : 'border-slate-100'">
+      <div class="text-[11px] font-black text-slate-400 uppercase tracking-wider">{{ e.etiqueta }}</div>
+      <div class="mt-2 text-3xl font-black tabular-nums" [ngClass]="clases[e.codigo].tarjeta" [attr.data-testid]="'valor-' + e.codigo">{{ valorKpi(e.codigo) }}</div>
+      <div class="absolute bottom-0 left-0 right-0 h-1" [ngClass]="clases[e.codigo].barra"></div>
+    </button>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+
+    <!-- Búsqueda y filtro activo -->
+    <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/50">
+      <div class="w-full md:w-96 relative">
+        <input type="text" data-testid="filtro-texto" [ngModel]="filtroTexto" (ngModelChange)="onFiltroTexto($event)"
+               placeholder="Buscar por código, descripción, marca, proveedor, observaciones..."
+               class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <mat-icon class="icon-size-4 text-slate-400 absolute left-3 top-2.5">search</mat-icon>
+      </div>
+      <div *ngIf="filtroEstatus !== 'TODOS'" class="flex items-center gap-2 text-xs" data-testid="filtro-activo">
+        <span class="px-2.5 py-1 rounded-full font-bold border" [ngClass]="clases[$any(filtroEstatus)].pildora">Filtrando: {{ etiquetaEstatus(filtroEstatus) }}</span>
+        <button type="button" class="font-bold text-indigo-600 hover:underline" data-testid="quitar-filtro" (click)="filtrarPor('TODOS')">Ver todos</button>
+      </div>
+    </div>
+
+    <!-- Selección múltiple -->
+    <div *ngIf="seleccionados.size > 0" data-testid="barra-masiva"
+         class="px-4 py-3 bg-indigo-50 border-b border-indigo-100 flex flex-wrap items-center gap-3 text-xs">
+      <span class="font-bold text-indigo-900">{{ seleccionados.size }} seleccionado(s)</span>
+      <select data-testid="select-estatus-masivo" class="px-3 py-1.5 bg-white border border-indigo-200 rounded-xl text-xs font-medium" [(ngModel)]="estatusMasivo">
+        <option *ngFor="let e of estatus" [ngValue]="e.codigo">{{ e.etiqueta }}</option>
+      </select>
+      <button type="button" mat-flat-button color="primary" class="!rounded-xl" data-testid="btn-aplicar-masivo" [disabled]="aplicandoMasivo" (click)="aplicarMasivo()">
+        Cambiar estatus
+      </button>
+      <button type="button" class="font-bold text-slate-600 hover:underline" data-testid="btn-limpiar-seleccion" (click)="limpiarSeleccion()">Quitar selección</button>
+    </div>
+
+    <!-- Carga y error -->
+    <div *ngIf="cargando" data-testid="cargando" class="p-12 text-center text-slate-400">
+      <mat-icon class="animate-spin icon-size-8 text-indigo-500 mb-2">sync</mat-icon>
+      <p class="text-xs font-bold">Cargando productos…</p>
+    </div>
+
+    <div *ngIf="!cargando && errorCarga" data-testid="error-carga" class="m-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center justify-between gap-3">
+      <span>{{ errorCarga }}</span>
+      <button type="button" mat-stroked-button color="warn" data-testid="btn-reintentar" (click)="cargar()">Reintentar</button>
+    </div>
+
+    <!-- Sin productos -->
+    <div *ngIf="!cargando && !errorCarga && materiales.length === 0" data-testid="estado-vacio" class="p-12 text-center">
+      <div class="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-3xl flex items-center justify-center mx-auto mb-4">
+        <mat-icon class="icon-size-8">playlist_add</mat-icon>
+      </div>
+      <h3 class="text-base font-bold text-slate-700">Aún no hay productos en este proyecto</h3>
+      <p class="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-5">
+        Sube el Excel de materiales en Archivos y evidencias → Materiales y pulsa «Importar desde Excel», o agrega los productos a mano.
+      </p>
+      <div class="flex items-center justify-center gap-3">
+        <button type="button" mat-raised-button color="primary" class="!rounded-xl" (click)="abrirImportarExcel()">
+          <mat-icon class="icon-size-4 mr-1">upload_file</mat-icon>
+          Importar desde Excel
+        </button>
+        <button type="button" mat-stroked-button class="!rounded-xl" (click)="abrirModalNuevoMaterial(1)">
+          <mat-icon class="icon-size-4 mr-1">add_box</mat-icon>
+          Agregar manual
+        </button>
+      </div>
+    </div>
+
+    <!-- Hay productos, pero el filtro no deja ver ninguno -->
+    <div *ngIf="!cargando && !errorCarga && materiales.length > 0 && visibles === 0" data-testid="sin-coincidencias" class="p-10 text-center text-xs text-slate-400">
+      Ningún producto coincide con el filtro.
+    </div>
+
+    <!-- Tabla -->
+    <div *ngIf="!cargando && !errorCarga && visibles > 0" class="overflow-x-auto">
+      <table class="w-full text-left text-xs" data-testid="tabla-materiales">
+        <thead class="bg-slate-100/80 text-slate-600 uppercase text-[10px] font-black tracking-wider border-b">
+          <tr>
+            <th class="py-3 px-3 w-8">
+              <input type="checkbox" data-testid="marcar-todos" [checked]="todosMarcados" (change)="toggleTodos()" aria-label="Seleccionar todos">
+            </th>
+            <th class="py-3 px-3 w-8"></th>
+            <th class="py-3 px-3">Tipo / Código</th>
+            <th class="py-3 px-3">Descripción</th>
+            <th class="py-3 px-3 text-right">Cant.</th>
+            <th class="py-3 px-3 text-center">U.M.</th>
+            <th class="py-3 px-3">Proveedor</th>
+            <th class="py-3 px-3">Observaciones</th>
+            <th class="py-3 px-3">Estatus</th>
+            <th class="py-3 px-3 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <ng-container *ngFor="let g of grupos">
+            <tr *ngIf="g.seccion" class="bg-yellow-50/80" data-testid="fila-seccion">
+              <td colspan="10" class="py-2 px-3 text-[11px] font-black text-yellow-900 uppercase tracking-wide">
+                {{ g.seccion }} <span class="font-semibold text-yellow-700">({{ g.items.length }})</span>
+              </td>
+            </tr>
+
+            <ng-container *ngFor="let item of g.items; trackBy: trackPorMaterial">
+              <tr class="hover:bg-slate-50/80 transition-colors" [attr.data-testid]="'fila-' + item.idMaterial">
+                <td class="py-3 px-3" (click)="$event.stopPropagation()">
+                  <input type="checkbox" [attr.data-testid]="'marcar-' + item.idMaterial" [checked]="seleccionados.has(item.idMaterial)" (change)="toggleSeleccion(item)" aria-label="Seleccionar producto">
+                </td>
+                <td class="py-3 px-3 text-center">
+                  <button type="button" mat-icon-button class="w-6 h-6 min-h-6 p-0 text-slate-400 hover:text-indigo-600" [attr.data-testid]="'expandir-' + item.idMaterial" (click)="toggleExpandir(item)">
+                    <mat-icon class="icon-size-4 transition-transform duration-200" [ngClass]="{'rotate-180': item.expanded}">keyboard_arrow_down</mat-icon>
+                  </button>
+                </td>
+
+                <td class="py-3 px-3">
+                  <div class="flex items-center gap-1.5">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold" [ngClass]="item.tipoItem === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'">
+                      {{ item.tipoItem === 1 ? 'MATERIAL' : 'SERVICIO' }}
+                    </span>
+                    <span *ngIf="item.codigoProducto" class="font-mono text-xs font-bold text-indigo-600">{{ item.codigoProducto }}</span>
+                  </div>
+                </td>
+
+                <td class="py-3 px-3">
+                  <div class="font-bold text-slate-800">{{ item.descripcion }}</div>
+                  <div *ngIf="item.marca" class="text-[10px] text-slate-400">Marca: {{ item.marca }}</div>
+                </td>
+
+                <td class="py-3 px-3 text-right font-extrabold text-slate-700 tabular-nums">{{ item.cantidadCotizada }}</td>
+                <td class="py-3 px-3 text-center text-slate-500 font-bold uppercase">{{ item.unidadMedida || 'PZA' }}</td>
+
+                <td class="py-3 px-3 text-slate-700" [attr.data-testid]="'proveedor-' + item.idMaterial">{{ item.proveedorNombre || '—' }}</td>
+                <td class="py-3 px-3 text-slate-600 max-w-[16rem]" [attr.data-testid]="'observaciones-' + item.idMaterial">
+                  <div class="truncate" [matTooltip]="item.notas || ''">{{ item.notas || '—' }}</div>
+                </td>
+
+                <td class="py-3 px-3">
+                  <select [attr.data-testid]="'estatus-' + item.idMaterial" [ngModel]="item.estatus" (ngModelChange)="cambiarEstatus(item, $event)" [disabled]="estaGuardando(item)"
+                          class="px-2.5 py-1.5 rounded-full border text-[11px] font-extrabold focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          [ngClass]="clases[item.estatus]?.pildora">
+                    <option *ngFor="let e of estatus" [ngValue]="e.codigo">{{ e.etiqueta }}</option>
+                  </select>
+                </td>
+
+                <td class="py-3 px-3 text-center">
+                  <div class="flex items-center justify-center gap-1">
+                    <button type="button" mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-indigo-600" [attr.data-testid]="'compra-' + item.idMaterial" (click)="abrirCompra(item)" matTooltip="Proveedor y observaciones">
+                      <mat-icon class="icon-size-4">storefront</mat-icon>
+                    </button>
+                    <button type="button" mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-indigo-600" [attr.data-testid]="'editar-' + item.idMaterial" (click)="editarMaterial(item)" matTooltip="Editar producto">
+                      <mat-icon class="icon-size-4">edit</mat-icon>
+                    </button>
+                    <button type="button" mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-rose-600" [attr.data-testid]="'eliminar-' + item.idMaterial" (click)="eliminarMaterialItem(item)" matTooltip="Eliminar">
+                      <mat-icon class="icon-size-4">delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Detalle: cotizado, compras y salidas de almacén vinculadas -->
+              <tr *ngIf="item.expanded" class="bg-slate-50/90 border-t border-b border-slate-200" [attr.data-testid]="'detalle-' + item.idMaterial">
+                <td colspan="10" class="p-4">
+                  <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 text-xs">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                      <div class="text-[10px] font-black text-slate-400 uppercase">Precio unit. cotizado</div>
+                      <div class="font-bold text-slate-700 tabular-nums">{{ item.precioUnitarioCotizado | currency:'MXN':'symbol':'1.2-2' }}</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                      <div class="text-[10px] font-black text-slate-400 uppercase">Total cotizado</div>
+                      <div class="font-bold text-indigo-700 tabular-nums">{{ item.importeCotizado | currency:'MXN':'symbol':'1.2-2' }}</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                      <div class="text-[10px] font-black text-slate-400 uppercase">Comprado (OC)</div>
+                      <div class="font-bold text-amber-700 tabular-nums">{{ item.cantidadComprada }}
+                        <span *ngIf="item.costoTotalComprado > 0" class="text-slate-400 font-normal">· {{ item.costoTotalComprado | currency:'MXN':'symbol':'1.2-2' }}</span>
+                      </div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                      <div class="text-[10px] font-black text-slate-400 uppercase">Surtido (almacén)</div>
+                      <div class="font-bold text-emerald-700 tabular-nums">{{ item.cantidadSurtida }}
+                        <span *ngIf="item.costoTotalSurtido > 0" class="text-slate-400 font-normal">· {{ item.costoTotalSurtido | currency:'MXN':'symbol':'1.2-2' }}</span>
+                      </div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200">
+                      <div class="text-[10px] font-black text-slate-400 uppercase">Pendiente de surtir</div>
+                      <div class="font-bold tabular-nums" [ngClass]="item.cantidadPendienteSurtir <= 0 ? 'text-emerald-600' : 'text-rose-600'">{{ item.cantidadPendienteSurtir }}</div>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <div class="flex items-center justify-between mb-3 border-b pb-2">
+                        <div class="text-xs font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                          <mat-icon class="icon-size-4 text-amber-500">shopping_bag</mat-icon>
+                          <span>Órdenes de compra vinculadas ({{ item.comprasRelacionadas?.length || 0 }})</span>
+                        </div>
+                      </div>
+                      <div *ngIf="!item.comprasRelacionadas || item.comprasRelacionadas.length === 0" class="text-xs text-slate-400 italic py-2 text-center">
+                        No se registran órdenes de compra para este producto.
+                      </div>
+                      <div *ngIf="item.comprasRelacionadas && item.comprasRelacionadas.length > 0" class="space-y-2">
+                        <div *ngFor="let c of item.comprasRelacionadas" class="p-2.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                          <div>
+                            <div class="font-bold text-indigo-700">Solicitud #{{ c.idSolicitud }} <span *ngIf="c.folioOC" class="text-amber-700 font-black">({{ c.folioOC }})</span></div>
+                            <div class="text-[11px] text-slate-500 truncate mt-0.5">{{ c.proveedor || 'Sin proveedor' }} &bull; {{ c.fechaSolicitud | date:'dd/MM/yyyy' }}</div>
+                          </div>
+                          <div class="text-right">
+                            <div class="font-black text-slate-800">{{ c.cantidad }} {{ item.unidadMedida }}</div>
+                            <div class="text-[11px] text-indigo-600 font-bold">{{ c.importeTotal | currency:'MXN':'symbol':'1.2-2' }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <div class="flex items-center justify-between mb-3 border-b pb-2">
+                        <div class="text-xs font-black text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                          <mat-icon class="icon-size-4 text-emerald-600">warehouse</mat-icon>
+                          <span>Salidas de almacén vinculadas ({{ item.salidasRelacionadas?.length || 0 }})</span>
+                        </div>
+                      </div>
+                      <div *ngIf="!item.salidasRelacionadas || item.salidasRelacionadas.length === 0" class="text-xs text-slate-400 italic py-2 text-center">
+                        No se registran salidas de bodega vinculadas con este producto.
+                      </div>
+                      <div *ngIf="item.salidasRelacionadas && item.salidasRelacionadas.length > 0" class="space-y-2">
+                        <div *ngFor="let s of item.salidasRelacionadas" class="p-2.5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                          <div>
+                            <div class="font-bold text-emerald-800">Folio salida: {{ s.folioSalida }}</div>
+                            <div class="text-[11px] text-slate-500 truncate mt-0.5">{{ s.almacen || 'Almacén central' }} &bull; {{ s.fechaSalida }}</div>
+                          </div>
+                          <div class="text-right">
+                            <div class="font-black text-slate-800">{{ s.cantidad }} {{ item.unidadMedida }}</div>
+                            <div class="text-[11px] text-emerald-700 font-bold">{{ s.importeTotal | currency:'MXN':'symbol':'1.2-2' }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Alta / edición manual de un producto -->
+<div *ngIf="showMaterialModal" data-testid="modal-material" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[999990] flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden">
+
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 rounded-xl text-white" [ngClass]="materialFormTipoItem === 1 ? 'bg-indigo-600' : 'bg-purple-600'">
+          <mat-icon class="icon-size-5">{{ materialFormTipoItem === 1 ? 'inventory_2' : 'miscellaneous_services' }}</mat-icon>
+        </div>
+        <div>
+          <h3 class="text-base font-black text-slate-800">
+            {{ editingMaterialId ? 'Editar producto' : (materialFormTipoItem === 1 ? 'Agregar producto' : 'Agregar servicio / renta externa') }}
+          </h3>
+          <p class="text-xs text-slate-500 font-medium">Proyecto #{{ idSeguimiento }}</p>
+        </div>
+      </div>
+      <button type="button" mat-icon-button class="text-slate-400 hover:text-slate-600" data-testid="cerrar-modal" (click)="cerrarModalMaterial()">
+        <mat-icon class="icon-size-5">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-4 max-h-[calc(85vh-130px)] overflow-y-auto custom-scrollbar dialogo-alto">
+      <div *ngIf="errorModal" data-testid="error-modal" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">{{ errorModal }}</div>
+
+      <div class="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
+        <button type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                [ngClass]="materialFormTipoItem === 1 ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                (click)="materialFormTipoItem = 1; materialFormUnidad = 'PZA'">
+          <mat-icon class="icon-size-4">inventory_2</mat-icon>
+          Material
+        </button>
+        <button type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                [ngClass]="materialFormTipoItem === 2 ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                (click)="materialFormTipoItem = 2; materialFormUnidad = 'SERV'">
+          <mat-icon class="icon-size-4">miscellaneous_services</mat-icon>
+          Servicio / Renta externa
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="sm:col-span-1">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Código (opcional)</label>
+          <input type="text" data-testid="form-codigo" [(ngModel)]="materialFormCodigo" placeholder="Ej. MAT-001"
+                 class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-700 mb-1">Unidad de medida</label>
+          <input type="text" data-testid="form-unidad" [(ngModel)]="materialFormUnidad" placeholder="Ej. PZA, MTR, SERV, DIA"
+                 class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs uppercase focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Descripción *</label>
+        <input type="text" data-testid="form-descripcion" [(ngModel)]="materialFormDescripcion" placeholder="Ej. Interruptor termomagnético 3P 100A"
+               class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Marca (opcional)</label>
+          <input type="text" data-testid="form-marca" [(ngModel)]="materialFormMarca" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Sección (opcional)</label>
+          <input type="text" data-testid="form-seccion" [(ngModel)]="materialFormSeccion" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Cantidad *</label>
+          <input type="number" step="any" min="0" data-testid="form-cantidad" [(ngModel)]="materialFormCantidad"
+                 class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Precio unitario cotizado ($)</label>
+          <input type="number" step="any" min="0" data-testid="form-precio" [(ngModel)]="materialFormPrecioUnitario"
+                 class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+      </div>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Importe total estimado:</span>
+        <span class="text-base font-black text-indigo-700">{{ (materialFormCantidad * materialFormPrecioUnitario) | currency:'MXN':'symbol':'1.2-2' }}</span>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones</label>
+        <textarea rows="2" data-testid="form-notas" [(ngModel)]="materialFormNotas" placeholder="Condiciones, tiempos, referencias..."
+                  class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+      <button type="button" mat-stroked-button class="!rounded-xl border-slate-200" data-testid="btn-cancelar-modal" (click)="cerrarModalMaterial()" [disabled]="isSavingMaterial">Cancelar</button>
+      <button type="button" mat-raised-button color="primary" class="!rounded-xl shadow-indigo-100 shadow-md" data-testid="btn-guardar-modal"
+              [disabled]="!puedeGuardarMaterial" (click)="guardarMaterialSubmit()">
+        <mat-icon class="icon-size-4 mr-1" *ngIf="!isSavingMaterial">check</mat-icon>
+        <mat-icon class="icon-size-4 animate-spin mr-1" *ngIf="isSavingMaterial">sync</mat-icon>
+        <span>{{ editingMaterialId ? 'Guardar cambios' : 'Agregar' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

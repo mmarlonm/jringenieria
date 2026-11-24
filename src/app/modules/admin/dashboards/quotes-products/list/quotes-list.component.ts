@@ -16,11 +16,17 @@ import { FormsModule } from '@angular/forms';
 import { MatMenuTrigger, MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
 import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
+import { QuotesBoardComponent } from './quotes-board/quotes-board.component';
+import { aplicarResumenSgc } from './quotes-sgc-merge';
 import moment from 'moment';
+
+export type VistaCotizaciones = 'tablero' | 'lista';
+const CLAVE_VISTA = 'cotizaciones.vista';
 
 @Component({
   selector: 'app-quotes-list',
@@ -40,7 +46,9 @@ import moment from 'moment';
     MatMenuModule,
     MatSelectModule,
     MatTooltipModule,
-    EtapaChipComponent
+    MatButtonToggleModule,
+    EtapaChipComponent,
+    QuotesBoardComponent
   ]
 })
 export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -94,6 +102,12 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   fechaDesde: string = moment().startOf('month').format('YYYY-MM-DD');
   fechaHasta: string = moment().format('YYYY-MM-DD');
   errorFechas: string | null = null;
+
+  // Vista: tablero por tipo (Comercial / Técnico-comercial / Estratégica) o la lista de siempre. Se recuerda por navegador.
+  vista: VistaCotizaciones = this.leerVistaGuardada();
+  // Fechas que ve el tablero: solo se actualizan cuando ya son válidas y la persona terminó de teclear.
+  boardDesde: string = this.fechaDesde;
+  boardHasta: string = this.fechaHasta;
   private temporizadorFechas: any = null;
   private solicitudListado = 0;
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -123,7 +137,10 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
-    this.getQuotes();
+    // El tablero pide sus propias páginas; la lista solo se carga cuando se está viendo.
+    if (this.vista === 'lista') {
+      this.getQuotes();
+    }
     this.getEstatus();
     this.obtenerPermisos();
   }
@@ -179,21 +196,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
                     quotes.forEach((q: any) => {
                       const r = mapResumen.get(q.cotizacionProductosId);
                       if (r) {
-                        q.tieneSgc = true;
-                        q.folio = r.folio;
-                        q.tipo = r.tipo;
-                        q.version = r.version;
-                        q.totalSgc = r.total;
-                        q.moneda = r.moneda;
-                        q.etapa = r.etapa;
-                        q.fechaEmision = r.fechaEmision;
-                        q.fechaVencimiento = r.fechaVencimiento;
-                        q.creadoPorNombre = r.creadoPorNombre;
-                        q.requerimientoFolio = r.requerimientoFolio;
-                        q.seguimientoAtrasado = r.seguimientoAtrasado;
-                        q.vencida = r.vencida;
-                        q.probabilidadPorcentaje = r.probabilidadPorcentaje;
-                        q.proximaAccionFecha = r.proximaAccionFecha;
+                        aplicarResumenSgc(q, r);
                       }
                     });
                     this.todasLasQuotesDePagina = [...quotes];
@@ -265,8 +268,49 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     clearTimeout(this.temporizadorFechas);
     this.temporizadorFechas = setTimeout(() => {
       this.pageIndex = 0;
-      this.getQuotes();
+      this.errorFechas = this.validarFechas();
+      if (!this.errorFechas) {
+        // El tablero se recarga solo al cambiar estas fechas (ya validadas).
+        this.boardDesde = this.fechaDesde;
+        this.boardHasta = this.fechaHasta;
+      }
+      if (this.vista === 'lista') {
+        this.getQuotes();
+      }
+      this._changeDetectorRef.markForCheck();
     }, 400);
+  }
+
+  cambiarVista(vista: VistaCotizaciones): void {
+    if (vista === this.vista || (vista !== 'tablero' && vista !== 'lista')) {
+      return;
+    }
+    this.vista = vista;
+    try {
+      localStorage.setItem(CLAVE_VISTA, vista);
+    } catch {
+      // Sin almacenamiento (ventana privada o bloqueado): la vista simplemente no se recuerda.
+    }
+    if (vista === 'lista') {
+      this.getQuotes();
+    }
+    this._changeDetectorRef.markForCheck();
+  }
+
+  /** El tablero informa cuántas cotizaciones hay en total (suma de sus tres columnas) para el encabezado. */
+  onTotalTablero(total: number): void {
+    if (this.vista === 'tablero') {
+      this.quotesCount = total;
+      this._changeDetectorRef.markForCheck();
+    }
+  }
+
+  private leerVistaGuardada(): VistaCotizaciones {
+    try {
+      return localStorage.getItem(CLAVE_VISTA) === 'lista' ? 'lista' : 'tablero';
+    } catch {
+      return 'tablero';
+    }
   }
 
   abrirPicker(input: HTMLInputElement): void {

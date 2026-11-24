@@ -374,6 +374,23 @@ describe('QuotesService SGC', () => {
         req.flush({ code: 200, data: [], totalCount: 0 });
     });
 
+    it('getQuotesPorRango_con_tipo_manda_el_parametro_tipo', () => {
+        service.getQuotesPorRango(1, 15, '2026-11-01', null, 'CT').subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${apiUrl}/listado`);
+        expect(req.request.params.get('tipo')).toBe('CT');
+        expect(req.request.params.get('size')).toBe('15');
+        req.flush({ code: 200, data: [], totalCount: 0 });
+    });
+
+    it('getQuotesPorRango_sin_tipo_no_manda_el_parametro_tipo', () => {
+        service.getQuotesPorRango(1, 10).subscribe();
+
+        const req = httpMock.expectOne((r) => r.url === `${apiUrl}/listado`);
+        expect(req.request.params.has('tipo')).toBeFalse();
+        req.flush({ code: 200, data: [], totalCount: 0 });
+    });
+
     it('getQuotesPorRango_omite_las_fechas_vacias', () => {
         service.getQuotesPorRango(1, 10, null, '').subscribe();
 

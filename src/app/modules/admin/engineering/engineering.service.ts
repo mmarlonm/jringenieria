@@ -384,6 +384,56 @@ export class EngineeringService {
         return this._http.delete<ResumenTrazabilidadProyecto>(`${this.apiSeguimientoEjecucion}/materiales/${id}`);
     }
 
+    // --- Contrato v1.1: responsable de compra, estatus por producto, Excel, proveedor y observaciones ---
+    asignarResponsableCompra(idSeguimiento: number, usuarioId: number | null): Observable<ResponsableCompraRespuesta> {
+        return this._http.put<ResponsableCompraRespuesta>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/responsable-compra`, { usuarioId });
+    }
+
+    cambiarEstatusMaterial(idMaterial: number, estatus: MaterialEstatus, comentario?: string | null): Observable<SeguimientoMaterial> {
+        return this._http.put<SeguimientoMaterial>(`${this.apiSeguimientoEjecucion}/materiales/${idMaterial}/estatus`, {
+            estatus,
+            comentario: comentario ?? null
+        });
+    }
+
+    cambiarEstatusMasivo(idSeguimiento: number, idsMaterial: number[], estatus: MaterialEstatus, comentario?: string | null): Observable<ResumenEstatusMasivo> {
+        return this._http.put<ResumenEstatusMasivo>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/materiales/estatus-masivo`, {
+            idsMaterial,
+            estatus,
+            comentario: comentario ?? null
+        });
+    }
+
+    getHistorialEstatusMaterial(idMaterial: number): Observable<EstatusHistorialItem[]> {
+        return this._http.get<EstatusHistorialItem[]>(`${this.apiSeguimientoEjecucion}/materiales/${idMaterial}/estatus-historial`);
+    }
+
+    /** No guarda nada: lee el Excel ya subido a la carpeta «Materiales» y devuelve lo que se importaría. */
+    previsualizarExcelMateriales(idSeguimiento: number, nombreArchivo: string): Observable<VistaPreviaExcelMateriales> {
+        const params = new HttpParams().set('nombreArchivo', nombreArchivo);
+        return this._http.get<VistaPreviaExcelMateriales>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/materiales/excel/previsualizar`, { params });
+    }
+
+    importarExcelMateriales(idSeguimiento: number, nombreArchivo: string): Observable<ImportacionExcelRespuesta> {
+        return this._http.post<ImportacionExcelRespuesta>(`${this.apiSeguimientoEjecucion}/${idSeguimiento}/materiales/excel/importar`, { nombreArchivo });
+    }
+
+    /** Catálogo ligero (sin datos bancarios). No usar `GET ProveedorMaestro` desde esta pantalla. */
+    getProveedoresMateriales(q?: string | null, limite?: number): Observable<ProveedorLigero[]> {
+        let params = new HttpParams();
+        if (q) {
+            params = params.set('q', q);
+        }
+        if (limite) {
+            params = params.set('limite', limite.toString());
+        }
+        return this._http.get<ProveedorLigero[]>(`${this.apiSeguimientoEjecucion}/materiales/proveedores`, { params });
+    }
+
+    guardarCompraMaterial(idMaterial: number, datos: GuardarCompraMaterial): Observable<SeguimientoMaterial> {
+        return this._http.put<SeguimientoMaterial>(`${this.apiSeguimientoEjecucion}/materiales/${idMaterial}/compra`, datos);
+    }
+
     buscarProductosCatalogo(filtro: string): Observable<any[]> {
         return this._http.get<any[]>(`${environment.apiUrl}/SolicitudesCompra/buscar-productos?filtro=${encodeURIComponent(filtro)}`);
     }
@@ -407,10 +457,21 @@ export interface SalidaAlmacen {
     detalleRaw?: any[];
 }
 
+/** Estatus funcional de cada producto (contrato v1.1 §1). Solo `EnProceso` cuenta como «por comprar». */
+export type MaterialEstatus = 'EnProceso' | 'Listo' | 'PendienteRecoleccion' | 'Anulado' | 'Recolectado';
+
+export const MATERIAL_ESTATUS: ReadonlyArray<{ codigo: MaterialEstatus; etiqueta: string; cuentaComoPorComprar: boolean }> = [
+    { codigo: 'EnProceso', etiqueta: 'En proceso', cuentaComoPorComprar: true },
+    { codigo: 'Listo', etiqueta: 'Listo', cuentaComoPorComprar: false },
+    { codigo: 'PendienteRecoleccion', etiqueta: 'Pendiente de recolección', cuentaComoPorComprar: false },
+    { codigo: 'Anulado', etiqueta: 'Anulado', cuentaComoPorComprar: false },
+    { codigo: 'Recolectado', etiqueta: 'Recolectado', cuentaComoPorComprar: false }
+];
+
 export interface SeguimientoMaterial {
     idMaterial: number;
     idSeguimiento: number;
-    tipoItem: number; // 1: CONTPAQ, 2: Servicio / Renta
+    tipoItem: number; // 1: Material, 2: Servicio / Renta (el 1 ya no significa «CONTPAQ»)
     productoId?: number;
     codigoProducto?: string;
     descripcion: string;
@@ -418,9 +479,20 @@ export interface SeguimientoMaterial {
     cantidadCotizada: number;
     precioUnitarioCotizado: number;
     importeCotizado: number;
-    notas?: string;
+    /** Observaciones del producto (en pantalla se llama «Observaciones»). */
+    notas?: string | null;
     fechaRegistro?: string;
     idUsuarioRegistro?: number;
+
+    // Contrato v1.1
+    marca?: string | null;
+    seccion?: string | null;
+    proveedorId?: number | null;
+    /** Nombre comercial del proveedor, o su razón social si no tiene. */
+    proveedorNombre?: string | null;
+    estatus: MaterialEstatus;
+    fechaEstatus?: string | null;
+    archivoOrigen?: string | null;
 
     // Trazabilidad dinámica
     cantidadComprada: number;
@@ -460,8 +532,24 @@ export interface MaterialDetalleSalida {
     almacen?: string;
 }
 
+export interface ResponsableCompra {
+    usuarioId: number;
+    nombre: string;
+}
+
+export interface ConteoPorEstatus {
+    total: number;
+    enProceso: number;
+    listo: number;
+    pendienteRecoleccion: number;
+    anulado: number;
+    recolectado: number;
+}
+
 export interface ResumenTrazabilidadProyecto {
     idSeguimiento: number;
+    responsableCompra: ResponsableCompra | null;
+    conteoPorEstatus: ConteoPorEstatus;
     totalCotizado: number;
     totalComprado: number;
     totalSurtidoAlmacen: number;
@@ -484,6 +572,89 @@ export interface GuardarSeguimientoMaterial {
     precioUnitarioCotizado: number;
     importeCotizado?: number;
     notas?: string;
+    /** `null`/ausente = sin cambio; cadena vacía = limpiar (contrato §6.2). */
+    marca?: string | null;
+    seccion?: string | null;
+}
+
+export interface ResponsableCompraRespuesta {
+    idSeguimiento: number;
+    responsableCompra: ResponsableCompra | null;
+}
+
+/** Respuesta ligera del cambio masivo (contrato v1.3): conteo de todo el proyecto y el estatus de los productos pedidos. */
+export interface ResumenEstatusMasivo {
+    idSeguimiento: number;
+    conteoPorEstatus: ConteoPorEstatus;
+    materiales: { idMaterial: number; estatus: MaterialEstatus; fechaEstatus?: string | null }[];
+}
+
+export interface EstatusHistorialItem {
+    estatusAnterior: MaterialEstatus;
+    estatusNuevo: MaterialEstatus;
+    comentario?: string | null;
+    usuarioNombre?: string | null;
+    fecha: string;
+}
+
+export interface MaterialExcelFila {
+    fila: number;
+    seccion?: string | null;
+    cantidad: number;
+    unidad?: string | null;
+    concepto: string;
+    codigo?: string | null;
+    marca?: string | null;
+    precioUnitario: number;
+    subtotal: number;
+    tipoItem: number;
+    accion: 'agregar' | 'actualizar' | 'sinCambio';
+    advertencias: string[];
+}
+
+export interface ResumenVistaPreviaExcel {
+    totalFilas: number;
+    materiales: number;
+    servicios: number;
+    agregar: number;
+    actualizar: number;
+    sinCambio: number;
+    noEncontradosEnArchivo: number;
+    omitidas: number;
+}
+
+export interface VistaPreviaExcelMateriales {
+    nombreArchivo: string;
+    hoja: string;
+    filaEncabezado: number;
+    filas: MaterialExcelFila[];
+    resumen: ResumenVistaPreviaExcel;
+    advertencias: string[];
+}
+
+export interface ImportacionExcelMateriales {
+    agregados: number;
+    actualizados: number;
+    sinCambio: number;
+    noEncontradosEnArchivo: number;
+    omitidas: number;
+}
+
+export interface ImportacionExcelRespuesta {
+    importacion: ImportacionExcelMateriales;
+}
+
+export interface ProveedorLigero {
+    idProveedor: number;
+    razonSocial: string;
+    nombreComercial?: string | null;
+    rfc?: string | null;
+}
+
+/** Se reemplazan los dos valores (contrato §6.7): el front siempre manda ambos. */
+export interface GuardarCompraMaterial {
+    proveedorId: number | null;
+    notas: string | null;
 }
 
 

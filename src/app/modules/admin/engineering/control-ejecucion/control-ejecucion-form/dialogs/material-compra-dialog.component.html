@@ -1,0 +1,67 @@
+<div class="p-6 max-w-xl">
+  <h2 mat-dialog-title class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-1">
+    <mat-icon class="text-primary">storefront</mat-icon>
+    Proveedor y observaciones
+  </h2>
+  <p class="text-xs text-slate-500 mb-3">
+    <span class="font-semibold text-slate-700">{{ data.material.descripcion }}</span>
+    <span *ngIf="data.material.codigoProducto" class="font-mono"> · {{ data.material.codigoProducto }}</span>
+  </p>
+
+  <mat-dialog-content class="dialogo-alto">
+    <div *ngIf="errorMensaje" data-testid="error-compra" class="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
+      {{ errorMensaje }}
+    </div>
+
+    <!-- Proveedor elegido -->
+    <div class="mb-1 text-xs font-black text-slate-600 uppercase tracking-wide">Proveedor</div>
+    <div *ngIf="proveedor; else sinProveedor" data-testid="proveedor-elegido"
+         class="mb-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2 text-sm">
+      <span class="font-bold text-emerald-900 truncate">{{ proveedor.etiqueta }}</span>
+      <button type="button" mat-button color="warn" data-testid="quitar-proveedor" [disabled]="guardando" (click)="quitarProveedor()">Quitar</button>
+    </div>
+    <ng-template #sinProveedor>
+      <div data-testid="sin-proveedor" class="mb-3 text-xs text-slate-400 italic">Sin proveedor asignado.</div>
+    </ng-template>
+
+    <!-- Buscador del catálogo -->
+    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+      <mat-label>{{ proveedor ? 'Cambiar por otro proveedor' : 'Buscar proveedor' }}</mat-label>
+      <input matInput data-testid="input-proveedor" [formControl]="busquedaControl" [matAutocomplete]="auto" autocomplete="off"
+             placeholder="Nombre, razón social o RFC" (focus)="alEnfocarBusqueda()" [readonly]="guardando" />
+      <mat-icon matSuffix *ngIf="!buscando">search</mat-icon>
+      <mat-icon matSuffix *ngIf="buscando" class="animate-spin">sync</mat-icon>
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="mostrarVacio" (optionSelected)="alElegir($event)">
+        <mat-option *ngFor="let p of opciones" [value]="p" [attr.data-testid]="'opcion-' + p.idProveedor">
+          <div class="flex flex-col leading-tight">
+            <span class="text-sm font-semibold">{{ etiqueta(p) }}</span>
+            <span *ngIf="p.nombreComercial && p.nombreComercial !== p.razonSocial" class="text-[11px] text-slate-500">{{ p.razonSocial }}</span>
+            <span *ngIf="p.rfc" class="text-[10px] text-slate-400 font-mono">{{ p.rfc }}</span>
+          </div>
+        </mat-option>
+        <mat-option *ngIf="!buscando && opciones.length === 0 && !errorBusqueda" disabled data-testid="sin-resultados">Sin resultados</mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    <div *ngIf="errorBusqueda" data-testid="error-busqueda" class="mt-1 text-[11px] text-red-600 font-semibold">{{ errorBusqueda }}</div>
+    <p class="mt-1 text-[11px] text-slate-400">¿No está en la lista? Dalo de alta en Administración → Proveedores.</p>
+
+    <!-- Observaciones -->
+    <div class="mt-4 mb-1 text-xs font-black text-slate-600 uppercase tracking-wide">Observaciones</div>
+    <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+      <textarea matInput rows="4" data-testid="input-observaciones" [formControl]="observacionesControl" [readonly]="guardando"
+                placeholder="Condiciones de entrega, contacto, tiempos..."></textarea>
+    </mat-form-field>
+    <div class="mt-1 text-[11px] text-right tabular-nums" data-testid="contador" [ngClass]="excede ? 'text-red-600 font-bold' : 'text-slate-400'">
+      {{ cuenta }} / {{ maxObservaciones }}
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="gap-2 pt-4">
+    <button mat-button type="button" data-testid="btn-cancelar" [disabled]="guardando" (click)="cancelar()">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" data-testid="btn-guardar" [disabled]="!puedeGuardar" (click)="guardar()">
+      <mat-icon *ngIf="!guardando" class="mr-1">check</mat-icon>
+      <mat-icon *ngIf="guardando" class="mr-1 animate-spin">sync</mat-icon>
+      Guardar
+    </button>
+  </mat-dialog-actions>
+</div>
