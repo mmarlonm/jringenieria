@@ -7,7 +7,7 @@
       </h1>
       <app-etapa-chip *ngIf="quotesId" [etapa]="etapa" class="etapa-chip-header"></app-etapa-chip>
       <app-folio-cotizacion
-        *ngIf="quotesId && origen"
+        *ngIf="quotesId && origen && (origen.folioCotizacion || origen.puedeAgregarFolio)"
         data-testid="folio-cotizacion-header"
         [cotizacionProductosId]="quotesId"
         [folio]="origen.folioCotizacion"

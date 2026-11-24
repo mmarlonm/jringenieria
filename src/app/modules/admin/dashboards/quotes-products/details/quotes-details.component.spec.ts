@@ -1702,6 +1702,30 @@ describe('QuoteDetailsComponent SGC', () => {
       expect(headerFolio.textContent).toContain('COT-777');
     });
 
+    it('Sin_folio_y_sin_opcion_de_agregarlo_no_muestra_nada_en_el_encabezado', async () => {
+      mockQuotesService.origen.and.returnValue(of({ ...mockOrigen, folioCotizacion: null, puedeAgregarFolio: false } as CotizacionOrigen));
+
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]')).toBeNull();
+    });
+
+    it('Sin_folio_pero_con_la_opcion_de_agregarlo_muestra_el_boton_en_el_encabezado', async () => {
+      mockQuotesService.origen.and.returnValue(of({ ...mockOrigen, folioCotizacion: null, puedeAgregarFolio: true } as CotizacionOrigen));
+
+      paramMapSubject.next(convertToParamMap({ id: '10' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const header = fixture.nativeElement.querySelector('[data-testid="folio-cotizacion-header"]');
+      expect(header).not.toBeNull();
+      expect(header.querySelector('[data-testid="btn-agregar-folio"]')).not.toBeNull();
+    });
+
     it('Si_el_origen_falla_no_muestra_nada_ni_rompe_el_editor', async () => {
       mockQuotesService.origen.and.returnValue(throwError(() => new Error('Error al cargar origen')));
 
