@@ -24,6 +24,9 @@ export function aplicarResumenSgc(q: any, r: any): void {
 }
 
 export function tieneCapaSgc(q: any): boolean {
+  if (q?.informativa === false) {
+    return true;
+  }
   return !!(q?.tieneSgc || q?.folio || (q?.etapa && q?.version !== undefined));
 }
 
@@ -31,7 +34,9 @@ export function puedeEliminarCotizacion(q: any): boolean {
   if (!tieneCapaSgc(q)) {
     return true;
   }
-  const etapa = q.etapa || 'Borrador';
+  if (!q?.etapa) {
+    return false;
+  }
   const version = q.version ?? 1;
-  return etapa === 'Borrador' && version <= 1;
+  return q.etapa === 'Borrador' && version <= 1;
 }

@@ -333,6 +333,14 @@ describe('QuotesBoardComponent', () => {
     expect(q('[data-testid="eliminar-tarjeta-2"]')).toBeNull();
   });
 
+  it('Si_informativa_es_false_y_aun_no_llega_resumen_no_hay_icono_eliminar', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { informativa: false })]);
+    iniciar();
+
+    expect(q('[data-testid="eliminar-tarjeta-2"]')).toBeNull();
+  });
+
   it('La_papelera_emite_eliminar_con_el_id_y_no_abre_la_cotizacion', () => {
     component.permisoEliminar = true;
     respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
