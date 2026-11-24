@@ -642,7 +642,6 @@ export interface ImportacionExcelMateriales {
 
 export interface ImportacionExcelRespuesta {
     importacion: ImportacionExcelMateriales;
-    trazabilidad: ResumenTrazabilidadProyecto;
 }
 
 export interface ProveedorLigero {

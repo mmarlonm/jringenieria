@@ -32,8 +32,6 @@ function vista(over: Partial<VistaPreviaExcelMateriales> = {}): VistaPreviaExcel
 
 const RESULTADO: ImportacionExcelRespuesta = {
   importacion: { agregados: 1, actualizados: 1, sinCambio: 0, noEncontradosEnArchivo: 2, omitidas: 1 },
-  trazabilidad: { idSeguimiento: 4, responsableCompra: null, conteoPorEstatus: { total: 0, enProceso: 0, listo: 0, pendienteRecoleccion: 0, anulado: 0, recolectado: 0 },
-    totalCotizado: 0, totalComprado: 0, totalSurtidoAlmacen: 0, diferenciaPresupuesto: 0, itemsCompletos: 0, itemsEnProceso: 0, itemsPendientes: 0, materiales: [] }
 };
 
 describe('MaterialesImportarExcelDialogComponent', () => {

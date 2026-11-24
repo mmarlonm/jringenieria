@@ -365,7 +365,8 @@ export class MaterialesTrazabilidadComponent implements OnChanges {
     );
     ref.afterClosed().subscribe(res => {
       if (res?.importado) {
-        this.aplicar(res.resultado.trazabilidad);
+        // Contrato v1.5: importar devuelve solo el resumen; la lista completa (con compras y almacén) se vuelve a pedir.
+        this.cargar();
         const i = res.resultado.importacion;
         Swal.fire({
           icon: 'success',

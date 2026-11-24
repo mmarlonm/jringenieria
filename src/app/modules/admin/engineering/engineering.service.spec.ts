@@ -110,7 +110,6 @@ describe('EngineeringService - Material y trazabilidad (contrato v1.1)', () => {
         expect(req.request.body).toEqual({ nombreArchivo: 'Materiales.xlsx' });
         req.flush({
             importacion: { agregados: 30, actualizados: 5, sinCambio: 0, noEncontradosEnArchivo: 2, omitidas: 1 },
-            trazabilidad: { idSeguimiento: 4, responsableCompra: null, conteoPorEstatus: { total: 0, enProceso: 0, listo: 0, pendienteRecoleccion: 0, anulado: 0, recolectado: 0 }, materiales: [] }
         });
     });
 

@@ -525,19 +525,27 @@ describe('MaterialesTrazabilidadComponent', () => {
   });
 
   describe('Excel', () => {
-    it('Importar_desde_Excel_abre_el_dialogo_y_aplica_la_trazabilidad_devuelta', () => {
+    it('Importar_desde_Excel_abre_el_dialogo_y_al_importar_vuelve_a_pedir_la_trazabilidad_completa', () => {
       configurar(resumen([]));
-      const nueva = resumen(productos());
-      spyOn(Swal, 'fire');
+      expect(idsFilas().length).toBe(0);
+      const swal = spyOn(Swal, 'fire');
       const abrir = spyOn((component as any).dialog, 'open').and.returnValue({
-        afterClosed: () => of({ importado: true, resultado: { importacion: { agregados: 5, actualizados: 0, sinCambio: 0, noEncontradosEnArchivo: 0, omitidas: 0 }, trazabilidad: nueva } })
+        afterClosed: () => of({ importado: true, resultado: { importacion: { agregados: 5, actualizados: 0, sinCambio: 0, noEncontradosEnArchivo: 0, omitidas: 0 } } })
       } as any);
+      // El GET trae ahora los 5 productos, con lo calculado de compras y almacén
+      servicio.getMaterialesTrazabilidad.and.returnValue(of(resumen([
+        mat(1, { cantidadComprada: 3, cantidadSurtida: 2, semaforo: 'En Almacén' }), mat(2), mat(3), mat(4), mat(5)
+      ])));
+      servicio.getMaterialesTrazabilidad.calls.reset();
 
       (q('btn-importar-excel') as HTMLElement).click();
       fixture.detectChanges();
 
       expect(abrir).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ data: { idSeguimiento: 4 } }));
+      expect(servicio.getMaterialesTrazabilidad).toHaveBeenCalledOnceWith(4);
       expect(idsFilas().length).toBe(5);
+      expect(component.materiales[0].cantidadSurtida).toBe(2);
+      expect(swal).toHaveBeenCalledWith(jasmine.objectContaining({ text: jasmine.stringContaining('Agregados: 5') }));
     });
 
     it('Si_se_cierra_el_dialogo_sin_importar_no_cambia_nada', () => {
