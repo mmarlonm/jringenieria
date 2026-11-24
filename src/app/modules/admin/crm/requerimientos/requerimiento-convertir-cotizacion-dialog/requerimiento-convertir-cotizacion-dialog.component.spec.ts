@@ -199,6 +199,12 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
       buscarYEsperar({ folio: '1234', coincidencias: [coincidencia()] });
     });
 
+    /** Cambia la única coincidencia mostrada y elegida (para probar series raras sin rehacer el diálogo). */
+    function elegirCoincidencia(cambios: Partial<CoincidenciaFolioContpaq>): void {
+      component.coincidencias = [coincidencia(cambios)];
+      component.seleccionada = component.coincidencias[0];
+    }
+
     it('Convertir_envia_requerimientoId_folio_tipo_y_unidad_elegida', fakeAsync(() => {
       confirmar();
       servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
@@ -208,8 +214,78 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
       flushMicrotasks();
 
       expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith({
-        requerimientoId: 57, folioContpaq: '1234', unidadDeNegocioId: 2, tipo: 'CE'
+        requerimientoId: 57, folioContpaq: 'COT-1234', unidadDeNegocioId: 2, tipo: 'CE'
       });
+    }));
+
+    it('Sin_serie_en_la_coincidencia_se_manda_el_folio_tecleado', fakeAsync(() => {
+      elegirCoincidencia({ serie: null });
+      confirmar();
+      servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
+
+      component.convertir();
+      flushMicrotasks();
+
+      expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith(jasmine.objectContaining({ folioContpaq: '1234' }));
+    }));
+
+    ['COT/1', 'A--B', '-COT', 'COT-', 'A B', 'S'.repeat(30)].forEach((serie, i) => {
+      it(`Una_serie_que_el_API_no_acepta_no_se_antepone_al_folio_${i + 1}`, fakeAsync(() => {
+        elegirCoincidencia({ serie });
+        confirmar();
+        servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
+
+        component.convertir();
+        flushMicrotasks();
+
+        expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith(jasmine.objectContaining({ folioContpaq: '1234' }));
+      }));
+    });
+
+    it('Con_el_mismo_folio_en_dos_series_de_una_unidad_se_convierte_la_serie_elegida', fakeAsync(() => {
+      component.coincidencias = [
+        coincidencia({ idDocumento: 100, serie: 'COT', folio: '500' }),
+        coincidencia({ idDocumento: 104, serie: 'CTZ', folio: '500' })
+      ];
+      component.seleccionada = null;
+      component.seleccionar(component.coincidencias[1]);
+      confirmar();
+      servicio.convertirACotizacion.and.returnValue(of(RESULTADO));
+
+      component.convertir();
+      flushMicrotasks();
+
+      expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith(jasmine.objectContaining({ folioContpaq: 'CTZ-500', unidadDeNegocioId: 2 }));
+    }));
+
+    it('409_de_mas_de_una_serie_muestra_el_mensaje_y_deja_reintentar', fakeAsync(() => {
+      confirmar();
+      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409, error: { mensaje: 'El folio existe en más de una serie de esta unidad. Escribe la serie, por ejemplo COT-500.' }
+      })));
+
+      component.convertir();
+      flushMicrotasks();
+      fixture.detectChanges();
+
+      expect(q('error-convertir')?.textContent).toContain('más de una serie');
+      expect(component.seleccionada).not.toBeNull();
+      expect(boton('btn-convertir').disabled).toBeFalse();
+      expect(dialogRef.close).not.toHaveBeenCalled();
+    }));
+
+    it('409_de_conversion_en_curso_muestra_el_mensaje_y_deja_reintentar', fakeAsync(() => {
+      confirmar();
+      servicio.convertirACotizacion.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409, error: { mensaje: 'Hay otra conversión en curso. Intenta de nuevo.' }
+      })));
+
+      component.convertir();
+      flushMicrotasks();
+      fixture.detectChanges();
+
+      expect(q('error-convertir')?.textContent).toContain('Hay otra conversión en curso');
+      expect(boton('btn-convertir').disabled).toBeFalse();
     }));
 
     it('Tras_editar_el_folio_y_volver_a_buscar_se_convierte_el_folio_nuevo', fakeAsync(() => {
@@ -222,7 +298,7 @@ describe('RequerimientoConvertirCotizacionDialogComponent', () => {
       component.convertir();
       flushMicrotasks();
 
-      expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith(jasmine.objectContaining({ folioContpaq: '5678', unidadDeNegocioId: 3 }));
+      expect(servicio.convertirACotizacion).toHaveBeenCalledOnceWith(jasmine.objectContaining({ folioContpaq: 'COT-5678', unidadDeNegocioId: 3 }));
     }));
 
     it('Doble_clic_en_Convertir_envia_una_sola_peticion', fakeAsync(() => {

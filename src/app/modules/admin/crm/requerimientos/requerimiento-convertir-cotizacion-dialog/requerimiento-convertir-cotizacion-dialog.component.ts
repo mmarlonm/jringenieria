@@ -32,6 +32,9 @@ export interface ConvertirCotizacionDialogResult {
 /** Mismo criterio que el API (contrato §2): letras, dígitos y guion, de 1 a 30; se toleran espacios alrededor. */
 const PATRON_FOLIO = /^\s*[A-Za-z0-9-]{1,30}\s*$/;
 
+/** Una serie válida para ir antes del folio: letras y dígitos, con guiones solo entre ellos. */
+const PATRON_SERIE = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/;
+
 export const TIPOS_COTIZACION: ReadonlyArray<{ codigo: TipoCotizacionSgc; nombre: string }> = [
   { codigo: 'CS', nombre: 'Comercial' },
   { codigo: 'CT', nombre: 'Técnico-comercial' },
@@ -164,7 +167,7 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnDestro
     const elegida = this.seleccionada;
     this.reqService.convertirACotizacion({
       requerimientoId: this.data.requerimiento.id,
-      folioContpaq: this.folioBuscado,
+      folioContpaq: this.folioParaConvertir(elegida),
       unidadDeNegocioId: elegida.unidadDeNegocioId,
       tipo: this.tipoControl.value
     }).subscribe({
@@ -176,6 +179,21 @@ export class RequerimientoConvertirCotizacionDialogComponent implements OnDestro
         this.manejarErrorDeConversion(err);
       }
     });
+  }
+
+  /**
+   * Folio que se manda al convertir: «serie-folio» de la coincidencia elegida. Así, si el mismo folio existe en
+   * dos series de la misma unidad, el API convierte justo la que el usuario vio. Si la serie falta o no cabe en el
+   * formato que acepta el API (letras, dígitos y guiones sueltos, hasta 30), se manda lo que se tecleó.
+   */
+  private folioParaConvertir(c: CoincidenciaFolioContpaq): string {
+    const serie = (c.serie ?? '').trim();
+    const folio = (c.folio ?? '').trim();
+    if (!serie || !folio || !PATRON_SERIE.test(serie)) {
+      return this.folioBuscado;
+    }
+    const candidato = `${serie}-${folio}`;
+    return PATRON_FOLIO.test(candidato) && !candidato.includes('--') ? candidato : this.folioBuscado;
   }
 
   private bloquear(valor: boolean): void {
