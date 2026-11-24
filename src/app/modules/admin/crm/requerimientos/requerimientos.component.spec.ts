@@ -170,13 +170,13 @@ describe('RequerimientosComponent - Aprobados', () => {
     const swalSpy = spyOn(Swal, 'fire');
     const reqService = TestBed.inject(RequerimientosService);
     spyOn(reqService, 'calificarRequerimiento').and.returnValue(
-      throwError(() => ({ error: { mensaje: 'Falta capturar: Cantidades' } }))
+      throwError(() => ({ error: { mensaje: 'Error al calificar' } }))
     );
     const reloadSpy = spyOn(component, 'loadRequerimientos');
 
     (component as any).onCardMoved(1, 'Calificado Comercial', {});
 
-    expect(swalSpy).toHaveBeenCalledWith('Error', jasmine.stringMatching('Falta capturar: Cantidades'), 'error');
+    expect(swalSpy).toHaveBeenCalledWith('Error', jasmine.stringMatching('Error al calificar'), 'error');
     expect(reloadSpy).toHaveBeenCalled();
   });
 

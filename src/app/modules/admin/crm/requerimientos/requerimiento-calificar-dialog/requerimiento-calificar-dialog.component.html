@@ -166,10 +166,6 @@
                                 <mat-label>{{ item.etiquetaTexto || item.etiqueta }}</mat-label>
                                 <input matInput [formControlName]="item.campoTexto" [attr.formControlName]="item.campoTexto" [name]="item.campoTexto" [id]="item.campoTexto" [placeholder]="'Especifique ' + (item.etiquetaTexto || item.etiqueta).toLowerCase() + '...'" [maxlength]="item.campoTexto === 'marcaModelo' ? 200 : 500">
                             </mat-form-field>
-                            <div *ngIf="calificarForm.hasError('textosCalificacionRequeridos') && !falta(item) && !calificarForm.get(item.campoTexto)?.value?.trim()"
-                                 class="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">
-                                Escríbelo o márcalo como faltante
-                            </div>
                         </div>
 
                         <mat-form-field *ngIf="item.control === 'faltaOtros' && falta(item)" appearance="outline" class="w-full mt-3 fuse-mat-dense" subscriptSizing="dynamic">

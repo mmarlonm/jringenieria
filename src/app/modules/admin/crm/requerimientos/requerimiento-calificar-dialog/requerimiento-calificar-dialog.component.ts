@@ -19,27 +19,6 @@ import Swal from 'sweetalert2';
 
 type Pestana = 'clasificacion' | 'checklist' | 'seguimiento' | 'archivos' | 'aprobacion';
 
-export function validarTextosCalificacion(group: AbstractControl): ValidationErrors | null {
-  const estatus = group.get('estatus')?.value;
-  const esCalificado = estatus === 'Calificado Comercial' || estatus === 'Calificado Técnico';
-  if (!esCalificado) return null;
-
-  const raw = (group as FormGroup).getRawValue ? (group as FormGroup).getRawValue() : group.value;
-  const faltaCant = raw.faltaCantidad;
-  const cant = raw.cantidades;
-  const faltaUbic = raw.faltaUbicacion;
-  const ubic = raw.ubicacionExacta;
-  const faltaMarca = raw.faltaMarcaModelo;
-  const marca = raw.marcaModelo;
-
-  const faltantes: string[] = [];
-  if (!faltaCant && !(cant && String(cant).trim())) faltantes.push('cantidades');
-  if (!faltaUbic && !(ubic && String(ubic).trim())) faltantes.push('ubicacionExacta');
-  if (!faltaMarca && !(marca && String(marca).trim())) faltantes.push('marcaModelo');
-
-  return faltantes.length > 0 ? { textosCalificacionRequeridos: true, camposFaltantes: faltantes } : null;
-}
-
 @Component({
   selector: 'app-requerimiento-calificar-dialog',
   standalone: true,
@@ -146,7 +125,7 @@ export class RequerimientoCalificarDialogComponent implements OnInit {
       cantidades: [{ value: this.requerimiento.cantidades || '', disabled: !this.puedeCalificar || !!this.requerimiento.faltaCantidad }, [Validators.maxLength(500)]],
       ubicacionExacta: [{ value: this.requerimiento.ubicacionExacta || '', disabled: !this.puedeCalificar || !!this.requerimiento.faltaUbicacion }, [Validators.maxLength(500)]],
       marcaModelo: [{ value: this.requerimiento.marcaModelo || '', disabled: !this.puedeCalificar || !!this.requerimiento.faltaMarcaModelo }, [Validators.maxLength(200)]]
-    }, { validators: [validarTextosCalificacion] });
+    });
 
     if (!this.puedeCalificar) this.calificarForm.disable();
 
