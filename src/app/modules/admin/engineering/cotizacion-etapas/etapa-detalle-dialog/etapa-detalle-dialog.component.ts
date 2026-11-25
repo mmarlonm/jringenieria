@@ -360,9 +360,25 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
 
     get puedeCambiarAutorizador(): boolean {
         if (this.esSoloLectura) return false;
-        if (!this.etapaActualDto?.autorizaUsuarioId) return true;
         if (this.esAdmin) return true;
-        return this.usuarioActualId === this.etapaActualDto.autorizaUsuarioId;
+        if (this.usuarioActualId == null || this.detalle?.idUsuarioRegistro == null) return false;
+        return this.usuarioActualId === this.detalle.idUsuarioRegistro;
+    }
+
+    get autorizadoresDisponibles(): any[] {
+        if (!this.usuariosJr?.length) return [];
+        if (this.esAdmin) return this.usuariosJr;
+        const actualId = this.usuarioActualId;
+        const autorizadorSeleccionado = this.form?.get('autorizaUsuarioId')?.value
+            ?? this.etapaActualDto?.autorizaUsuarioId;
+
+        return this.usuariosJr.filter((u) => {
+            const uid = u.usuarioId || u.id;
+            if (uid === actualId) {
+                return uid === autorizadorSeleccionado;
+            }
+            return true;
+        });
     }
 
     puedeIniciarRevision(): boolean {

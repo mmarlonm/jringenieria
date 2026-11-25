@@ -209,21 +209,21 @@ describe('EtapaDetalleDialogComponent', () => {
         expect(compiled.textContent).not.toContain('Guardar Cambios');
     });
 
-    function conSesion(roles: string[]): void {
+    function conSesion(roles: string[], id: number = 42): void {
         (localStorage.getItem as jasmine.Spy).and.callFake((key: string) =>
-            key === 'userInformation' ? JSON.stringify({ usuario: { id: 42 }, roles }) : null
+            key === 'userInformation' ? JSON.stringify({ usuario: { id }, roles }) : null
         );
     }
 
     it('un administrador (rol admin o pruebas, sin importar mayusculas) puede autorizar y cambiar al autorizador aunque haya otro designado', () => {
         for (const rol of ['Admin', 'PRUEBAS']) {
-            conSesion([rol]);
+            conSesion([rol], 88); // 88 no es idUsuarioRegistro (42)
             expect(component.esAdmin).withContext(rol).toBeTrue();
             expect(component.puedeAutorizarAccion).withContext(rol).toBeTrue();
             expect(component.puedeCambiarAutorizador).withContext(rol).toBeTrue();
         }
 
-        conSesion(['Usuario']);
+        conSesion(['Usuario'], 88); // 88 no es admin y no es quien registró (42)
         expect(component.esAdmin).toBeFalse();
         expect(component.puedeAutorizarAccion).toBeFalse();
         expect(component.puedeCambiarAutorizador).toBeFalse();
@@ -908,5 +908,96 @@ describe('EtapaDetalleDialogComponent', () => {
         expect(component.errorRegresoMsg).toBe('No se puede regresar esta etapa');
         const errorElem = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="error-regreso"]');
         expect(errorElem?.textContent).toContain('No se puede regresar esta etapa');
+    });
+
+    describe('Candado del autorizador (F1)', () => {
+        it('Quien_registro_el_caso_puede_cambiar_al_autorizador', () => {
+            conSesion(['Usuario'], 42); // 42 es idUsuarioRegistro
+            component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
+            expect(component.puedeCambiarAutorizador).toBeTrue();
+        });
+
+        it('Otro_usuario_no_puede_aunque_no_haya_autorizador', () => {
+            conSesion(['Usuario'], 88); // 88 no es idUsuarioRegistro
+            component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
+            component.etapaActualDto = { ...component.etapaActualDto!, autorizaUsuarioId: null };
+            expect(component.puedeCambiarAutorizador).toBeFalse();
+        });
+
+        it('El_autorizador_actual_que_no_registro_no_puede_cambiarlo', () => {
+            conSesion(['Usuario'], 99); // 99 es autorizaUsuarioId actual, pero no es idUsuarioRegistro (42)
+            component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
+            component.etapaActualDto = { ...component.etapaActualDto!, autorizaUsuarioId: 99 };
+            expect(component.puedeCambiarAutorizador).toBeFalse();
+        });
+
+        it('Admin_siempre_puede', () => {
+            conSesion(['Admin'], 88); // 88 no registró el caso pero es admin
+            component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
+            expect(component.puedeCambiarAutorizador).toBeTrue();
+
+            conSesion(['pruebas'], 88); // pruebas cuenta como admin
+            expect(component.puedeCambiarAutorizador).toBeTrue();
+        });
+
+        it('En_solo_lectura_nadie_puede', () => {
+            conSesion(['Admin'], 42);
+            component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
+            spyOnProperty(component, 'esSoloLectura', 'get').and.returnValue(true);
+            expect(component.puedeCambiarAutorizador).toBeFalse();
+        });
+
+        it('El_selector_no_ofrece_al_usuario_actual_si_no_es_admin', () => {
+            conSesion(['Usuario'], 42);
+            component.usuariosJr = [
+                { usuarioId: 10, nombre: 'Ana' },
+                { usuarioId: 42, nombre: 'Usuario Actual' },
+                { usuarioId: 50, nombre: 'Carlos' }
+            ];
+            component.etapaActualDto = { ...component.etapaActualDto!, autorizaUsuarioId: null };
+            component.form.patchValue({ autorizaUsuarioId: null });
+
+            const lista = (component as any).autorizadoresDisponibles;
+            expect(lista.some((u: any) => (u.usuarioId || u.id) === 42)).toBeFalse();
+            expect(lista.length).toBe(2);
+
+            // Si el autorizador actual ya era el usuario 42 previamente, sí debe ofrecerse para no dejarlo en blanco
+            component.etapaActualDto = { ...component.etapaActualDto!, autorizaUsuarioId: 42 };
+            component.form.patchValue({ autorizaUsuarioId: 42 });
+            const listaConPreexistente = (component as any).autorizadoresDisponibles;
+            expect(listaConPreexistente.some((u: any) => (u.usuarioId || u.id) === 42)).toBeTrue();
+        });
+
+        it('Muestra_la_ayuda_cuando_el_campo_esta_bloqueado', () => {
+            conSesion(['Usuario'], 88); // no admin, no creador -> bloqueado
+            component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
+            fixture.detectChanges();
+
+            const texto = (fixture.nativeElement as HTMLElement).textContent || '';
+            expect(texto).toContain('Solo quien registró el caso o un administrador puede designar al autorizador');
+        });
+
+        it('Error_403_muestra_el_mensaje_del_API', () => {
+            conSesion(['Usuario'], 42);
+            component.form.patchValue({
+                responsableUsuarioId: 5,
+                autorizaUsuarioId: 42 // intento inválido
+            });
+            fixture.detectChanges();
+
+            const mensajeApi = 'No puedes designarte como autorizador: pídeselo a un administrador';
+            serviceMock.guardar.and.returnValue(throwError(() => ({
+                status: 403,
+                error: { mensaje: mensajeApi }
+            })));
+
+            component.guardar();
+            fixture.detectChanges();
+
+            expect(component.errorMsg).toBe(mensajeApi);
+            const errorDiv = (fixture.nativeElement as HTMLElement).querySelector('.bg-red-500\\/10');
+            expect(errorDiv?.textContent).toContain(mensajeApi);
+            expect(component.form.get('autorizaUsuarioId')?.value).toBe(42);
+        });
     });
 });
