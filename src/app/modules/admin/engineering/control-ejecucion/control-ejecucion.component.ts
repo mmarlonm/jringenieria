@@ -152,6 +152,8 @@ export class ControlEjecucionComponent implements OnInit, AfterViewInit {
     ) { }
 
     ngOnInit(): void {
+        this._setupFilterPredicate();
+
         // Cargar rango de fecha por defecto de localStorage, sino calcular el del mes corriente
         const savedStart = localStorage.getItem('controlEjecucion_fechaInicio');
         const savedEnd = localStorage.getItem('controlEjecucion_fechaFin');

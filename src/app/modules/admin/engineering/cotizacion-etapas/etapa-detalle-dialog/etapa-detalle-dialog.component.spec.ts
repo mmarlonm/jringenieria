@@ -1013,4 +1013,88 @@ describe('EtapaDetalleDialogComponent', () => {
             expect(component.form.get('autorizaUsuarioId')?.value).toBe(42);
         });
     });
+
+    describe('Cambio en ejecución (F1)', () => {
+        it('Regresar_visible_con_el_caso_en_ejecucion', () => {
+            abrirEnEtapa3ConAnteriores();
+            // Simular caso en ejecución (etapa 5 autorizada)
+            component.detalle = {
+                ...component.detalle!,
+                etapas: [
+                    ...component.detalle!.etapas,
+                    {
+                        etapa: 5,
+                        estatus: ESTATUS_ETAPA.Autorizada,
+                        esAliado: false,
+                        revisiones: []
+                    }
+                ]
+            };
+            spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+            fixture.detectChanges();
+
+            expect(component.casoPasoASeguimiento).toBeTrue();
+            expect(component.puedeRegresarEtapa).toBeTrue();
+            const btnRegresar = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-regresar-etapa"]');
+            expect(btnRegresar).not.toBeNull();
+        });
+
+        it('Regresar_oculto_si_el_caso_esta_cancelado', () => {
+            abrirEnEtapa3ConAnteriores();
+            component.detalle = {
+                ...component.detalle!,
+                cancelado: true
+            };
+            spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+            fixture.detectChanges();
+
+            expect(component.puedeRegresarEtapa).toBeFalse();
+            const btnRegresar = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-regresar-etapa"]');
+            expect(btnRegresar).toBeNull();
+        });
+
+        it('Modal_de_regresar_avisa_que_sigue_en_Seguimiento', () => {
+            abrirEnEtapa3ConAnteriores();
+            // Caso en ejecución
+            component.detalle = {
+                ...component.detalle!,
+                etapas: [
+                    ...component.detalle!.etapas,
+                    {
+                        etapa: 5,
+                        estatus: ESTATUS_ETAPA.Autorizada,
+                        esAliado: false,
+                        revisiones: []
+                    }
+                ]
+            };
+            spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+            fixture.detectChanges();
+
+            component.abrirModalRegresar();
+            fixture.detectChanges();
+
+            const aviso = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="aviso-regresar-en-ejecucion"]');
+            expect(aviso).not.toBeNull();
+            expect(aviso?.textContent).toContain('El proyecto seguirá en Seguimiento de Proyectos con lo último autorizado. Los cambios se aplicarán cuando el cliente vuelva a autorizar.');
+        });
+
+        it('Franja_de_cambio_en_curso_con_fecha_de_Mexico_y_motivo', () => {
+            abrirEnEtapa3ConAnteriores();
+            component.detalle = {
+                ...component.detalle!,
+                enCambioIngenieria: true,
+                cambioIngenieriaDesde: '2026-11-25T20:30:00Z',
+                cambioIngenieriaMotivo: 'Ajuste de alcance solicitado en obra'
+            };
+            fixture.detectChanges();
+
+            const franja = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="franja-cambio-en-curso"]');
+            expect(franja).not.toBeNull();
+            // 20:30 UTC -> 14:30 America/Mexico_City
+            expect(franja?.textContent).toContain('25/11/2026 14:30');
+            expect(franja?.textContent).toContain('Ajuste de alcance solicitado en obra');
+            expect(franja?.textContent).toContain('El proyecto sigue en Seguimiento de Proyectos con lo autorizado.');
+        });
+    });
 });

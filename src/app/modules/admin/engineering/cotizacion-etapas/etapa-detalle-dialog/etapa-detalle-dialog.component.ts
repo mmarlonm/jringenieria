@@ -267,7 +267,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
 
     /** Eliminar: solo un caso cancelado, que no pasó a Seguimiento de Proyectos, a quien lo registró o a un administrador. */
     get puedeEliminar(): boolean {
-        if (!this.detalle?.cancelado || this.casoPasoASeguimiento) return false;
+        if (!this.detalle?.cancelado || this.casoPasoASeguimiento || this.detalle?.enCambioIngenieria) return false;
         return this.esAdmin || (this.usuarioActualId != null && this.usuarioActualId === this.detalle.idUsuarioRegistro);
     }
 
@@ -290,8 +290,12 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         return !!this.detalle && this.etapaVisualizada !== this.detalle.etapaActual;
     }
 
+    get estaEnEjecucionOCambio(): boolean {
+        return this.casoPasoASeguimiento || !!this.detalle?.enCambioIngenieria;
+    }
+
     get puedeRegresarEtapa(): boolean {
-        if (!this.detalle || this.detalle.cancelado || this.casoPasoASeguimiento) return false;
+        if (!this.detalle || this.detalle.cancelado) return false;
         if (this.esModoConsulta) return false;
         const actual = this.detalle.etapaActual;
         if (actual <= 1) return false;

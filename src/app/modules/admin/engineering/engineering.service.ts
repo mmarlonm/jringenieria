@@ -41,6 +41,9 @@ export interface SeguimientoProyecto {
     sucursalId?: number | null;
     tieneSolicitudesCompra?: boolean;
     totalSolicitudesCompra?: number;
+    enCambioIngenieria?: boolean;
+    cambioIngenieriaDesde?: string | null;
+    cambioIngenieriaMotivo?: string | null;
 }
 
 export interface SeguimientoEjecucion {
@@ -75,6 +78,9 @@ export interface SeguimientoEjecucion {
     hayActividadDetenida?: boolean; // true si hay al menos una actividad detenida
     tieneSolicitudesCompra?: boolean;
     totalSolicitudesCompra?: number;
+    enCambioIngenieria?: boolean;
+    cambioIngenieriaDesde?: string | null;
+    cambioIngenieriaMotivo?: string | null;
 }
 
 export interface SeguimientoEjecucionActividadMaestra {
