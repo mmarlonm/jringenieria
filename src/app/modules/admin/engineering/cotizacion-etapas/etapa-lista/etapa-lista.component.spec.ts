@@ -297,5 +297,20 @@ describe('EtapaListaComponent', () => {
             expect(serviceMock.listar).toHaveBeenCalledWith(1, true);
             expect(component.kpiTotal).toBe(7);
         });
+
+        it('Lista_de_etapa_muestra_chip_En_cambio', () => {
+            setup(1);
+            component.dataSource.data = [
+                {
+                    ...mockProyectos[0],
+                    enCambioIngenieria: true
+                }
+            ];
+            fixture.detectChanges();
+
+            const chip = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="chip-en-cambio"]');
+            expect(chip).not.toBeNull();
+            expect(chip?.textContent?.trim()).toBe('En cambio');
+        });
     });
 });

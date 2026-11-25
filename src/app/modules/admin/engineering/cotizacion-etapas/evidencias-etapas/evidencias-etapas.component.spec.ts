@@ -129,4 +129,24 @@ describe('EvidenciasEtapasComponent', () => {
         expect(component.error).toBeTrue();
         expect(html().textContent).toContain('No se pudieron cargar');
     });
+
+    it('Evidencias_marcan_Sin_autorizar', () => {
+        crear([
+            { etapa: 3, revision: 2, nombreArchivo: 'no_aut.pdf', revisionAutorizada: false },
+            { etapa: 3, revision: 1, nombreArchivo: 'aut.pdf', revisionAutorizada: true }
+        ]);
+
+        const grupo = component.grupos.find((g) => g.etapa === 3);
+        expect(grupo).toBeDefined();
+        // Autorizados primero, no autorizados al final
+        expect(grupo!.archivos.map((a) => a.nombreArchivo)).toEqual(['aut.pdf', 'no_aut.pdf']);
+
+        const filaNoAut = html().querySelector('[data-archivo="no_aut.pdf"]') as HTMLElement;
+        const chip = filaNoAut.querySelector('[data-testid="chip-sin-autorizar"]');
+        expect(chip).not.toBeNull();
+        expect(chip?.textContent?.trim()).toBe('Sin autorizar');
+
+        const filaAut = html().querySelector('[data-archivo="aut.pdf"]') as HTMLElement;
+        expect(filaAut.querySelector('[data-testid="chip-sin-autorizar"]')).toBeNull();
+    });
 });

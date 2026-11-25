@@ -71,11 +71,19 @@ export class EvidenciasEtapasComponent implements OnInit, OnDestroy {
         }
         return [...porEtapa.keys()]
             .sort((a, b) => a - b)
-            .map((etapa) => ({
-                etapa,
-                titulo: obtenerEtapaConfig(etapa)?.titulo ?? `Etapa ${etapa}`,
-                archivos: porEtapa.get(etapa)!
-            }));
+            .map((etapa) => {
+                const lista = (porEtapa.get(etapa) || []).slice();
+                lista.sort((a, b) => {
+                    const sinAutA = a.revisionAutorizada === false ? 1 : 0;
+                    const sinAutB = b.revisionAutorizada === false ? 1 : 0;
+                    return sinAutA - sinAutB;
+                });
+                return {
+                    etapa,
+                    titulo: obtenerEtapaConfig(etapa)?.titulo ?? `Etapa ${etapa}`,
+                    archivos: lista
+                };
+            });
     }
 
     esPrevisualizable(nombre: string): boolean {

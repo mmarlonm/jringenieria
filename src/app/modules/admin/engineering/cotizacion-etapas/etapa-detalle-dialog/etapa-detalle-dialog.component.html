@@ -27,6 +27,18 @@
         </button>
     </div>
 
+    <!-- Franja de cambio en curso -->
+    <div
+        *ngIf="detalle?.enCambioIngenieria"
+        class="px-6 py-2.5 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/60 text-xs font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-2"
+        data-testid="franja-cambio-en-curso"
+    >
+        <mat-icon class="text-amber-600 dark:text-amber-400 !w-4 !h-4 !text-base leading-none">warning_amber</mat-icon>
+        <span>
+            Cambio en curso desde {{ detalle?.cambioIngenieriaDesde | date:'dd/MM/yyyy HH:mm':'America/Mexico_City' }}: {{ detalle?.cambioIngenieriaMotivo }}. El proyecto sigue en Seguimiento de Proyectos con lo autorizado.
+        </span>
+    </div>
+
     <!-- Proceso: en que paso va (Lead -> Requerimiento -> Ingenieria / Cotizacion) -->
     <app-proceso-comercial tipo="caso" [id]="idSeguimiento" [refresco]="detalle?.etapaActual + '|' + detalle?.cancelado" class="block shrink-0 px-6 py-3 border-b border-slate-200 dark:border-slate-800"></app-proceso-comercial>
 
@@ -956,6 +968,10 @@
 
             <p class="text-xs text-slate-500 dark:text-slate-400">
                 Seleccione la etapa anterior a la que desea regresar el caso e indique el motivo detallado (mínimo 10 caracteres).
+            </p>
+
+            <p *ngIf="estaEnEjecucionOCambio" class="text-xs p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 font-medium" data-testid="aviso-regresar-en-ejecucion">
+                El proyecto seguirá en Seguimiento de Proyectos con lo último autorizado. Los cambios se aplicarán cuando el cliente vuelva a autorizar.
             </p>
 
             <div class="space-y-3">

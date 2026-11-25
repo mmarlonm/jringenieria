@@ -27,6 +27,7 @@ export interface CotizacionEtapasListItemDto {
     monto?: number | null;
     fechaRegistro: string;
     cancelado: boolean;
+    enCambioIngenieria?: boolean;
 }
 
 export interface CotizacionEtapaArchivoVersionDto {
@@ -54,6 +55,7 @@ export interface CotizacionEtapasArchivoCasoDto {
     nombreArchivo: string;
     version?: number;
     observacion?: string | null;
+    revisionAutorizada?: boolean;
 }
 
 export interface CotizacionEtapasRevisionDto {
@@ -116,6 +118,9 @@ export interface CotizacionEtapasDetalleDto {
     cancelado: boolean;
     motivoRechazo?: string | null;
     montoTotalEstimado?: number | null;
+    enCambioIngenieria?: boolean;
+    cambioIngenieriaDesde?: string | null;
+    cambioIngenieriaMotivo?: string | null;
     etapas: CotizacionEtapaDto[];
 }
 
