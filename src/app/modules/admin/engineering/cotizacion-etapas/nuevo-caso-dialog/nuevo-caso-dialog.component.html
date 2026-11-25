@@ -29,17 +29,28 @@
         <form [formGroup]="form" class="space-y-4">
             <!-- Solicitante, Sucursal y Fecha Requisicion -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-                    <mat-label>Cliente / Solicitante</mat-label>
-                    <mat-select formControlName="idSolicitante">
-                        <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">
-                            {{ s.nombreCompleto }} <span class="text-xs text-slate-400">({{ s.empresa }})</span>
-                        </mat-option>
-                    </mat-select>
-                    <mat-error *ngIf="form.get('idSolicitante')?.hasError('required')">
-                        El cliente solicitante es obligatorio
-                    </mat-error>
-                </mat-form-field>
+                <div class="flex items-center gap-1 w-full">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1 min-w-0">
+                        <mat-label>Cliente / Solicitante</mat-label>
+                        <mat-select formControlName="idSolicitante">
+                            <mat-option *ngFor="let s of solicitantes" [value]="s.idSolicitante">
+                                {{ s.nombreCompleto }} <span class="text-xs text-slate-400">({{ s.empresa }})</span>
+                            </mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="form.get('idSolicitante')?.hasError('required')">
+                            El cliente solicitante es obligatorio
+                        </mat-error>
+                    </mat-form-field>
+                    <button mat-icon-button
+                            type="button"
+                            color="primary"
+                            matTooltip="Agregar nuevo solicitante"
+                            data-testid="btn-agregar-solicitante"
+                            [disabled]="guardando || creandoSolicitante"
+                            (click)="agregarSolicitante()">
+                        <mat-icon>person_add</mat-icon>
+                    </button>
+                </div>
 
                 <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
                     <mat-label>Sucursal</mat-label>
