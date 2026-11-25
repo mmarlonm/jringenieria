@@ -45,10 +45,14 @@ export class NavigationMockApi {
             // ... Tu lógica actual de filtrado por localStorage ...
             const storedData = JSON.parse(localStorage.getItem('userInformation') || '{}');
 
-            // 🔹 CORRECCIÓN: Extraer permisos de forma más robusta (soportando múltiples estructuras)
-            const vistasPermitidas: string[] = (storedData.permisos || []).map(p => {
-                return p.vista?.nombreVista || p.vistaId || p.nombreVista || p.vista?.idVista || "";
-            }).filter(v => v !== "");
+            // 🔹 CORRECCIÓN: Extraer permisos de forma más robusta (soportando múltiples estructuras y vistas asignadas)
+            const permisosVistas: string[] = (storedData.permisos || []).map((p: any) => {
+                return p.vista?.nombreVista || (typeof p.vistaId === 'string' ? p.vistaId : '') || p.nombreVista || p.vista?.idVista || "";
+            }).filter((v: string) => v !== "");
+            const rolVistas: string[] = (storedData.vistas || []).map((v: any) => {
+                return v.nombreVista || (typeof v.vistaId === 'string' ? v.vistaId : '') || "";
+            }).filter((v: string) => v !== "");
+            const vistasPermitidas: string[] = Array.from(new Set([...permisosVistas, ...rolVistas]));
 
             // Fill compact navigation children using the default navigation
             this._compactNavigation.forEach((compactNavItem) => {

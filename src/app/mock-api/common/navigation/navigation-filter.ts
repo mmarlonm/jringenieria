@@ -3,11 +3,20 @@ import { cloneDeep } from 'lodash-es';
 
 /**
  * Módulos cuyos nombres de vista son exactamente los ids del menú (la pantalla de Roles guarda la vista con el id del menú).
- * Sus nombres solo coinciden de forma exacta: con la regla antigua por último segmento, `eventos.dashboard` encendía
- * `finanzas.dashboard` (y al revés) y el menú de Finanzas aparecía para quien no tenía ninguna vista de Finanzas.
- * El API ya compara el nombre exacto; esto solo alinea el menú con él.
+ * Sus nombres solo coinciden de forma exacta: con la regla antigua por último segmento, choques como `eventos.dashboard`
+ * encendían `finanzas.dashboard`, o `administracion.tickets` encendía `ingenieria.tickets` (y con ello el módulo completo de Ingeniería).
+ * El API ya compara el nombre exacto; esto asegura que los usuarios solo vean en el menú los módulos y vistas a los
+ * que su rol tiene permisos.
  */
-const MODULOS_CON_NOMBRE_EXACTO = ['finanzas.'];
+const MODULOS_CON_NOMBRE_EXACTO = [
+    'administracion.',
+    'ingenieria.',
+    'comercializacion.',
+    'marketing.',
+    'rrhh.',
+    'finanzas.',
+    'eventos.',
+];
 
 /** Entradas del menú que se muestran siempre, sin importar los permisos. */
 const SIEMPRE_VISIBLES = ['dashboards.identidad', 'dashboards.neural-graph', 'administracion.minutas'];

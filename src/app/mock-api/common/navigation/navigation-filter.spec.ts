@@ -19,6 +19,24 @@ describe('filtro del menú por vistas', () => {
             expect(coincideVista('otro.cfdi', 'finanzas.cfdi')).toBeFalse();
         });
 
+        it('los nombres de Ingeniería solo coinciden de forma exacta, en los dos sentidos', () => {
+            // Choque de tickets: administracion.tickets no debe encender ingenieria.tickets
+            expect(coincideVista('administracion.tickets', 'ingenieria.tickets')).toBeFalse();
+            expect(coincideVista('ingenieria.tickets', 'administracion.tickets')).toBeFalse();
+            // Solicitud del cliente solo enciende con su vista exacta
+            expect(coincideVista('solicitud-cliente', 'ingenieria.solicitud-cliente')).toBeFalse();
+            expect(coincideVista('otro.solicitud-cliente', 'ingenieria.solicitud-cliente')).toBeFalse();
+            expect(coincideVista('administracion.solicitudes-compra', 'ingenieria.solicitud-cliente')).toBeFalse();
+            expect(coincideVista('ingenieria.solicitud-cliente', 'ingenieria.solicitud-cliente')).toBeTrue();
+        });
+
+        it('los demás módulos principales (administración, comercialización, marketing, rrhh, eventos) solo coinciden exacto', () => {
+            expect(coincideVista('comercializacion.control-entregas', 'administracion.control-entregas')).toBeFalse();
+            expect(coincideVista('administracion.reportes', 'ingenieria.reportes')).toBeFalse();
+            expect(coincideVista('comercializacion.inventario', 'ingenieria.inventario')).toBeFalse();
+            expect(coincideVista('eventos.gestion', 'ingenieria.gestion')).toBeFalse();
+        });
+
         it('el resto conserva la regla antigua por último segmento', () => {
             expect(coincideVista('clients', 'catalogs.clients')).toBeTrue();
             expect(coincideVista('viejo.usuarios', 'apps.usuarios')).toBeTrue();
@@ -104,6 +122,52 @@ describe('filtro del menú por vistas', () => {
 
             // «Nube de Minutas» se agregó a SIEMPRE_VISIBLES a propósito (commit bd03e5c5): la ven todos los usuarios
             expect(hojas(menu)).toEqual(['dashboards.identidad', 'dashboards.neural-graph', 'administracion.minutas']);
+        });
+
+        it('quien solo tiene tickets de Administración no ve el módulo Ingeniería ni ingenieria.tickets', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, ['administracion.tickets']);
+            const idsMenu = ids(menu);
+
+            expect(idsMenu).toContain('administracion.tickets');
+            expect(idsMenu).not.toContain('ingenieria.tickets');
+            expect(menu.find((i) => i.id === 'ingenieria')).toBeUndefined();
+        });
+
+        it('quien no tiene ingenieria.solicitud-cliente no ve la entrada de Solicitud del cliente en el menú', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, ['administracion.solicitudes-compra', 'rrhh.mis-solicitudes']);
+            const idsMenu = ids(menu);
+
+            expect(idsMenu).not.toContain('ingenieria.solicitud-cliente');
+            expect(menu.find((i) => i.id === 'ingenieria')).toBeUndefined();
+        });
+
+        it('quien solo tiene vistas de administración no ve módulos a los que su rol no tiene permisos', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, [
+                'administracion.tablero-compras',
+                'administracion.solicitudes-compra',
+                'administracion.recepcion-compras',
+                'administracion.tickets'
+            ]);
+            const topLevelIds = menu.map((i) => i.id);
+
+            expect(topLevelIds).toContain('administracion');
+            expect(topLevelIds).not.toContain('ingenieria');
+            expect(topLevelIds).not.toContain('finanzas');
+            expect(topLevelIds).not.toContain('eventos');
+            expect(topLevelIds).not.toContain('rrhh');
+            expect(topLevelIds).not.toContain('comercializacion');
+        });
+
+        it('quien tiene ingenieria.solicitud-cliente ve solo esa etapa y no las demás etapas de ingeniería', () => {
+            const menu = filtrarMenuPorVistas(defaultNavigation, ['ingenieria.solicitud-cliente']);
+            const hijosIng = menu.find((i) => i.id === 'ingenieria')?.children?.map((h) => h.id as string);
+
+            expect(hijosIng).toContain('ingenieria.solicitud-cliente');
+            expect(hijosIng).not.toContain('ingenieria.levantamiento-tecnico');
+            expect(hijosIng).not.toContain('ingenieria.diseno-calculo');
+            expect(hijosIng).not.toContain('ingenieria.presupuesto-tecnico');
+            expect(hijosIng).not.toContain('ingenieria.propuesta-tecnico-comercial');
+            expect(hijosIng).not.toContain('ingenieria.tickets');
         });
 
         it('devuelve copias: no modifica el menú original', () => {
