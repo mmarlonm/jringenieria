@@ -22,6 +22,7 @@ import {
   MaterialesImportarExcelDialogResult
 } from '../dialogs/materiales-importar-excel-dialog.component';
 import { MaterialCompraDialogComponent, MaterialCompraDialogData } from '../dialogs/material-compra-dialog.component';
+import { MaterialObservacionesDialogComponent, MaterialObservacionesDialogData } from './material-observaciones-dialog/material-observaciones-dialog.component';
 import { CLASES_ESTATUS, CLAVE_CONTEO, CONTEO_VACIO, contarPorEstatus } from './material-estatus';
 
 export interface GrupoMateriales {
@@ -340,6 +341,16 @@ export class MaterialesTrazabilidadComponent implements OnChanges {
       if (nuevo) {
         this.reemplazar(nuevo);
       }
+    });
+  }
+
+  abrirObservaciones(item: SeguimientoMaterial): void {
+    const ref = this.dialog.open<MaterialObservacionesDialogComponent, MaterialObservacionesDialogData>(
+      MaterialObservacionesDialogComponent,
+      { width: '600px', maxWidth: '95vw', autoFocus: false, data: { material: item } }
+    );
+    ref.afterClosed().subscribe(() => {
+      this.recalcular();
     });
   }
 

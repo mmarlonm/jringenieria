@@ -137,7 +137,7 @@ describe('MaterialesTrazabilidadComponent', () => {
       configurar(resumen([mat(1), mat(2, { proveedorId: 99, proveedorNombre: null })]));
 
       expect(q('proveedor-1')?.textContent?.trim()).toBe('—');
-      expect(q('observaciones-1')?.textContent?.trim()).toBe('—');
+      expect(q('observaciones-1')?.textContent).toContain('Sin observaciones');
       expect(q('proveedor-2')?.textContent?.trim()).toBe('—');
     });
 
@@ -145,6 +145,21 @@ describe('MaterialesTrazabilidadComponent', () => {
       configurar();
       expect(q('proveedor-2')?.textContent).toContain('Proveedor Ficticio');
       expect(q('observaciones-2')?.textContent).toContain('Entrega en obra');
+    });
+
+    it('Muestra_icono_de_historial_y_conteo_de_observaciones', () => {
+      configurar(resumen([mat(1, { observacionesCount: 4, notas: 'Nota activa' })]));
+      expect(q('btn-historial-observaciones-1')).not.toBeNull();
+      expect(q('conteo-observaciones-1')?.textContent?.trim()).toBe('4');
+      expect(q('observaciones-1')?.textContent).toContain('Nota activa');
+    });
+
+    it('Clic_en_icono_de_historial_abre_dialogo_de_observaciones', () => {
+      configurar();
+      spyOn(component, 'abrirObservaciones');
+      const btn = q('btn-historial-observaciones-1') as HTMLButtonElement;
+      btn?.click();
+      expect(component.abrirObservaciones).toHaveBeenCalled();
     });
 
     it('Lo_que_viene_del_API_se_muestra_como_texto_y_no_como_HTML', () => {
@@ -506,7 +521,7 @@ describe('MaterialesTrazabilidadComponent', () => {
       fixture.detectChanges();
 
       expect(q('proveedor-2')?.textContent?.trim()).toBe('—');
-      expect(q('observaciones-2')?.textContent?.trim()).toBe('—');
+      expect(q('observaciones-2')?.textContent).toContain('Sin observaciones');
     });
   });
 

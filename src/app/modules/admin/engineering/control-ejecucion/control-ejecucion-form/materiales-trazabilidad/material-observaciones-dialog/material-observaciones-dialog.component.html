@@ -1,0 +1,81 @@
+<div class="p-6 max-w-2xl w-full">
+  <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+    <div>
+      <h2 mat-dialog-title class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 m-0">
+        <mat-icon class="text-indigo-600">history</mat-icon>
+        Historial de observaciones
+      </h2>
+      <p class="text-xs text-slate-500 mt-0.5 mb-0">
+        <span class="font-semibold text-slate-700">{{ data.material.descripcion }}</span>
+        <span *ngIf="data.material.codigoProducto" class="font-mono text-indigo-600"> · {{ data.material.codigoProducto }}</span>
+      </p>
+    </div>
+    <button mat-icon-button type="button" data-testid="btn-cerrar-x" (click)="cerrar()" [attr.aria-label]="'Cerrar'">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="py-4 px-0 max-h-[60vh] overflow-y-auto">
+    <!-- Formulario para agregar observacion -->
+    <div class="p-4 mb-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-2">Agregar observación</div>
+      <div *ngIf="errorMensaje" data-testid="error-observacion" class="p-2.5 mb-2 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
+        {{ errorMensaje }}
+      </div>
+      <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <textarea matInput rows="3" data-testid="input-nueva-observacion" [formControl]="nuevoTextoControl"
+                  placeholder="Escribe una observación para este material..." maxlength="1000" [readonly]="guardando"></textarea>
+      </mat-form-field>
+      <div class="flex items-center justify-between mt-2">
+        <span class="text-[11px] tabular-nums" [ngClass]="cuenta > 1000 ? 'text-red-600 font-bold' : 'text-slate-400'">
+          {{ cuenta }} / 1000
+        </span>
+        <button mat-flat-button color="primary" type="button" data-testid="btn-guardar-observacion"
+                [disabled]="!puedeGuardar" (click)="agregar()">
+          <mat-icon class="icon-size-4 mr-1">add_comment</mat-icon>
+          Agregar
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de observaciones -->
+    <div *ngIf="cargando" data-testid="cargando-observaciones" class="flex items-center justify-center py-8 text-slate-400">
+      <mat-icon class="animate-spin mr-2">sync</mat-icon>
+      <span class="text-xs">Cargando observaciones...</span>
+    </div>
+
+    <div *ngIf="errorCarga" data-testid="error-carga" class="p-4 rounded-xl bg-red-50 text-red-800 text-xs text-center border border-red-200">
+      {{ errorCarga }}
+      <div class="mt-2">
+        <button mat-stroked-button color="warn" size="small" (click)="cargarObservaciones()">Reintentar</button>
+      </div>
+    </div>
+
+    <div *ngIf="!cargando && !errorCarga">
+      <div *ngIf="observaciones.length === 0" data-testid="sin-observaciones" class="py-8 text-center text-xs text-slate-400 italic">
+        Sin observaciones registradas.
+      </div>
+
+      <div *ngIf="observaciones.length > 0" class="space-y-3" data-testid="lista-observaciones">
+        <div *ngFor="let obs of observaciones" [attr.data-testid]="'observacion-item-' + obs.idObservacion"
+             class="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 pb-1 border-b border-slate-100">
+            <span class="font-bold text-slate-700" [attr.data-testid]="'usuario-' + obs.idObservacion">
+              {{ obs.usuarioNombre || 'Sistema' }}
+            </span>
+            <span class="tabular-nums" [attr.data-testid]="'fecha-' + obs.idObservacion">
+              {{ formatearFecha(obs.fecha) }}
+            </span>
+          </div>
+          <div class="text-xs text-slate-800 whitespace-pre-wrap leading-relaxed" [attr.data-testid]="'texto-' + obs.idObservacion">
+            {{ obs.texto }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="pt-3 border-t border-slate-100">
+    <button mat-button type="button" data-testid="btn-cerrar-observaciones" (click)="cerrar()">Cerrar</button>
+  </mat-dialog-actions>
+</div>
