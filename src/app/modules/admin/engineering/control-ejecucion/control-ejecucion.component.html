@@ -150,7 +150,7 @@
                                 <span *ngIf="s.tituloProyecto" class="text-indigo-600 font-bold">({{ s.tituloProyecto }})</span>
                                 <span *ngIf="s.enCambioIngenieria"
                                       class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300"
-                                      [matTooltip]="'Cambio en curso desde ' + (s.cambioIngenieriaDesde | date:'dd/MM/yyyy HH:mm':'America/Mexico_City') + ': ' + (s.cambioIngenieriaMotivo || '')"
+                                      [matTooltip]="'Cambio en curso desde ' + (s.cambioIngenieriaDesde | date:'dd/MM/yyyy HH:mm':'-0600') + ': ' + (s.cambioIngenieriaMotivo || '')"
                                       data-testid="chip-cambio-ingenieria">
                                     Cambio en Ingeniería
                                 </span>
