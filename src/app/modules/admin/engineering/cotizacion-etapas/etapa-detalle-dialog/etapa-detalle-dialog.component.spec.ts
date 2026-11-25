@@ -955,25 +955,30 @@ describe('EtapaDetalleDialogComponent', () => {
             expect(component.puedeCambiarAutorizador).toBeFalse();
         });
 
-        it('El_selector_no_ofrece_al_usuario_actual_si_no_es_admin', () => {
+        it('El_selector_ofrece_tambien_al_usuario_actual_para_designarse', () => {
+            // Decisión del dueño (25-nov): quien registró el caso puede ponerse a sí mismo como autorizador
             conSesion(['Usuario'], 42);
+            component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
             component.usuariosJr = [
                 { usuarioId: 10, nombre: 'Ana' },
                 { usuarioId: 42, nombre: 'Usuario Actual' },
                 { usuarioId: 50, nombre: 'Carlos' }
             ];
             component.etapaActualDto = { ...component.etapaActualDto!, autorizaUsuarioId: null };
+            component.form.enable({ emitEvent: false });
             component.form.patchValue({ autorizaUsuarioId: null });
+            fixture.detectChanges();
 
-            const lista = (component as any).autorizadoresDisponibles;
-            expect(lista.some((u: any) => (u.usuarioId || u.id) === 42)).toBeFalse();
-            expect(lista.length).toBe(2);
+            const trigger = (fixture.nativeElement as HTMLElement)
+                .querySelector('mat-select[formControlName="autorizaUsuarioId"] .mat-mdc-select-trigger') as HTMLElement;
+            expect(trigger).withContext('selector de autorizador en pantalla').toBeTruthy();
+            trigger.click();
+            fixture.detectChanges();
 
-            // Si el autorizador actual ya era el usuario 42 previamente, sí debe ofrecerse para no dejarlo en blanco
-            component.etapaActualDto = { ...component.etapaActualDto!, autorizaUsuarioId: 42 };
-            component.form.patchValue({ autorizaUsuarioId: 42 });
-            const listaConPreexistente = (component as any).autorizadoresDisponibles;
-            expect(listaConPreexistente.some((u: any) => (u.usuarioId || u.id) === 42)).toBeTrue();
+            const opciones = Array.from(document.querySelectorAll('mat-option')).map((o) => (o.textContent || '').trim());
+            expect(opciones).toContain('Usuario Actual');
+            expect(opciones).toContain('Ana');
+            expect(opciones).toContain('Carlos');
         });
 
         it('Muestra_la_ayuda_cuando_el_campo_esta_bloqueado', () => {

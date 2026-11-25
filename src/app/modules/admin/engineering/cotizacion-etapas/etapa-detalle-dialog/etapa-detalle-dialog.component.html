@@ -223,7 +223,7 @@
                                         <mat-label>Autorizador designado *</mat-label>
                                         <mat-select formControlName="autorizaUsuarioId">
                                             <mat-option [value]="null">-- Sin designar --</mat-option>
-                                            <mat-option *ngFor="let u of autorizadoresDisponibles" [value]="u.usuarioId || u.id">
+                                            <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
                                                 {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
                                             </mat-option>
                                         </mat-select>
