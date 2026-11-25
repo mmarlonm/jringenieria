@@ -15,6 +15,31 @@ export interface VisorDocumentoData {
     onDescargar?: () => void;
 }
 
+/**
+ * Sanea los hipervínculos dentro del contenedor renderizado por docx-preview.
+ * Solo permite protocolos http:, https: y mailto:. Remueve href de javascript:, data:, etc.
+ * Configura target="_blank" y rel="noopener noreferrer" en los enlaces permitidos.
+ */
+export function sanearVinculos(container: HTMLElement): void {
+    if (!container) return;
+    const links = container.querySelectorAll('a');
+    links.forEach((a) => {
+        const href = a.getAttribute('href');
+        if (!href) return;
+        try {
+            const parsed = new URL(href, window.location?.href || 'http://localhost');
+            if (['http:', 'https:', 'mailto:'].includes(parsed.protocol)) {
+                a.setAttribute('target', '_blank');
+                a.setAttribute('rel', 'noopener noreferrer');
+            } else {
+                a.removeAttribute('href');
+            }
+        } catch {
+            a.removeAttribute('href');
+        }
+    });
+}
+
 @Component({
     selector: 'app-visor-documento-dialog',
     standalone: true,
@@ -67,14 +92,15 @@ export class VisorDocumentoDialogComponent implements OnInit, AfterViewInit {
         }
     }
 
-    renderDocumento(blob: Blob, container: HTMLElement): Promise<any> {
-        return renderAsync(blob, container);
+    renderDocumento(blob: Blob, container: HTMLElement, options: any = { renderAltChunks: false }): Promise<any> {
+        return renderAsync(blob, container, undefined, options);
     }
 
     async renderizarDocx(blob: Blob): Promise<void> {
         this.cargando = true;
         try {
-            await this.renderDocumento(blob, this.docxContainer.nativeElement);
+            await this.renderDocumento(blob, this.docxContainer.nativeElement, { renderAltChunks: false });
+            sanearVinculos(this.docxContainer.nativeElement);
             this.cargando = false;
             this._cdr.detectChanges();
         } catch (err) {

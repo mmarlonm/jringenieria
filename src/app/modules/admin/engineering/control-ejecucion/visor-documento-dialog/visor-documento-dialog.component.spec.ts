@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { VisorDocumentoDialogComponent, VisorDocumentoData } from './visor-documento-dialog.component';
+import { VisorDocumentoDialogComponent, VisorDocumentoData, sanearVinculos } from './visor-documento-dialog.component';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import * as docxPreview from 'docx-preview';
@@ -44,7 +44,11 @@ describe('VisorDocumentoDialogComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(component.renderDocumento).toHaveBeenCalledWith(mockBlob, jasmine.any(HTMLElement));
+        expect(component.renderDocumento).toHaveBeenCalledWith(
+            mockBlob,
+            jasmine.any(HTMLElement),
+            jasmine.objectContaining({ renderAltChunks: false })
+        );
         expect(component.formatoNoSoportado).toBeFalse();
         expect(component.errorMsg).toBeNull();
 
@@ -54,6 +58,54 @@ describe('VisorDocumentoDialogComponent', () => {
         expect(el.querySelector('[data-testid="mensaje-formato-no-soportado"]')).toBeNull();
         expect(el.querySelector('[data-testid="mensaje-error-render"]')).toBeNull();
     }));
+
+    it('Render_desactiva_altChunks', fakeAsync(() => {
+        const mockBlob = new Blob(['docx-content'], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        crearComponente({
+            nombreArchivo: 'documento.docx',
+            blob: mockBlob
+        });
+
+        spyOn(component, 'renderDocumento').and.returnValue(Promise.resolve());
+
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        expect(component.renderDocumento).toHaveBeenCalledWith(
+            mockBlob,
+            jasmine.any(HTMLElement),
+            jasmine.objectContaining({ renderAltChunks: false })
+        );
+    }));
+
+    it('Sanea_vinculos_javascript_y_data', () => {
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <a href="javascript:alert(1)" id="a-js">Enlace JS</a>
+            <a href="data:text/html,<h1>XSS</h1>" id="a-data">Enlace Data</a>
+            <a href="https://ejemplo.test" id="a-https">Enlace Seguro</a>
+            <a href="mailto:soporte@jr.com" id="a-mail">Correo</a>
+        `;
+
+        sanearVinculos(container);
+
+        const aJs = container.querySelector('#a-js');
+        const aData = container.querySelector('#a-data');
+        const aHttps = container.querySelector('#a-https');
+        const aMail = container.querySelector('#a-mail');
+
+        expect(aJs?.hasAttribute('href')).toBeFalse();
+        expect(aData?.hasAttribute('href')).toBeFalse();
+
+        expect(aHttps?.getAttribute('href')).toBe('https://ejemplo.test');
+        expect(aHttps?.getAttribute('target')).toBe('_blank');
+        expect(aHttps?.getAttribute('rel')).toBe('noopener noreferrer');
+
+        expect(aMail?.getAttribute('href')).toBe('mailto:soporte@jr.com');
+        expect(aMail?.getAttribute('target')).toBe('_blank');
+        expect(aMail?.getAttribute('rel')).toBe('noopener noreferrer');
+    });
 
     it('un_doc_viejo_muestra_Este_formato_no_se_puede_ver_aqui_y_boton_Descargar', () => {
         crearComponente({
