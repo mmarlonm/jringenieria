@@ -79,13 +79,15 @@ describe('EtapaDetalleDialogComponent', () => {
             'archivosDelCaso',
             'subirArchivos',
             'descargarArchivo',
-            'eliminarArchivo'
+            'eliminarArchivo',
+            'regresar'
         ]);
         usersMock = jasmine.createSpyObj('UsersService', ['getUsers']);
         subcontratacionMock = jasmine.createSpyObj('SubcontratacionService', ['getPersonal']);
         dialogRefMock = jasmine.createSpyObj('MatDialogRef', ['close']);
 
         serviceMock.obtener.and.returnValue(of(mockDetalle));
+        serviceMock.regresar.and.returnValue(of(mockDetalle));
         serviceMock.archivos.and.returnValue(of([]));
         serviceMock.archivosDelCaso.and.returnValue(of([]));
         usersMock.getUsers.and.returnValue(of([]));
@@ -476,6 +478,7 @@ describe('EtapaDetalleDialogComponent', () => {
             { etapa: 3, revision: 1, nombreArchivo: 'calculo.xlsx' }
         ]));
         component.etapaNumero = 3;
+        component.etapaVisualizada = 3;
         component.etapaConfig = obtenerEtapaConfig(3);
         component.cargarDetalle();
         fixture.detectChanges();
@@ -768,5 +771,142 @@ describe('EtapaDetalleDialogComponent', () => {
         fixture.detectChanges();
 
         expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-subir-archivo"]')).not.toBeNull();
+    });
+
+    // ───── F6: Regresar a una etapa anterior y breadcrumb de solo lectura ─────
+
+    it('Encabezado_muestra_breadcrumb_de_las_5_etapas_con_marca_de_hecha_actual_y_futura', () => {
+        abrirEnEtapa3ConAnteriores();
+        const breadcrumb = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="breadcrumb-etapas"]');
+        expect(breadcrumb).not.toBeNull();
+
+        for (let i = 1; i <= 5; i++) {
+            const btn = (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="breadcrumb-etapa-${i}"]`);
+            expect(btn).not.toBeNull();
+        }
+
+        // Etapa 1 está hecha (Autorizada)
+        const iconoHecha1 = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="icono-hecha-1"]');
+        expect(iconoHecha1).not.toBeNull();
+
+        // Etapa 4 y 5 son futuras
+        const btn4 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-4"]');
+        const btn5 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-5"]');
+        expect(btn4?.disabled).toBeTrue();
+        expect(btn5?.disabled).toBeTrue();
+    });
+
+    it('Clic_en_etapa_anterior_muestra_vista_de_consulta_solo_lectura_y_boton_volver', () => {
+        abrirEnEtapa3ConAnteriores();
+        const btn1 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-1"]');
+        btn1?.click();
+        fixture.detectChanges();
+
+        expect(component.etapaVisualizada).toBe(1);
+        expect(component.esModoConsulta).toBeTrue();
+        expect(component.esSoloLectura).toBeTrue();
+        expect(component.form.disabled).toBeTrue();
+
+        const banner = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="banner-vista-consulta"]');
+        expect(banner).not.toBeNull();
+        expect(banner?.textContent).toContain('Vista de consulta');
+        expect(banner?.textContent).toContain('Solicitud del cliente');
+
+        const btnVolver = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="btn-volver-etapa-actual"]');
+        expect(btnVolver).not.toBeNull();
+        btnVolver?.click();
+        fixture.detectChanges();
+
+        expect(component.etapaVisualizada).toBe(3);
+        expect(component.esModoConsulta).toBeFalse();
+    });
+
+    it('Etapas_futuras_no_son_clicables_en_el_breadcrumb', () => {
+        abrirEnEtapa3ConAnteriores();
+        const btn4 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-4"]');
+        expect(btn4?.disabled).toBeTrue();
+        component.seleccionarEtapaBreadcrumb(4);
+        fixture.detectChanges();
+
+        expect(component.etapaVisualizada).toBe(3);
+    });
+
+    it('Boton_regresar_a_etapa_anterior_solo_se_ofrece_si_es_elegible_y_con_permiso', () => {
+        // En etapa 1: no se debe ofrecer
+        expect(component.puedeRegresarEtapa).toBeFalse();
+        let btnRegresar = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-regresar-etapa"]');
+        expect(btnRegresar).toBeNull();
+
+        // En etapa 3 como usuario sin permiso
+        abrirEnEtapa3ConAnteriores();
+        expect(component.puedeRegresarEtapa).toBeFalse();
+
+        // En etapa 3 con rol admin
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+        expect(component.puedeRegresarEtapa).toBeTrue();
+        btnRegresar = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-regresar-etapa"]');
+        expect(btnRegresar).not.toBeNull();
+    });
+
+    it('Modal_regresar_muestra_selector_por_titulo_y_valida_motivo_10_a_1000', () => {
+        abrirEnEtapa3ConAnteriores();
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+
+        component.abrirModalRegresar();
+        fixture.detectChanges();
+
+        expect(component.modalRegresarAbierto).toBeTrue();
+        expect(component.etapasParaRegresar.map((e) => e.numero)).toEqual([1, 2]);
+        expect(component.etapaRegresoSeleccionada).toBe(2);
+
+        // Motivo vacío o corto (< 10 caracteres)
+        component.motivoRegresoTexto = 'Corto';
+        expect(component.motivoValido).toBeFalse();
+
+        component.motivoRegresoTexto = 'Motivo suficientemente detallado para el regreso';
+        expect(component.motivoValido).toBeTrue();
+    });
+
+    it('Confirmar_regreso_llama_a_servicio_regresar_y_recarga_detalle', () => {
+        abrirEnEtapa3ConAnteriores();
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+
+        const detalleRegresado: CotizacionEtapasDetalleDto = {
+            ...mockDetalle,
+            etapaActual: 1
+        };
+        serviceMock.regresar.and.returnValue(of(detalleRegresado));
+
+        component.abrirModalRegresar();
+        component.etapaRegresoSeleccionada = 1;
+        component.motivoRegresoTexto = 'Revisión técnica solicitada por el cliente';
+        component.confirmarRegresar();
+
+        expect(serviceMock.regresar).toHaveBeenCalledWith(10, 1, 'Revisión técnica solicitada por el cliente');
+        expect(component.modalRegresarAbierto).toBeFalse();
+        expect(component.huboCambios).toBeTrue();
+        expect(component.etapaActualNumero).toBe(1);
+    });
+
+    it('Error_al_regresar_se_muestra_dentro_del_modal', () => {
+        abrirEnEtapa3ConAnteriores();
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+
+        serviceMock.regresar.and.returnValue(throwError(() => ({ error: { mensaje: 'No se puede regresar esta etapa' } })));
+
+        component.abrirModalRegresar();
+        component.etapaRegresoSeleccionada = 1;
+        component.motivoRegresoTexto = 'Motivo de prueba con longitud valida';
+        component.confirmarRegresar();
+        fixture.detectChanges();
+
+        expect(component.modalRegresarAbierto).toBeTrue();
+        expect(component.errorRegresoMsg).toBe('No se puede regresar esta etapa');
+        const errorElem = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="error-regreso"]');
+        expect(errorElem?.textContent).toContain('No se puede regresar esta etapa');
     });
 });

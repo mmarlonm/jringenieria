@@ -78,6 +78,17 @@ describe('CotizacionEtapasService', () => {
         req.flush({});
     });
 
+    it('regresar() debe llamar POST /CotizacionEtapas/{id}/regresar con etapaDestino y motivo', () => {
+        service.regresar(10, 2, 'Faltaron especificaciones en el levantamiento').subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/10/regresar`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({
+            etapaDestino: 2,
+            motivo: 'Faltaron especificaciones en el levantamiento'
+        });
+        req.flush({});
+    });
+
     it('iniciarRevision() debe llamar POST revisiones', () => {
         service.iniciarRevision(5, 2).subscribe();
         const req = httpMock.expectOne(`${baseUrl}/5/etapas/2/revisiones`);

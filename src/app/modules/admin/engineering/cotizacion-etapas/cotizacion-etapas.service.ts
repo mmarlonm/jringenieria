@@ -48,6 +48,13 @@ export class CotizacionEtapasService {
         return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/etapas/${etapa}/enviar-autorizacion`, {});
     }
 
+    regresar(id: number, etapaDestino: number, motivo: string): Observable<CotizacionEtapasDetalleDto> {
+        return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/regresar`, {
+            etapaDestino,
+            motivo
+        });
+    }
+
     autorizacionCliente(id: number, dto: AutorizacionClienteDto): Observable<CotizacionEtapasDetalleDto> {
         return this._http.post<CotizacionEtapasDetalleDto>(`${this._baseUrl}/${id}/autorizacion-cliente`, dto);
     }

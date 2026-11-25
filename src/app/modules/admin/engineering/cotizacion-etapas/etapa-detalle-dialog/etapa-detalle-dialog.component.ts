@@ -29,7 +29,7 @@ import {
     CambiarEstatusDto,
     AutorizacionClienteDto
 } from '../cotizacion-etapas.models';
-import { EtapaConfig, obtenerEtapaConfig } from '../etapas.config';
+import { EtapaConfig, obtenerEtapaConfig, ETAPAS } from '../etapas.config';
 import { puedeAutorizar } from '../etapa-permisos.utils';
 import { fechaLocalISO } from '../cotizacion-etapas.utils';
 import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
@@ -79,6 +79,10 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     usuariosJr: any[] = [];
     aliados: SubcontratistaPersonal[] = [];
 
+    // Breadcrumb y visualización
+    listaEtapasConfig: EtapaConfig[] = ETAPAS;
+    etapaVisualizada!: number;
+
     // Archivos
     revisionSeleccionadaArchivos: number = 1;
     archivosLista: CotizacionEtapasArchivoDto[] = [];
@@ -103,6 +107,12 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     modalReactivarAbierto = false;
     modalEliminarAbierto = false;
 
+    // Modal regresar a etapa anterior
+    modalRegresarAbierto = false;
+    etapaRegresoSeleccionada: number | null = null;
+    motivoRegresoTexto = '';
+    errorRegresoMsg: string | null = null;
+
     // Modales de autorización del cliente (Etapa 5)
     modalClienteAutorizoAbierto = false;
     clienteFecha: string = '';
@@ -126,6 +136,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     ) {
         this.idSeguimiento = data.idSeguimiento;
         this.etapaNumero = data.etapa;
+        this.etapaVisualizada = data.etapa;
         this.etapaConfig = obtenerEtapaConfig(this.etapaNumero);
 
         this.form = this._fb.group({
@@ -261,6 +272,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
     }
 
     get esSoloLectura(): boolean {
+        if (this.esModoConsulta) return true;
         if (!this.detalle || !this.etapaActualDto) return true;
         if (this.detalle.cancelado) return true;
         if (this.detalle.etapaActual !== this.etapaNumero) return true;
@@ -268,6 +280,32 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
             this.etapaActualDto.estatus === ESTATUS_ETAPA.NoAplica ||
             this.etapaActualDto.estatus === ESTATUS_ETAPA.AutorizadaInterna) return true;
         return false;
+    }
+
+    get etapaActualNumero(): number {
+        return this.detalle?.etapaActual || this.etapaNumero;
+    }
+
+    get esModoConsulta(): boolean {
+        return !!this.detalle && this.etapaVisualizada !== this.detalle.etapaActual;
+    }
+
+    get puedeRegresarEtapa(): boolean {
+        if (!this.detalle || this.detalle.cancelado || this.casoPasoASeguimiento) return false;
+        if (this.esModoConsulta) return false;
+        const actual = this.detalle.etapaActual;
+        if (actual <= 1) return false;
+        return this.puedeAutorizarAccion;
+    }
+
+    get etapasParaRegresar(): EtapaConfig[] {
+        const actual = this.detalle?.etapaActual || 1;
+        return ETAPAS.filter((e) => e.numero < actual);
+    }
+
+    get motivoValido(): boolean {
+        const m = (this.motivoRegresoTexto || '').trim();
+        return m.length >= 10 && m.length <= 1000;
     }
 
     get etapa5PendienteDelCliente(): boolean {
@@ -369,42 +407,18 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                 next: (det) => {
                     this.cargando = false;
                     this.detalle = det;
-                    this.etapaActualDto = det.etapas?.find((e) => e.etapa === this.etapaNumero);
+                    if (!this.etapaVisualizada) {
+                        this.etapaVisualizada = this.etapaNumero;
+                    }
+                    this.etapaActualDto = det.etapas?.find((e) => e.etapa === this.etapaVisualizada);
 
                     if (this.etapaNumero > 1) {
                         this._cargarArchivosAnteriores();
                     }
 
                     if (this.etapaActualDto) {
-                        const esAliado = !!this.etapaActualDto.esAliado;
-                        const respId = esAliado
-                            ? (this.etapaActualDto.responsableAliadoId ?? null)
-                            : (this.etapaActualDto.responsableUsuarioId ?? null);
-
-                        const ult = this.ultimaRevision;
-
-                        this.form.patchValue({
-                            responsableUsuarioId: respId,
-                            esAliado: esAliado,
-                            autorizaUsuarioId: this.etapaActualDto.autorizaUsuarioId ?? null,
-                            informacionSuficiente: this.etapaActualDto.informacionSuficiente ?? null,
-                            fechaProgramada: this.etapaActualDto.fechaProgramada ? new Date(this.etapaActualDto.fechaProgramada) : null,
-                            fechaElaboracion: ult?.fechaElaboracion ? new Date(ult.fechaElaboracion) : null,
-                            monto: ult?.monto ?? null,
-                            observacionesInformacion: this.etapaActualDto.observacionesInformacion ?? '',
-                            queCambio: ''
-                        }, { emitEvent: false });
-
-                        if (!this.puedeCambiarAutorizador) {
-                            this.form.get('autorizaUsuarioId')?.disable({ emitEvent: false });
-                        } else {
-                            this.form.get('autorizaUsuarioId')?.enable({ emitEvent: false });
-                        }
-
-                        if (ult) {
-                            this.revisionSeleccionadaArchivos = ult.numero;
-                            this.cargarArchivos();
-                        }
+                        this._patchValores();
+                        this.cargarArchivos();
                     }
                 },
                 error: (err) => {
@@ -412,6 +426,41 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                     this.errorMsg = err?.error?.mensaje || 'Error al obtener detalle del caso.';
                 }
             });
+    }
+
+    private _patchValores(): void {
+        if (!this.etapaActualDto) return;
+        const esAliado = !!this.etapaActualDto.esAliado;
+        const respId = esAliado
+            ? (this.etapaActualDto.responsableAliadoId ?? null)
+            : (this.etapaActualDto.responsableUsuarioId ?? null);
+
+        const ult = this.ultimaRevision;
+
+        this.form.patchValue({
+            responsableUsuarioId: respId,
+            esAliado: esAliado,
+            autorizaUsuarioId: this.etapaActualDto.autorizaUsuarioId ?? null,
+            informacionSuficiente: this.etapaActualDto.informacionSuficiente ?? null,
+            fechaProgramada: this.etapaActualDto.fechaProgramada ? new Date(this.etapaActualDto.fechaProgramada) : null,
+            fechaElaboracion: ult?.fechaElaboracion ? new Date(ult.fechaElaboracion) : null,
+            monto: ult?.monto ?? null,
+            observacionesInformacion: this.etapaActualDto.observacionesInformacion ?? '',
+            queCambio: ''
+        }, { emitEvent: false });
+
+        if (this.esSoloLectura) {
+            this.form.disable({ emitEvent: false });
+        } else {
+            this.form.enable({ emitEvent: false });
+            if (!this.puedeCambiarAutorizador) {
+                this.form.get('autorizaUsuarioId')?.disable({ emitEvent: false });
+            }
+        }
+
+        if (ult) {
+            this.revisionSeleccionadaArchivos = ult.numero;
+        }
     }
 
     guardar(): void {
@@ -747,6 +796,92 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
                 error: (err) => {
                     this.guardando = false;
                     this.errorMsg = err?.error?.mensaje || 'Error al eliminar el caso.';
+                }
+            });
+    }
+
+    // --- BREADCRUMB Y VISTA DE CONSULTA ---
+    seleccionarEtapaBreadcrumb(numero: number): void {
+        if (this.esEtapaFutura(numero)) return;
+        if (numero === this.etapaVisualizada) return;
+
+        this.etapaVisualizada = numero;
+        this.etapaNumero = numero;
+        this.etapaConfig = obtenerEtapaConfig(numero);
+        this.etapaActualDto = this.detalle?.etapas?.find((e) => e.etapa === numero);
+        this._patchValores();
+        this.cargarArchivos();
+    }
+
+    volverAEtapaActual(): void {
+        if (!this.detalle) return;
+        this.seleccionarEtapaBreadcrumb(this.detalle.etapaActual);
+    }
+
+    esEtapaHecha(numero: number): boolean {
+        const actual = this.detalle?.etapaActual || 1;
+        if (numero < actual) {
+            const e = this.detalle?.etapas?.find((x) => x.etapa === numero);
+            return e?.estatus === ESTATUS_ETAPA.Autorizada || e?.estatus === ESTATUS_ETAPA.NoAplica;
+        }
+        return false;
+    }
+
+    esEtapaAnterior(numero: number): boolean {
+        const actual = this.detalle?.etapaActual || 1;
+        return numero < actual;
+    }
+
+    esEtapaFutura(numero: number): boolean {
+        const actual = this.detalle?.etapaActual || 1;
+        return numero > actual;
+    }
+
+    // --- REGRESAR A ETAPA ANTERIOR ---
+    abrirModalRegresar(): void {
+        this.errorRegresoMsg = null;
+        this.motivoRegresoTexto = '';
+        const previas = this.etapasParaRegresar;
+        this.etapaRegresoSeleccionada = previas.length > 0 ? previas[previas.length - 1].numero : null;
+        this.modalRegresarAbierto = true;
+    }
+
+    cerrarModalRegresar(): void {
+        this.modalRegresarAbierto = false;
+        this.errorRegresoMsg = null;
+        this.motivoRegresoTexto = '';
+    }
+
+    confirmarRegresar(): void {
+        if (!this.etapaRegresoSeleccionada || !this.motivoValido || this.guardando) return;
+        this.guardando = true;
+        this.errorRegresoMsg = null;
+
+        this._service
+            .regresar(this.idSeguimiento, this.etapaRegresoSeleccionada, this.motivoRegresoTexto.trim())
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: (nuevoDetalle) => {
+                    this.guardando = false;
+                    this.huboCambios = true;
+                    this.modalRegresarAbierto = false;
+                    this.motivoRegresoTexto = '';
+                    this.etapaRegresoSeleccionada = null;
+                    if (nuevoDetalle) {
+                        this.detalle = nuevoDetalle;
+                        this.etapaNumero = nuevoDetalle.etapaActual;
+                        this.etapaVisualizada = nuevoDetalle.etapaActual;
+                        this.etapaConfig = obtenerEtapaConfig(nuevoDetalle.etapaActual);
+                        this.etapaActualDto = nuevoDetalle.etapas?.find((e) => e.etapa === nuevoDetalle.etapaActual);
+                        this._patchValores();
+                        this.cargarArchivos();
+                    } else {
+                        this.cargarDetalle();
+                    }
+                },
+                error: (err) => {
+                    this.guardando = false;
+                    this.errorRegresoMsg = err?.error?.mensaje || 'Error al regresar a la etapa anterior.';
                 }
             });
     }
