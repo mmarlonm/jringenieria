@@ -185,7 +185,18 @@
 
                 <td class="py-3 px-3 text-slate-700" [attr.data-testid]="'proveedor-' + item.idMaterial">{{ item.proveedorNombre || '—' }}</td>
                 <td class="py-3 px-3 text-slate-600 max-w-[16rem]" [attr.data-testid]="'observaciones-' + item.idMaterial">
-                  <div class="truncate" [matTooltip]="item.notas || ''">{{ item.notas || '—' }}</div>
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" mat-icon-button class="w-7 h-7 min-h-7 text-slate-400 hover:text-indigo-600"
+                            [attr.data-testid]="'btn-historial-observaciones-' + item.idMaterial"
+                            (click)="abrirObservaciones(item)" matTooltip="Historial de observaciones">
+                      <mat-icon class="icon-size-4">history</mat-icon>
+                    </button>
+                    <span *ngIf="item.observacionesCount" [attr.data-testid]="'conteo-observaciones-' + item.idMaterial"
+                          class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 tabular-nums">
+                      {{ item.observacionesCount }}
+                    </span>
+                    <div class="truncate text-xs" [matTooltip]="item.notas || 'Sin observaciones'">{{ item.notas || 'Sin observaciones' }}</div>
+                  </div>
                 </td>
 
                 <td class="py-3 px-3">

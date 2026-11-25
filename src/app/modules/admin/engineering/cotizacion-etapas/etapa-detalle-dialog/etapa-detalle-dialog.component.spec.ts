@@ -79,13 +79,15 @@ describe('EtapaDetalleDialogComponent', () => {
             'archivosDelCaso',
             'subirArchivos',
             'descargarArchivo',
-            'eliminarArchivo'
+            'eliminarArchivo',
+            'regresar'
         ]);
         usersMock = jasmine.createSpyObj('UsersService', ['getUsers']);
         subcontratacionMock = jasmine.createSpyObj('SubcontratacionService', ['getPersonal']);
         dialogRefMock = jasmine.createSpyObj('MatDialogRef', ['close']);
 
         serviceMock.obtener.and.returnValue(of(mockDetalle));
+        serviceMock.regresar.and.returnValue(of(mockDetalle));
         serviceMock.archivos.and.returnValue(of([]));
         serviceMock.archivosDelCaso.and.returnValue(of([]));
         usersMock.getUsers.and.returnValue(of([]));
@@ -476,6 +478,7 @@ describe('EtapaDetalleDialogComponent', () => {
             { etapa: 3, revision: 1, nombreArchivo: 'calculo.xlsx' }
         ]));
         component.etapaNumero = 3;
+        component.etapaVisualizada = 3;
         component.etapaConfig = obtenerEtapaConfig(3);
         component.cargarDetalle();
         fixture.detectChanges();
@@ -533,5 +536,377 @@ describe('EtapaDetalleDialogComponent', () => {
         component.descargarArchivoAnterior({ etapa: 1, revision: 2, nombreArchivo: 'plano.pdf' });
 
         expect(serviceMock.descargarArchivo).toHaveBeenCalledOnceWith(10, 1, 2, 'plano.pdf');
+    });
+
+    it('El_selector_de_etapa_siguiente_muestra_el_titulo_de_cada_etapa_y_no_Etapa_sola', () => {
+        component.modalAutorizarAbierto = true;
+        fixture.detectChanges();
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        const select = compiled.querySelector('[data-testid="select-etapa-siguiente"]') as HTMLSelectElement;
+        expect(select).not.toBeNull();
+
+        const opciones = Array.from(select.querySelectorAll('option'));
+        expect(opciones.length).toBe(4);
+
+        for (const op of opciones) {
+            expect(op.textContent?.trim()).not.toMatch(/^Etapa \d+$/);
+        }
+
+        expect(opciones[0].textContent?.trim()).toBe('Levantamiento técnico');
+        expect(opciones[0].value).toBe('2');
+
+        expect(opciones[1].textContent?.trim()).toBe('Diseño/Cálculo e Ingeniería');
+        expect(opciones[1].value).toBe('3');
+
+        expect(opciones[2].textContent?.trim()).toBe('Presupuesto técnico');
+        expect(opciones[2].value).toBe('4');
+
+        expect(opciones[3].textContent?.trim()).toBe('Cotización técnico-comercial');
+        expect(opciones[3].value).toBe('5');
+    });
+
+    // ───── F4: Archivos y evidencias con versiones y observaciones ─────
+
+    it('Muestra_pestanas_R1_R2_por_cada_revision_de_la_etapa', async () => {
+        const detalleConDosRevisiones: CotizacionEtapasDetalleDto = {
+            ...mockDetalle,
+            etapas: [
+                {
+                    ...mockDetalle.etapas[0],
+                    revisiones: [
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 1, resultado: ESTATUS_ETAPA.Rechazada },
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 2, resultado: ESTATUS_ETAPA.EnProceso }
+                    ]
+                }
+            ]
+        };
+        component.detalle = detalleConDosRevisiones;
+        component.etapaActualDto = detalleConDosRevisiones.etapas[0];
+        component.revisionSeleccionadaArchivos = 2;
+        fixture.detectChanges();
+
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const tabsRev = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[data-testid^="tab-revision-"]');
+        expect(tabsRev.length).toBe(2);
+        expect(tabsRev[0].textContent?.trim()).toBe('R1');
+        expect(tabsRev[1].textContent?.trim()).toBe('R2');
+
+        serviceMock.archivos.calls.reset();
+        tabsRev[0].click();
+        fixture.detectChanges();
+        expect(component.revisionSeleccionadaArchivos).toBe(1);
+        expect(serviceMock.archivos).toHaveBeenCalledWith(10, 1, 1);
+    });
+
+    it('Cada_archivo_muestra_version_observacion_quien_y_cuando', async () => {
+        component.archivosLista = [
+            {
+                nombreArchivo: 'memoria.docx',
+                tamanoBytes: 2048,
+                fecha: '2026-11-20T10:30:00Z',
+                subidoPorNombre: 'Juan Ingeniero',
+                version: 2,
+                observacion: 'Cálculo de cargas ajustado',
+                versiones: []
+            }
+        ];
+        component.cargandoArchivos = false;
+        fixture.detectChanges();
+
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const item = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="archivo-item-memoria.docx"]');
+        expect(item).not.toBeNull();
+        expect(item?.querySelector('[data-testid="version-badge-memoria.docx"]')?.textContent?.trim()).toBe('v2');
+        expect(item?.querySelector('[data-testid="subido-por-memoria.docx"]')?.textContent).toContain('Juan Ingeniero');
+        expect(item?.querySelector('[data-testid="observacion-archivo-memoria.docx"]')?.textContent).toContain('Cálculo de cargas ajustado');
+    });
+
+    it('Muestra_versiones_anteriores_desplegable_con_descarga_version_k', async () => {
+        serviceMock.descargarArchivo.and.returnValue(of(new Blob(['v1content'])));
+        component.archivosLista = [
+            {
+                nombreArchivo: 'especificaciones.pdf',
+                tamanoBytes: 4096,
+                fecha: '2026-11-21T15:00:00Z',
+                subidoPorNombre: 'Carlos',
+                version: 2,
+                observacion: 'Segunda entrega',
+                versiones: [
+                    {
+                        version: 1,
+                        fecha: '2026-11-19T09:00:00Z',
+                        subidoPorNombre: 'Carlos',
+                        observacion: 'Primera entrega preliminar'
+                    }
+                ]
+            }
+        ];
+        component.cargandoArchivos = false;
+        fixture.detectChanges();
+
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const summary = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="summary-versiones-especificaciones.pdf"]');
+        expect(summary).not.toBeNull();
+        expect(summary?.textContent).toContain('Versiones anteriores (1)');
+
+        const versionItem = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="version-item-especificaciones.pdf-1"]');
+        expect(versionItem).not.toBeNull();
+        expect(versionItem?.textContent).toContain('v1');
+        expect(versionItem?.textContent).toContain('Primera entrega preliminar');
+
+        const btnDescargarV1 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="descargar-v-especificaciones.pdf-1"]');
+        expect(btnDescargarV1).not.toBeNull();
+        btnDescargarV1?.click();
+        expect(serviceMock.descargarArchivo).toHaveBeenCalledWith(10, 1, 1, 'especificaciones.pdf', 1);
+    });
+
+    it('Al_elegir_archivos_abre_modal_y_si_existe_avisa_se_guardara_como_version_N', () => {
+        component.archivosLista = [
+            {
+                nombreArchivo: 'diagrama.dwg',
+                tamanoBytes: 1024,
+                fecha: '2026-11-20T10:00:00Z',
+                subidoPorNombre: 'Ana',
+                version: 2,
+                observacion: 'Versión previa',
+                versiones: []
+            }
+        ];
+        fixture.detectChanges();
+
+        const mockFileExistente = new File(['123'], 'diagrama.dwg');
+        const mockFileNuevo = new File(['456'], 'nuevo-plano.pdf');
+
+        component.onArchivosSeleccionados({ target: { files: [mockFileExistente, mockFileNuevo] } });
+        fixture.detectChanges();
+
+        expect(component.modalSubirArchivosAbierto).toBeTrue();
+        expect(component.archivosParaSubir.length).toBe(2);
+        expect(component.archivosParaSubir[0].esResubida).toBeTrue();
+        expect(component.archivosParaSubir[0].versionSiguiente).toBe(3);
+        expect(component.archivosParaSubir[1].esResubida).toBeFalse();
+        expect(component.archivosParaSubir[1].versionSiguiente).toBe(1);
+
+        const avisoResubida = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="aviso-resubida-diagrama.dwg"]');
+        expect(avisoResubida).not.toBeNull();
+        expect(avisoResubida?.textContent).toContain('Se guardará como versión 3');
+
+        const avisoNuevo = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="aviso-resubida-nuevo-plano.pdf"]');
+        expect(avisoNuevo).toBeNull();
+    });
+
+    it('Confirmar_subida_manda_archivos_y_observaciones_al_servicio', () => {
+        serviceMock.subirArchivos.and.returnValue(of(undefined));
+        const mockFile = new File(['abc'], 'reporte.docx');
+        component.archivosParaSubir = [
+            {
+                file: mockFile,
+                nombre: 'reporte.docx',
+                observacion: 'Correcciones de ortografía',
+                esResubida: false,
+                versionSiguiente: 1
+            }
+        ];
+        component.modalSubirArchivosAbierto = true;
+        fixture.detectChanges();
+
+        component.confirmarSubida();
+        expect(serviceMock.subirArchivos).toHaveBeenCalledWith(
+            10,
+            1,
+            1,
+            [mockFile],
+            ['Correcciones de ortografía']
+        );
+        expect(component.modalSubirArchivosAbierto).toBeFalse();
+    });
+
+    it('Subir_archivo_solo_se_permite_en_la_revision_editable', async () => {
+        const detalleConDosRev: CotizacionEtapasDetalleDto = {
+            ...mockDetalle,
+            etapas: [
+                {
+                    ...mockDetalle.etapas[0],
+                    revisiones: [
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 1, resultado: ESTATUS_ETAPA.Rechazada },
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 2, resultado: ESTATUS_ETAPA.EnProceso }
+                    ]
+                }
+            ]
+        };
+        component.detalle = detalleConDosRev;
+        component.etapaActualDto = detalleConDosRev.etapas[0];
+
+        // En R1 (revisión pasada no editable)
+        component.revisionSeleccionadaArchivos = 1;
+        fixture.detectChanges();
+        expect(component.puedeSubirArchivoActual).toBeFalse();
+
+        // En R2 (última revisión editable)
+        component.revisionSeleccionadaArchivos = 2;
+        fixture.detectChanges();
+        expect(component.puedeSubirArchivoActual).toBeTrue();
+
+        // Verificar botón en la pestaña de archivos
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-subir-archivo"]')).not.toBeNull();
+    });
+
+    // ───── F6: Regresar a una etapa anterior y breadcrumb de solo lectura ─────
+
+    it('Encabezado_muestra_breadcrumb_de_las_5_etapas_con_marca_de_hecha_actual_y_futura', () => {
+        abrirEnEtapa3ConAnteriores();
+        const breadcrumb = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="breadcrumb-etapas"]');
+        expect(breadcrumb).not.toBeNull();
+
+        for (let i = 1; i <= 5; i++) {
+            const btn = (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="breadcrumb-etapa-${i}"]`);
+            expect(btn).not.toBeNull();
+        }
+
+        // Etapa 1 está hecha (Autorizada)
+        const iconoHecha1 = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="icono-hecha-1"]');
+        expect(iconoHecha1).not.toBeNull();
+
+        // Etapa 4 y 5 son futuras
+        const btn4 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-4"]');
+        const btn5 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-5"]');
+        expect(btn4?.disabled).toBeTrue();
+        expect(btn5?.disabled).toBeTrue();
+    });
+
+    it('Clic_en_etapa_anterior_muestra_vista_de_consulta_solo_lectura_y_boton_volver', () => {
+        abrirEnEtapa3ConAnteriores();
+        const btn1 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-1"]');
+        btn1?.click();
+        fixture.detectChanges();
+
+        expect(component.etapaVisualizada).toBe(1);
+        expect(component.esModoConsulta).toBeTrue();
+        expect(component.esSoloLectura).toBeTrue();
+        expect(component.form.disabled).toBeTrue();
+
+        const banner = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="banner-vista-consulta"]');
+        expect(banner).not.toBeNull();
+        expect(banner?.textContent).toContain('Vista de consulta');
+        expect(banner?.textContent).toContain('Solicitud del cliente');
+
+        const btnVolver = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="btn-volver-etapa-actual"]');
+        expect(btnVolver).not.toBeNull();
+        btnVolver?.click();
+        fixture.detectChanges();
+
+        expect(component.etapaVisualizada).toBe(3);
+        expect(component.esModoConsulta).toBeFalse();
+    });
+
+    it('Etapas_futuras_no_son_clicables_en_el_breadcrumb', () => {
+        abrirEnEtapa3ConAnteriores();
+        const btn4 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="breadcrumb-etapa-4"]');
+        expect(btn4?.disabled).toBeTrue();
+        component.seleccionarEtapaBreadcrumb(4);
+        fixture.detectChanges();
+
+        expect(component.etapaVisualizada).toBe(3);
+    });
+
+    it('Boton_regresar_a_etapa_anterior_solo_se_ofrece_si_es_elegible_y_con_permiso', () => {
+        // En etapa 1: no se debe ofrecer
+        expect(component.puedeRegresarEtapa).toBeFalse();
+        let btnRegresar = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-regresar-etapa"]');
+        expect(btnRegresar).toBeNull();
+
+        // En etapa 3 como usuario sin permiso
+        abrirEnEtapa3ConAnteriores();
+        expect(component.puedeRegresarEtapa).toBeFalse();
+
+        // En etapa 3 con rol admin
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+        expect(component.puedeRegresarEtapa).toBeTrue();
+        btnRegresar = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-regresar-etapa"]');
+        expect(btnRegresar).not.toBeNull();
+    });
+
+    it('Modal_regresar_muestra_selector_por_titulo_y_valida_motivo_10_a_1000', () => {
+        abrirEnEtapa3ConAnteriores();
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+
+        component.abrirModalRegresar();
+        fixture.detectChanges();
+
+        expect(component.modalRegresarAbierto).toBeTrue();
+        expect(component.etapasParaRegresar.map((e) => e.numero)).toEqual([1, 2]);
+        expect(component.etapaRegresoSeleccionada).toBe(2);
+
+        // Motivo vacío o corto (< 10 caracteres)
+        component.motivoRegresoTexto = 'Corto';
+        expect(component.motivoValido).toBeFalse();
+
+        component.motivoRegresoTexto = 'Motivo suficientemente detallado para el regreso';
+        expect(component.motivoValido).toBeTrue();
+    });
+
+    it('Confirmar_regreso_llama_a_servicio_regresar_y_recarga_detalle', () => {
+        abrirEnEtapa3ConAnteriores();
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+
+        const detalleRegresado: CotizacionEtapasDetalleDto = {
+            ...mockDetalle,
+            etapaActual: 1
+        };
+        serviceMock.regresar.and.returnValue(of(detalleRegresado));
+
+        component.abrirModalRegresar();
+        component.etapaRegresoSeleccionada = 1;
+        component.motivoRegresoTexto = 'Revisión técnica solicitada por el cliente';
+        component.confirmarRegresar();
+
+        expect(serviceMock.regresar).toHaveBeenCalledWith(10, 1, 'Revisión técnica solicitada por el cliente');
+        expect(component.modalRegresarAbierto).toBeFalse();
+        expect(component.huboCambios).toBeTrue();
+        expect(component.etapaActualNumero).toBe(1);
+    });
+
+    it('Error_al_regresar_se_muestra_dentro_del_modal', () => {
+        abrirEnEtapa3ConAnteriores();
+        spyOnProperty(component, 'esAdmin', 'get').and.returnValue(true);
+        fixture.detectChanges();
+
+        serviceMock.regresar.and.returnValue(throwError(() => ({ error: { mensaje: 'No se puede regresar esta etapa' } })));
+
+        component.abrirModalRegresar();
+        component.etapaRegresoSeleccionada = 1;
+        component.motivoRegresoTexto = 'Motivo de prueba con longitud valida';
+        component.confirmarRegresar();
+        fixture.detectChanges();
+
+        expect(component.modalRegresarAbierto).toBeTrue();
+        expect(component.errorRegresoMsg).toBe('No se puede regresar esta etapa');
+        const errorElem = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="error-regreso"]');
+        expect(errorElem?.textContent).toContain('No se puede regresar esta etapa');
     });
 });

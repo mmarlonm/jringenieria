@@ -1,8 +1,8 @@
-import { Component, Inject, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatDialogModule } from '@angular/material/dialog';
+import { Component, Inject, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from "@angular/material/icon";
+import { MatIconModule } from '@angular/material/icon';
 import { DocumentEditorModule } from '@onlyoffice/document-editor-angular';
 
 @Component({
@@ -11,51 +11,70 @@ import { DocumentEditorModule } from '@onlyoffice/document-editor-angular';
   templateUrl: './only-office-editor.component.html',
   standalone: true,
   imports: [
+    CommonModule,
     MatDialogModule,
     MatIconModule,
     MatButtonModule,
     DocumentEditorModule
   ]
 })
-export class OnlyOfficeEditorComponent {
+export class OnlyOfficeEditorComponent implements OnInit, OnDestroy {
 
   editorConfig: any;
   documentServerUrl: string;
-  isDocumentAvailable = false; // para mostrar un mensaje si no existe
+  isDocumentAvailable = false;
+  cargando = true;
+  tardando = false;
+  errorCarga = false;
+  mensajeError = '';
+  private _timer: any;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
-    console.log('OnlyOfficeEditorComponent - data recibida:', data);
-    this.documentServerUrl = data.documentServerUrl;
-    this.editorConfig = data.editorConfig;
-
-    console.log('OnlyOfficeEditorComponent - documentServerUrl:', this.documentServerUrl);
-    console.log('OnlyOfficeEditorComponent - editorConfig:', this.editorConfig);
-
+    this.documentServerUrl = data?.documentServerUrl;
+    this.editorConfig = data?.editorConfig;
   }
 
+  ngOnInit(): void {
+    // Si el editor tarda más de 20 s, mostrar aviso no destructivo sin desmontar el editor
+    this._timer = setTimeout(() => {
+      if (this.cargando) {
+        this.tardando = true;
+      }
+    }, 20000);
+  }
+
+  ngOnDestroy(): void {
+    if (this._timer) {
+      clearTimeout(this._timer);
+    }
+  }
 
   onDocumentReady = () => {
-    console.log("Document is loaded");
-    const documentEditor = window.DocEditor.instances["docxEditor"];
-
-  documentEditor.showMessage("Welcome to ONLYOFFICE Editor!");
+    this.cargando = false;
+    this.tardando = false;
+    this.errorCarga = false;
+    if (this._timer) {
+      clearTimeout(this._timer);
+    }
   }
 
-  onLoadComponentError = (errorCode, errorDescription) => {
-    console.log("Error loading component");
-    console.log("Código:", errorCode);
-    console.log("Descripción:", errorDescription);
+  onLoadComponentError = (errorCode: any, errorDescription: any) => {
+    this.cargando = false;
+    this.tardando = false;
+    this.errorCarga = true;
+    this.mensajeError = 'No se pudo abrir el editor';
+    if (this._timer) {
+      clearTimeout(this._timer);
+    }
   }
 
-  onDocumentStateChange(event: any) {
-  console.log('Evento DocumentStateChange:', event);
-  
-  // event tiene propiedades como:
-  // event.type -> "documentStateChanged", "onSaveAs", etc.
-  // event.data -> contiene status, key, etc.
-  
-  if (event.type === 'onSave') {
-    console.log('Documento guardado, backend respondió:', event.data);
+  descargar(): void {
+    if (this.data?.onDescargar) {
+      this.data.onDescargar();
+    }
   }
-}
+
+  onDocumentStateChange(event: any): void {
+    // Manejo de eventos de guardado del editor
+  }
 }

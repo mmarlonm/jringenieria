@@ -46,6 +46,18 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
     incluirProcesados: boolean = false;
     cargando: boolean = false;
     filtroTexto: string = '';
+    casosCompletos: CotizacionEtapasListItemDto[] = [];
+
+    kpiTotal: number = 0;
+    kpiPendiente: number = 0;
+    kpiEnProceso: number = 0;
+    kpiAutorizadaInterna: number = 0;
+    kpiAutorizada: number = 0;
+    kpiRechazada: number = 0;
+    kpiNoAplica: number = 0;
+    kpiCancelados: number = 0;
+
+    filtroEstatusKpi: string | null = null;
 
     columnasDefinidas: string[] = [
         'idSeguimiento',
@@ -117,7 +129,9 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (items) => {
                     this.cargando = false;
-                    this.dataSource.data = items || [];
+                    this.casosCompletos = items || [];
+                    this._actualizarKpis();
+                    this._aplicarFiltroATabla();
                     if (this.paginator) {
                         this.dataSource.paginator = this.paginator;
                     }
@@ -132,16 +146,74 @@ export class EtapaListaComponent implements OnInit, OnDestroy {
             });
     }
 
+    private _actualizarKpis(): void {
+        this.kpiTotal = this.casosCompletos.length;
+        this.kpiPendiente = this.casosCompletos.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.Pendiente).length;
+        this.kpiEnProceso = this.casosCompletos.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.EnProceso).length;
+        this.kpiAutorizadaInterna = this.casosCompletos.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.AutorizadaInterna).length;
+        this.kpiAutorizada = this.casosCompletos.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.Autorizada).length;
+        this.kpiRechazada = this.casosCompletos.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.Rechazada).length;
+        this.kpiNoAplica = this.casosCompletos.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.NoAplica).length;
+        this.kpiCancelados = this.casosCompletos.filter(c => c.cancelado).length;
+    }
+
+    seleccionarFiltroKpi(clave: string): void {
+        if (clave === 'TOTAL' || this.filtroEstatusKpi === clave) {
+            this.filtroEstatusKpi = null;
+        } else {
+            this.filtroEstatusKpi = clave;
+        }
+        this._aplicarFiltroATabla();
+    }
+
+    private _aplicarFiltroATabla(): void {
+        let filtrados = this.casosCompletos;
+
+        if (this.filtroEstatusKpi) {
+            switch (this.filtroEstatusKpi) {
+                case 'PENDIENTE':
+                    filtrados = filtrados.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.Pendiente);
+                    break;
+                case 'EN_PROCESO':
+                    filtrados = filtrados.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.EnProceso);
+                    break;
+                case 'AUTORIZADA_INTERNA':
+                    filtrados = filtrados.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.AutorizadaInterna);
+                    break;
+                case 'AUTORIZADA':
+                    filtrados = filtrados.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.Autorizada);
+                    break;
+                case 'RECHAZADA':
+                    filtrados = filtrados.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.Rechazada);
+                    break;
+                case 'NO_APLICA':
+                    filtrados = filtrados.filter(c => !c.cancelado && c.estatusEtapa === ESTATUS_ETAPA.NoAplica);
+                    break;
+                case 'CANCELADOS':
+                    filtrados = filtrados.filter(c => c.cancelado);
+                    break;
+            }
+        }
+
+        this.dataSource.data = filtrados;
+        if (this.filtroTexto) {
+            this.dataSource.filter = this.filtroTexto.trim().toLowerCase();
+        } else {
+            this.dataSource.filter = '';
+        }
+
+        if (this.dataSource.paginator) {
+            this.dataSource.paginator.firstPage();
+        }
+    }
+
     cambiarIncluirProcesados(): void {
         this.cargarCasos();
     }
 
     aplicarFiltro(valor: string): void {
         this.filtroTexto = valor;
-        this.dataSource.filter = valor.trim().toLowerCase();
-        if (this.dataSource.paginator) {
-            this.dataSource.paginator.firstPage();
-        }
+        this._aplicarFiltroATabla();
     }
 
     // Un doble clic (o un clic que sube del icono a la fila) apilaba dos diálogos iguales: solo uno a la vez.

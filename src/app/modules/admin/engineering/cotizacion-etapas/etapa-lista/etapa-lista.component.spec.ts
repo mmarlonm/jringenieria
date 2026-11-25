@@ -175,4 +175,127 @@ describe('EtapaListaComponent', () => {
         expect(compiled.textContent).toContain('América Móvil');
         expect(compiled.textContent).toContain('En Proceso');
     });
+
+    describe('KPIs por estatus (F2)', () => {
+        const mockCasosKpis: CotizacionEtapasListItemDto[] = [
+            { idSeguimiento: 1, titulo: 'C1', solicitanteNombre: 'A', empresa: 'E', tipo: 'P', etapaActual: 1, estatusEtapa: 1, revisionActual: 1, fechaRegistro: '2026-11-01', cancelado: false },
+            { idSeguimiento: 2, titulo: 'C2', solicitanteNombre: 'B', empresa: 'E', tipo: 'P', etapaActual: 1, estatusEtapa: 2, revisionActual: 1, fechaRegistro: '2026-11-02', cancelado: false },
+            { idSeguimiento: 3, titulo: 'C3', solicitanteNombre: 'C', empresa: 'E', tipo: 'P', etapaActual: 1, estatusEtapa: 3, revisionActual: 1, fechaRegistro: '2026-11-03', cancelado: false },
+            { idSeguimiento: 4, titulo: 'C4', solicitanteNombre: 'D', empresa: 'E', tipo: 'P', etapaActual: 1, estatusEtapa: 4, revisionActual: 1, fechaRegistro: '2026-11-04', cancelado: false },
+            { idSeguimiento: 5, titulo: 'C5', solicitanteNombre: 'E', empresa: 'E', tipo: 'P', etapaActual: 1, estatusEtapa: 5, revisionActual: 1, fechaRegistro: '2026-11-05', cancelado: false },
+            { idSeguimiento: 6, titulo: 'C6', solicitanteNombre: 'F', empresa: 'E', tipo: 'P', etapaActual: 5, estatusEtapa: 6, revisionActual: 1, fechaRegistro: '2026-11-06', cancelado: false },
+            { idSeguimiento: 7, titulo: 'C7', solicitanteNombre: 'G', empresa: 'E', tipo: 'P', etapaActual: 1, estatusEtapa: 1, revisionActual: 1, fechaRegistro: '2026-11-07', cancelado: true }
+        ];
+
+        function setupConCasos(etapaNumber: number, casos: CotizacionEtapasListItemDto[] = mockCasosKpis) {
+            serviceMock = jasmine.createSpyObj('CotizacionEtapasService', ['listar', 'obtener']);
+            dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
+            serviceMock.listar.and.returnValue(of(casos));
+
+            TestBed.configureTestingModule({
+                imports: [EtapaListaComponent, NoopAnimationsModule],
+                providers: [
+                    { provide: CotizacionEtapasService, useValue: serviceMock },
+                    { provide: MatDialog, useValue: dialogMock },
+                    {
+                        provide: ActivatedRoute,
+                        useValue: { snapshot: { data: { etapa: etapaNumber } } }
+                    }
+                ]
+            });
+
+            fixture = TestBed.createComponent(EtapaListaComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+        }
+
+        it('Muestra_tarjetas_de_KPIs_con_los_conteos_correctos', () => {
+            setupConCasos(5);
+            expect(component.kpiTotal).toBe(7);
+            expect(component.kpiPendiente).toBe(1);
+            expect(component.kpiEnProceso).toBe(1);
+            expect(component.kpiAutorizada).toBe(1);
+            expect(component.kpiRechazada).toBe(1);
+            expect(component.kpiNoAplica).toBe(1);
+            expect(component.kpiAutorizadaInterna).toBe(1);
+            expect(component.kpiCancelados).toBe(1);
+
+            const compiled = fixture.nativeElement as HTMLElement;
+            expect(compiled.querySelector('[data-testid="kpi-total-valor"]')?.textContent?.trim()).toBe('7');
+            expect(compiled.querySelector('[data-testid="kpi-pendiente-valor"]')?.textContent?.trim()).toBe('1');
+            expect(compiled.querySelector('[data-testid="kpi-cancelados-valor"]')?.textContent?.trim()).toBe('1');
+        });
+
+        it('En_etapa_1_no_muestra_tarjeta_Autorizada_interna', () => {
+            setupConCasos(1);
+            const compiled = fixture.nativeElement as HTMLElement;
+            expect(compiled.querySelector('[data-testid="kpi-autorizada-interna"]')).toBeNull();
+        });
+
+        it('En_etapa_5_muestra_tarjeta_Autorizada_interna', () => {
+            setupConCasos(5);
+            const compiled = fixture.nativeElement as HTMLElement;
+            expect(compiled.querySelector('[data-testid="kpi-autorizada-interna"]')).not.toBeNull();
+            expect(compiled.querySelector('[data-testid="kpi-autorizada-interna-valor"]')?.textContent?.trim()).toBe('1');
+        });
+
+        it('Clic_en_tarjeta_filtra_la_tabla_y_otro_clic_lo_quita', () => {
+            setupConCasos(1);
+            expect(component.dataSource.data.length).toBe(7);
+
+            // Clic en Pendiente
+            const kpiPendiente = fixture.nativeElement.querySelector('[data-testid="kpi-pendiente"]') as HTMLElement;
+            kpiPendiente.click();
+            fixture.detectChanges();
+
+            expect(component.filtroEstatusKpi).toBe('PENDIENTE');
+            expect(component.dataSource.data.length).toBe(1);
+            expect(component.dataSource.data[0].idSeguimiento).toBe(1);
+
+            // Otro clic lo quita
+            kpiPendiente.click();
+            fixture.detectChanges();
+
+            expect(component.filtroEstatusKpi).toBeNull();
+            expect(component.dataSource.data.length).toBe(7);
+        });
+
+        it('Clic_en_Cancelados_filtra_los_cancelados', () => {
+            setupConCasos(1);
+            const kpiCancelados = fixture.nativeElement.querySelector('[data-testid="kpi-cancelados"]') as HTMLElement;
+            kpiCancelados.click();
+            fixture.detectChanges();
+
+            expect(component.filtroEstatusKpi).toBe('CANCELADOS');
+            expect(component.dataSource.data.length).toBe(1);
+            expect(component.dataSource.data[0].idSeguimiento).toBe(7);
+            expect(component.dataSource.data[0].cancelado).toBeTrue();
+        });
+
+        it('Clic_en_Total_quita_cualquier_filtro', () => {
+            setupConCasos(1);
+            component.seleccionarFiltroKpi('EN_PROCESO');
+            expect(component.dataSource.data.length).toBe(1);
+
+            const kpiTotal = fixture.nativeElement.querySelector('[data-testid="kpi-total"]') as HTMLElement;
+            kpiTotal.click();
+            fixture.detectChanges();
+
+            expect(component.filtroEstatusKpi).toBeNull();
+            expect(component.dataSource.data.length).toBe(7);
+        });
+
+        it('Recargar_con_incluirProcesados_actualiza_los_conteos', () => {
+            setupConCasos(1, [mockCasosKpis[0]]);
+            expect(component.kpiTotal).toBe(1);
+
+            serviceMock.listar.and.returnValue(of(mockCasosKpis));
+            component.incluirProcesados = true;
+            component.cambiarIncluirProcesados();
+            fixture.detectChanges();
+
+            expect(serviceMock.listar).toHaveBeenCalledWith(1, true);
+            expect(component.kpiTotal).toBe(7);
+        });
+    });
 });

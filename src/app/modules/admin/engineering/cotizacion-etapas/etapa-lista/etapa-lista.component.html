@@ -32,6 +32,82 @@
         </div>
     </div>
 
+    <!-- KPIs por Estatus -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" [ngClass]="etapaNumero === 5 ? 'lg:grid-cols-8' : 'lg:grid-cols-7'">
+        <!-- Total -->
+        <div (click)="seleccionarFiltroKpi('TOTAL')"
+             [attr.data-testid]="'kpi-total'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === null ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total</span>
+            <span class="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 mt-1 tabular-nums" [attr.data-testid]="'kpi-total-valor'">{{ kpiTotal }}</span>
+        </div>
+
+        <!-- Pendiente -->
+        <div (click)="seleccionarFiltroKpi('PENDIENTE')"
+             [attr.data-testid]="'kpi-pendiente'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === 'PENDIENTE' ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/50 dark:bg-amber-950/20' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-amber-200'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Pendiente</span>
+            <span class="text-xl md:text-2xl font-black text-amber-700 dark:text-amber-300 mt-1 tabular-nums" [attr.data-testid]="'kpi-pendiente-valor'">{{ kpiPendiente }}</span>
+        </div>
+
+        <!-- En Proceso -->
+        <div (click)="seleccionarFiltroKpi('EN_PROCESO')"
+             [attr.data-testid]="'kpi-en-proceso'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === 'EN_PROCESO' ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-blue-200'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">En Proceso</span>
+            <span class="text-xl md:text-2xl font-black text-blue-700 dark:text-blue-300 mt-1 tabular-nums" [attr.data-testid]="'kpi-en-proceso-valor'">{{ kpiEnProceso }}</span>
+        </div>
+
+        <!-- Autorizada Interna (Solo etapa 5) -->
+        <div *ngIf="etapaNumero === 5"
+             (click)="seleccionarFiltroKpi('AUTORIZADA_INTERNA')"
+             [attr.data-testid]="'kpi-autorizada-interna'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === 'AUTORIZADA_INTERNA' ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/50 dark:bg-purple-950/20' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-purple-200'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Autorizada interna</span>
+            <span class="text-xl md:text-2xl font-black text-purple-700 dark:text-purple-300 mt-1 tabular-nums" [attr.data-testid]="'kpi-autorizada-interna-valor'">{{ kpiAutorizadaInterna }}</span>
+        </div>
+
+        <!-- Autorizada -->
+        <div (click)="seleccionarFiltroKpi('AUTORIZADA')"
+             [attr.data-testid]="'kpi-autorizada'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === 'AUTORIZADA' ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-200'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Autorizada</span>
+            <span class="text-xl md:text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1 tabular-nums" [attr.data-testid]="'kpi-autorizada-valor'">{{ kpiAutorizada }}</span>
+        </div>
+
+        <!-- Rechazada -->
+        <div (click)="seleccionarFiltroKpi('RECHAZADA')"
+             [attr.data-testid]="'kpi-rechazada'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === 'RECHAZADA' ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/50 dark:bg-rose-950/20' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-rose-200'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Rechazada</span>
+            <span class="text-xl md:text-2xl font-black text-rose-700 dark:text-rose-300 mt-1 tabular-nums" [attr.data-testid]="'kpi-rechazada-valor'">{{ kpiRechazada }}</span>
+        </div>
+
+        <!-- No Aplica -->
+        <div (click)="seleccionarFiltroKpi('NO_APLICA')"
+             [attr.data-testid]="'kpi-no-aplica'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === 'NO_APLICA' ? 'border-slate-500 ring-2 ring-slate-500/20 bg-slate-100 dark:bg-slate-800' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-slate-300'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">No aplica</span>
+            <span class="text-xl md:text-2xl font-black text-slate-700 dark:text-slate-300 mt-1 tabular-nums" [attr.data-testid]="'kpi-no-aplica-valor'">{{ kpiNoAplica }}</span>
+        </div>
+
+        <!-- Cancelados -->
+        <div (click)="seleccionarFiltroKpi('CANCELADOS')"
+             [attr.data-testid]="'kpi-cancelados'"
+             class="cursor-pointer p-3.5 rounded-xl border transition-all duration-200 bg-white/90 dark:bg-slate-900/90 shadow-xs flex flex-col justify-between"
+             [ngClass]="filtroEstatusKpi === 'CANCELADOS' ? 'border-red-600 ring-2 ring-red-600/20 bg-red-50/50 dark:bg-red-950/20' : 'border-slate-200/80 dark:border-slate-800/80 hover:border-red-200'">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">Cancelados</span>
+            <span class="text-xl md:text-2xl font-black text-red-700 dark:text-red-300 mt-1 tabular-nums" [attr.data-testid]="'kpi-cancelados-valor'">{{ kpiCancelados }}</span>
+        </div>
+    </div>
+
     <!-- Filter and Search Toolbar -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full sm:w-96">

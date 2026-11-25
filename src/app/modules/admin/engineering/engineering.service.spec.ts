@@ -151,4 +151,26 @@ describe('EngineeringService - Material y trazabilidad (contrato v1.1)', () => {
         expect(req.request.body).toEqual({ proveedorId: null, notas: null });
         req.flush({ idMaterial: 901, proveedorId: null, proveedorNombre: null, notas: null, estatus: 'EnProceso' });
     });
+
+    it('observacionesMaterial_hace_GET_al_endpoint_del_material', () => {
+        service.observacionesMaterial(901).subscribe(res => {
+            expect(res.length).toBe(1);
+            expect(res[0].texto).toBe('Nota 1');
+        });
+
+        const req = httpMock.expectOne(`${api}/materiales/901/observaciones`);
+        expect(req.request.method).toBe('GET');
+        req.flush([{ idObservacion: 1, texto: 'Nota 1', usuarioNombre: 'Admin', fecha: '2026-11-26T15:30:00Z' }]);
+    });
+
+    it('agregarObservacionMaterial_hace_POST_con_texto', () => {
+        service.agregarObservacionMaterial(901, 'Nueva nota').subscribe(res => {
+            expect(res.idObservacion).toBe(2);
+        });
+
+        const req = httpMock.expectOne(`${api}/materiales/901/observaciones`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({ texto: 'Nueva nota' });
+        req.flush({ idObservacion: 2, texto: 'Nueva nota', usuarioNombre: 'Admin', fecha: '2026-11-26T16:00:00Z' });
+    });
 });

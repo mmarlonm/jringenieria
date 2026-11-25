@@ -23,6 +23,7 @@ import { EvidenciasEtapasComponent } from '../../cotizacion-etapas/evidencias-et
 import { MaterialesTrazabilidadComponent } from './materiales-trazabilidad/materiales-trazabilidad.component';
 import { FinanzasKpiSalidasComponent } from './finanzas-kpi-salidas/finanzas-kpi-salidas.component';
 import { OnlyOfficeEditorComponent } from '@fuse/components/only-office-editor/only-office-editor.component';
+import { VisorDocumentoDialogComponent } from '../visor-documento-dialog/visor-documento-dialog.component';
 import { environment } from 'environments/environment';
 import Swal from 'sweetalert2';
 import { 
@@ -1024,6 +1025,64 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
 
   previsualizarArchivo(file: any): void {
     if (!file || !file.tipo || !file.nombreArchivo) return;
+    const nombre = file.nombreArchivo || '';
+    const ext = nombre.split('.').pop()?.toLowerCase() || '';
+
+    // Si es .doc (formato legacy) o .docx
+    if (ext === 'docx' || ext === 'doc') {
+      if (ext === 'doc') {
+        this._dialog.open(VisorDocumentoDialogComponent, {
+          width: '80vw',
+          maxHeight: '90vh',
+          data: {
+            nombreArchivo: nombre,
+            formatoNoSoportado: true,
+            onDescargar: () => this.descargarArchivo(file)
+          }
+        });
+        return;
+      }
+
+      // Para .docx: pedir el blob con sesión (HttpClient)
+      this._engineeringService.descargarArchivoEjecucion(this.idSeguimiento, file.tipo, file.nombreArchivo).subscribe({
+        next: (res) => {
+          if (res && res.data) {
+            const byteCharacters = atob(res.data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: res.contentType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+            this._dialog.open(VisorDocumentoDialogComponent, {
+              width: '85vw',
+              maxHeight: '90vh',
+              data: {
+                nombreArchivo: nombre,
+                blob: blob,
+                onDescargar: () => this.descargarArchivo(file)
+              }
+            });
+          }
+        },
+        error: (err) => {
+          console.error('Error al descargar archivo para visor:', err);
+          this._dialog.open(VisorDocumentoDialogComponent, {
+            width: '80vw',
+            maxHeight: '90vh',
+            data: {
+              nombreArchivo: nombre,
+              errorCarga: true,
+              onDescargar: () => this.descargarArchivo(file)
+            }
+          });
+        }
+      });
+      return;
+    }
+
+    // Imágenes y PDF siguen usando el visor actual
     this._engineeringService.descargarArchivoEjecucion(this.idSeguimiento, file.tipo, file.nombreArchivo).subscribe({
       next: (res) => {
         if (res && res.data) {
@@ -1139,7 +1198,9 @@ export class ControlEjecucionFormComponent implements OnInit, OnDestroy {
             height: '90vh',
             data: {
               documentServerUrl: this.onlyOfficeDocsUrl,
-              editorConfig: editorConfig
+              editorConfig: editorConfig,
+              archivo: archivo,
+              onDescargar: () => this.descargarArchivo(archivo)
             }
           });
         }

@@ -434,6 +434,14 @@ export class EngineeringService {
         return this._http.put<SeguimientoMaterial>(`${this.apiSeguimientoEjecucion}/materiales/${idMaterial}/compra`, datos);
     }
 
+    observacionesMaterial(idMaterial: number): Observable<MaterialObservacion[]> {
+        return this._http.get<MaterialObservacion[]>(`${this.apiSeguimientoEjecucion}/materiales/${idMaterial}/observaciones`);
+    }
+
+    agregarObservacionMaterial(idMaterial: number, texto: string): Observable<MaterialObservacion> {
+        return this._http.post<MaterialObservacion>(`${this.apiSeguimientoEjecucion}/materiales/${idMaterial}/observaciones`, { texto });
+    }
+
     buscarProductosCatalogo(filtro: string): Observable<any[]> {
         return this._http.get<any[]>(`${environment.apiUrl}/SolicitudesCompra/buscar-productos?filtro=${encodeURIComponent(filtro)}`);
     }
@@ -509,7 +517,15 @@ export interface SeguimientoMaterial {
 
     comprasRelacionadas?: MaterialDetalleCompra[];
     salidasRelacionadas?: MaterialDetalleSalida[];
+    observacionesCount?: number;
     expanded?: boolean; // Frontend UI helper
+}
+
+export interface MaterialObservacion {
+    idObservacion: number;
+    texto: string;
+    usuarioNombre?: string | null;
+    fecha: string;
 }
 
 export interface MaterialDetalleCompra {

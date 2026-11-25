@@ -78,6 +78,17 @@ describe('CotizacionEtapasService', () => {
         req.flush({});
     });
 
+    it('regresar() debe llamar POST /CotizacionEtapas/{id}/regresar con etapaDestino y motivo', () => {
+        service.regresar(10, 2, 'Faltaron especificaciones en el levantamiento').subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/10/regresar`);
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({
+            etapaDestino: 2,
+            motivo: 'Faltaron especificaciones en el levantamiento'
+        });
+        req.flush({});
+    });
+
     it('iniciarRevision() debe llamar POST revisiones', () => {
         service.iniciarRevision(5, 2).subscribe();
         const req = httpMock.expectOne(`${baseUrl}/5/etapas/2/revisiones`);
@@ -148,17 +159,18 @@ describe('CotizacionEtapasService', () => {
         const blob = new Blob(['contenido'], { type: 'text/plain' });
         const file = new File([blob], 'prueba.txt', { type: 'text/plain' });
 
-        service.subirArchivos(5, 2, 1, [file]).subscribe();
+        service.subirArchivos(5, 2, 1, [file], ['mi observacion']).subscribe();
         const req = httpMock.expectOne(`${baseUrl}/5/etapas/2/revisiones/1/archivos`);
         expect(req.request.method).toBe('POST');
         expect(req.request.body instanceof FormData).toBeTrue();
         expect(req.request.body.has('archivos')).toBeTrue();
+        expect(req.request.body.has('observaciones')).toBeTrue();
         req.flush({ success: true });
     });
 
-    it('descargarArchivo() debe llamar GET con responseType blob', () => {
-        service.descargarArchivo(5, 2, 1, 'plano con espacios.pdf').subscribe();
-        const req = httpMock.expectOne(`${baseUrl}/5/etapas/2/revisiones/1/archivos/plano%20con%20espacios.pdf`);
+    it('descargarArchivo() debe llamar GET con responseType blob y version opcional', () => {
+        service.descargarArchivo(5, 2, 1, 'plano con espacios.pdf', 3).subscribe();
+        const req = httpMock.expectOne(`${baseUrl}/5/etapas/2/revisiones/1/archivos/plano%20con%20espacios.pdf?version=3`);
         expect(req.request.method).toBe('GET');
         expect(req.request.responseType).toBe('blob');
         req.flush(new Blob());

@@ -1,0 +1,95 @@
+<div class="flex flex-col h-full max-h-[90vh] w-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shrink-0">
+        <div class="flex items-center gap-2 overflow-hidden">
+            <mat-icon class="text-blue-600 scale-90 shrink-0">description</mat-icon>
+            <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate" data-testid="titulo-documento">
+                {{ data?.nombreArchivo }}
+            </h2>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <button
+                *ngIf="formatoNoSoportado || errorMsg"
+                mat-stroked-button
+                color="primary"
+                (click)="descargar()"
+                class="gap-1 text-xs"
+                data-testid="btn-descargar-error"
+            >
+                <mat-icon class="scale-75">download</mat-icon>
+                <span>Descargar</span>
+            </button>
+            <button
+                *ngIf="!formatoNoSoportado && !errorMsg"
+                mat-icon-button
+                (click)="descargar()"
+                matTooltip="Descargar archivo"
+                data-testid="btn-descargar"
+            >
+                <mat-icon>download</mat-icon>
+            </button>
+            <button mat-icon-button (click)="cerrar()" matTooltip="Cerrar" data-testid="btn-cerrar">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-auto p-4 relative min-h-[400px]">
+        <!-- Formato no soportado (.doc) -->
+        <div
+            *ngIf="formatoNoSoportado"
+            class="flex flex-col items-center justify-center h-full p-8 text-center space-y-4"
+            data-testid="mensaje-formato-no-soportado"
+        >
+            <mat-icon class="text-amber-500 scale-150">info</mat-icon>
+            <div class="space-y-1">
+                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                    Este formato no se puede ver aquí
+                </h3>
+                <p class="text-xs text-slate-500 max-w-sm">
+                    Los archivos en formato .doc antiguo no admiten previsualización directa. Puede descargarlo para abrirlo en su equipo.
+                </p>
+            </div>
+            <button mat-flat-button color="primary" (click)="descargar()" class="gap-1" data-testid="btn-descargar-doc">
+                <mat-icon class="scale-90">download</mat-icon>
+                <span>Descargar</span>
+            </button>
+        </div>
+
+        <!-- Error al renderizar o cargar -->
+        <div
+            *ngIf="!formatoNoSoportado && errorMsg"
+            class="flex flex-col items-center justify-center h-full p-8 text-center space-y-4"
+            data-testid="mensaje-error-render"
+        >
+            <mat-icon class="text-rose-500 scale-150">error_outline</mat-icon>
+            <div class="space-y-1">
+                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                    {{ errorMsg }}
+                </h3>
+                <p class="text-xs text-slate-500 max-w-sm">
+                    Ocurrió un problema al procesar el archivo. Puede descargarlo para abrirlo con su procesador de textos habitual.
+                </p>
+            </div>
+            <button mat-flat-button color="primary" (click)="descargar()" class="gap-1" data-testid="btn-descargar-fallo">
+                <mat-icon class="scale-90">download</mat-icon>
+                <span>Descargar</span>
+            </button>
+        </div>
+
+        <!-- Indicador de carga -->
+        <div *ngIf="cargando" class="flex flex-col items-center justify-center h-full p-8 space-y-3" data-testid="indicador-carga">
+            <mat-progress-bar mode="indeterminate" class="w-48"></mat-progress-bar>
+            <span class="text-xs text-slate-400">Cargando documento...</span>
+        </div>
+
+        <!-- Contenedor del documento DOCX -->
+        <div
+            [hidden]="formatoNoSoportado || errorMsg"
+            #docxContainer
+            class="docx-render-container w-full h-full bg-white text-slate-900 overflow-auto p-4"
+            data-testid="docx-container"
+        ></div>
+    </div>
+</div>
