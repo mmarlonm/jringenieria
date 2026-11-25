@@ -511,6 +511,33 @@ describe('MaterialesTrazabilidadComponent', () => {
       expect(component.materiales).toBe(antes);
     });
 
+    it('Al cerrar Proveedor y observaciones la fila actualiza notas y conteo', () => {
+      configurar(resumen([
+        mat(1, { notas: 'Nota previa', observacionesCount: 1 })
+      ]));
+      const actualizado = mat(1, { proveedorId: 31, proveedorNombre: 'Proveedor Nuevo', notas: 'Nueva nota', observacionesCount: 2 });
+      spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(actualizado) } as any);
+
+      (q('compra-1') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(component.materiales[0].notas).toBe('Nueva nota');
+      expect(component.materiales[0].observacionesCount).toBe(2);
+      expect(component.materiales[0].proveedorId).toBe(31);
+      expect(q('observaciones-1')?.textContent).toContain('Nueva nota');
+      expect(q('conteo-observaciones-1')?.textContent?.trim()).toBe('2');
+    });
+
+    it('Al cancelar Proveedor y observaciones la tabla se recalcula', () => {
+      configurar();
+      spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as any);
+      const recalcularSpy = spyOn(component as any, 'recalcular').and.callThrough();
+
+      (q('compra-1') as HTMLElement).click();
+
+      expect(recalcularSpy).toHaveBeenCalled();
+    });
+
     it('Quitar_el_proveedor_deja_el_guion_en_la_fila', () => {
       configurar();
       spyOn((component as any).dialog, 'open').and.returnValue({

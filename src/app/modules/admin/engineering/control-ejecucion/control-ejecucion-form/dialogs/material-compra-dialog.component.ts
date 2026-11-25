@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, switchMap, of, catchError } from 'rxjs';
 import { EngineeringService, ProveedorLigero, SeguimientoMaterial } from '../../../engineering.service';
+import { MaterialObservacionesDialogComponent, MaterialObservacionesDialogData } from '../materiales-trazabilidad/material-observaciones-dialog/material-observaciones-dialog.component';
 
 export interface MaterialCompraDialogData {
   material: SeguimientoMaterial;
@@ -56,21 +57,22 @@ export class MaterialCompraDialogComponent implements OnInit, OnDestroy {
   guardando = false;
   errorMensaje: string | null = null;
 
-  private readonly inicial: { proveedorId: number | null; notas: string };
+  private readonly inicial: { proveedorId: number | null };
   private readonly consultas = new Subject<string>();
   private readonly suscripciones = new Subscription();
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: MaterialCompraDialogData,
     private dialogRef: MatDialogRef<MaterialCompraDialogComponent, SeguimientoMaterial>,
-    private engineering: EngineeringService
+    private engineering: EngineeringService,
+    private dialog: MatDialog
   ) {
     const m = data.material;
     this.proveedor = m.proveedorId
       ? { idProveedor: m.proveedorId, etiqueta: (m.proveedorNombre || '').trim() || 'Proveedor sin nombre' }
       : null;
-    this.observacionesControl = new FormControl<string>(m.notas ?? '', { nonNullable: true });
-    this.inicial = { proveedorId: m.proveedorId ?? null, notas: (m.notas ?? '').trim() };
+    this.observacionesControl = new FormControl<string>('', { nonNullable: true });
+    this.inicial = { proveedorId: m.proveedorId ?? null };
   }
 
   ngOnInit(): void {
@@ -127,6 +129,21 @@ export class MaterialCompraDialogComponent implements OnInit, OnDestroy {
   /** Para que el autocomplete no escriba el objeto en el campo: el elegido se muestra aparte. */
   mostrarVacio = (): string => '';
 
+  get observacionActual(): string {
+    return (this.data.material.notas || '').trim();
+  }
+
+  get conteoHistorial(): number {
+    return this.data.material.observacionesCount || 0;
+  }
+
+  verHistorial(): void {
+    this.dialog.open<MaterialObservacionesDialogComponent, MaterialObservacionesDialogData>(
+      MaterialObservacionesDialogComponent,
+      { width: '600px', maxWidth: '95vw', autoFocus: false, data: { material: this.data.material } }
+    );
+  }
+
   get cuenta(): number {
     return this.observacionesControl.value.length;
   }
@@ -136,8 +153,11 @@ export class MaterialCompraDialogComponent implements OnInit, OnDestroy {
   }
 
   get hayCambios(): boolean {
-    return (this.proveedor?.idProveedor ?? null) !== this.inicial.proveedorId
-      || this.observacionesControl.value.trim() !== this.inicial.notas;
+    const proveedorCambio = (this.proveedor?.idProveedor ?? null) !== this.inicial.proveedorId;
+    const nuevaRecortada = this.observacionesControl.value.trim();
+    const observacionActual = (this.data.material.notas || '').trim();
+    const observacionNuevaValida = nuevaRecortada.length > 0 && nuevaRecortada !== observacionActual;
+    return proveedorCambio || observacionNuevaValida;
   }
 
   get puedeGuardar(): boolean {
@@ -151,10 +171,11 @@ export class MaterialCompraDialogComponent implements OnInit, OnDestroy {
     this.guardando = true;
     this.dialogRef.disableClose = true;
     this.errorMensaje = null;
-    const notas = this.observacionesControl.value.trim();
+    const nuevaRecortada = this.observacionesControl.value.trim();
+    const notas = nuevaRecortada || (this.data.material.notas?.trim() || null);
     this.engineering.guardarCompraMaterial(this.data.material.idMaterial, {
       proveedorId: this.proveedor?.idProveedor ?? null,
-      notas: notas ? notas : null
+      notas: notas
     }).subscribe({
       next: (material) => {
         this.dialogRef.close(material);

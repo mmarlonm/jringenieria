@@ -47,12 +47,33 @@
 
     <!-- Observaciones -->
     <div class="mt-4 mb-1 text-xs font-black text-slate-600 uppercase tracking-wide">Observaciones</div>
+
+    <!-- Recuadro Observación actual y Ver historial -->
+    <div class="mb-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-3 text-sm">
+      <div class="flex-1 min-w-0">
+        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Observación actual</div>
+        <div data-testid="observacion-actual" class="text-slate-700 dark:text-slate-200 break-words whitespace-pre-wrap text-xs" [ngClass]="{'italic text-slate-400': !observacionActual}">
+          {{ observacionActual || 'Sin observaciones' }}
+        </div>
+      </div>
+      <button type="button" mat-stroked-button class="shrink-0" data-testid="btn-ver-historial" (click)="verHistorial()">
+        <mat-icon class="text-slate-500 mr-1 text-[18px]">history</mat-icon>
+        Ver historial
+        <span *ngIf="conteoHistorial > 0" class="ml-1 text-xs text-slate-500 font-semibold">({{ conteoHistorial }})</span>
+      </button>
+    </div>
+
+    <!-- Nueva observación -->
     <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-      <textarea matInput rows="4" data-testid="input-observaciones" [formControl]="observacionesControl" [readonly]="guardando"
+      <mat-label>Nueva observación</mat-label>
+      <textarea matInput rows="3" data-testid="input-observaciones" [formControl]="observacionesControl" [readonly]="guardando"
                 placeholder="Condiciones de entrega, contacto, tiempos..."></textarea>
     </mat-form-field>
-    <div class="mt-1 text-[11px] text-right tabular-nums" data-testid="contador" [ngClass]="excede ? 'text-red-600 font-bold' : 'text-slate-400'">
-      {{ cuenta }} / {{ maxObservaciones }}
+    <div class="mt-1 flex items-center justify-between text-[11px]">
+      <span class="text-slate-500">Se agrega al historial con tu nombre y la fecha. Si lo dejas vacío, la observación actual no cambia.</span>
+      <span class="tabular-nums ml-2 shrink-0" data-testid="contador" [ngClass]="excede ? 'text-red-600 font-bold' : 'text-slate-400'">
+        {{ cuenta }} / {{ maxObservaciones }}
+      </span>
     </div>
   </mat-dialog-content>
 
