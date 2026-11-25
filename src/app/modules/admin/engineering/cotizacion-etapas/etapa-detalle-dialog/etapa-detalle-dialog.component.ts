@@ -365,22 +365,6 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         return this.usuarioActualId === this.detalle.idUsuarioRegistro;
     }
 
-    get autorizadoresDisponibles(): any[] {
-        if (!this.usuariosJr?.length) return [];
-        if (this.esAdmin) return this.usuariosJr;
-        const actualId = this.usuarioActualId;
-        const autorizadorSeleccionado = this.form?.get('autorizaUsuarioId')?.value
-            ?? this.etapaActualDto?.autorizaUsuarioId;
-
-        return this.usuariosJr.filter((u) => {
-            const uid = u.usuarioId || u.id;
-            if (uid === actualId) {
-                return uid === autorizadorSeleccionado;
-            }
-            return true;
-        });
-    }
-
     puedeIniciarRevision(): boolean {
         if (this.esSoloLectura) return false;
         return this.ultimaRevisionRechazada;
