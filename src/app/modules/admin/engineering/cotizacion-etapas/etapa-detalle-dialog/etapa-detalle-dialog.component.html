@@ -218,16 +218,19 @@
                                     </mat-select>
                                 </mat-form-field>
 
-                                <mat-form-field appearance="outline" class="w-full">
-                                    <mat-label>Autorizador designado *</mat-label>
-                                    <mat-select formControlName="autorizaUsuarioId">
-                                        <mat-option [value]="null">-- Sin designar --</mat-option>
-                                        <mat-option *ngFor="let u of usuariosJr" [value]="u.usuarioId || u.id">
-                                            {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
-                                        </mat-option>
-                                    </mat-select>
-                                    <mat-hint class="text-xs text-slate-500">Obligatorio para enviar a autorizar. Solo esa persona (o un administrador) puede autorizar o rechazar</mat-hint>
-                                </mat-form-field>
+                                <div>
+                                    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                                        <mat-label>Autorizador designado *</mat-label>
+                                        <mat-select formControlName="autorizaUsuarioId">
+                                            <mat-option [value]="null">-- Sin designar --</mat-option>
+                                            <mat-option *ngFor="let u of autorizadoresDisponibles" [value]="u.usuarioId || u.id">
+                                                {{ u.nombreUsuario || u.nombre || u.nombreCompleto }}
+                                            </mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <p class="mt-1 text-xs text-slate-500">Obligatorio para enviar a autorizar. Solo esa persona (o un administrador) puede autorizar o rechazar</p>
+                                    <p *ngIf="!puedeCambiarAutorizador" class="mt-1 text-xs text-amber-600 dark:text-amber-400 font-medium">Solo quien registró el caso o un administrador puede designar al autorizador</p>
+                                </div>
                             </div>
                         </div>
 
