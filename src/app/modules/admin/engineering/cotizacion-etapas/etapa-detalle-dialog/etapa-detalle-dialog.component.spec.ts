@@ -562,4 +562,211 @@ describe('EtapaDetalleDialogComponent', () => {
         expect(opciones[3].textContent?.trim()).toBe('Cotización técnico-comercial');
         expect(opciones[3].value).toBe('5');
     });
+
+    // ───── F4: Archivos y evidencias con versiones y observaciones ─────
+
+    it('Muestra_pestanas_R1_R2_por_cada_revision_de_la_etapa', async () => {
+        const detalleConDosRevisiones: CotizacionEtapasDetalleDto = {
+            ...mockDetalle,
+            etapas: [
+                {
+                    ...mockDetalle.etapas[0],
+                    revisiones: [
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 1, resultado: ESTATUS_ETAPA.Rechazada },
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 2, resultado: ESTATUS_ETAPA.EnProceso }
+                    ]
+                }
+            ]
+        };
+        component.detalle = detalleConDosRevisiones;
+        component.etapaActualDto = detalleConDosRevisiones.etapas[0];
+        component.revisionSeleccionadaArchivos = 2;
+        fixture.detectChanges();
+
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const tabsRev = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[data-testid^="tab-revision-"]');
+        expect(tabsRev.length).toBe(2);
+        expect(tabsRev[0].textContent?.trim()).toBe('R1');
+        expect(tabsRev[1].textContent?.trim()).toBe('R2');
+
+        serviceMock.archivos.calls.reset();
+        tabsRev[0].click();
+        fixture.detectChanges();
+        expect(component.revisionSeleccionadaArchivos).toBe(1);
+        expect(serviceMock.archivos).toHaveBeenCalledWith(10, 1, 1);
+    });
+
+    it('Cada_archivo_muestra_version_observacion_quien_y_cuando', async () => {
+        component.archivosLista = [
+            {
+                nombreArchivo: 'memoria.docx',
+                tamanoBytes: 2048,
+                fecha: '2026-11-20T10:30:00Z',
+                subidoPorNombre: 'Juan Ingeniero',
+                version: 2,
+                observacion: 'Cálculo de cargas ajustado',
+                versiones: []
+            }
+        ];
+        component.cargandoArchivos = false;
+        fixture.detectChanges();
+
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const item = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="archivo-item-memoria.docx"]');
+        expect(item).not.toBeNull();
+        expect(item?.querySelector('[data-testid="version-badge-memoria.docx"]')?.textContent?.trim()).toBe('v2');
+        expect(item?.querySelector('[data-testid="subido-por-memoria.docx"]')?.textContent).toContain('Juan Ingeniero');
+        expect(item?.querySelector('[data-testid="observacion-archivo-memoria.docx"]')?.textContent).toContain('Cálculo de cargas ajustado');
+    });
+
+    it('Muestra_versiones_anteriores_desplegable_con_descarga_version_k', async () => {
+        serviceMock.descargarArchivo.and.returnValue(of(new Blob(['v1content'])));
+        component.archivosLista = [
+            {
+                nombreArchivo: 'especificaciones.pdf',
+                tamanoBytes: 4096,
+                fecha: '2026-11-21T15:00:00Z',
+                subidoPorNombre: 'Carlos',
+                version: 2,
+                observacion: 'Segunda entrega',
+                versiones: [
+                    {
+                        version: 1,
+                        fecha: '2026-11-19T09:00:00Z',
+                        subidoPorNombre: 'Carlos',
+                        observacion: 'Primera entrega preliminar'
+                    }
+                ]
+            }
+        ];
+        component.cargandoArchivos = false;
+        fixture.detectChanges();
+
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const summary = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="summary-versiones-especificaciones.pdf"]');
+        expect(summary).not.toBeNull();
+        expect(summary?.textContent).toContain('Versiones anteriores (1)');
+
+        const versionItem = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="version-item-especificaciones.pdf-1"]');
+        expect(versionItem).not.toBeNull();
+        expect(versionItem?.textContent).toContain('v1');
+        expect(versionItem?.textContent).toContain('Primera entrega preliminar');
+
+        const btnDescargarV1 = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('[data-testid="descargar-v-especificaciones.pdf-1"]');
+        expect(btnDescargarV1).not.toBeNull();
+        btnDescargarV1?.click();
+        expect(serviceMock.descargarArchivo).toHaveBeenCalledWith(10, 1, 1, 'especificaciones.pdf', 1);
+    });
+
+    it('Al_elegir_archivos_abre_modal_y_si_existe_avisa_se_guardara_como_version_N', () => {
+        component.archivosLista = [
+            {
+                nombreArchivo: 'diagrama.dwg',
+                tamanoBytes: 1024,
+                fecha: '2026-11-20T10:00:00Z',
+                subidoPorNombre: 'Ana',
+                version: 2,
+                observacion: 'Versión previa',
+                versiones: []
+            }
+        ];
+        fixture.detectChanges();
+
+        const mockFileExistente = new File(['123'], 'diagrama.dwg');
+        const mockFileNuevo = new File(['456'], 'nuevo-plano.pdf');
+
+        component.onArchivosSeleccionados({ target: { files: [mockFileExistente, mockFileNuevo] } });
+        fixture.detectChanges();
+
+        expect(component.modalSubirArchivosAbierto).toBeTrue();
+        expect(component.archivosParaSubir.length).toBe(2);
+        expect(component.archivosParaSubir[0].esResubida).toBeTrue();
+        expect(component.archivosParaSubir[0].versionSiguiente).toBe(3);
+        expect(component.archivosParaSubir[1].esResubida).toBeFalse();
+        expect(component.archivosParaSubir[1].versionSiguiente).toBe(1);
+
+        const avisoResubida = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="aviso-resubida-diagrama.dwg"]');
+        expect(avisoResubida).not.toBeNull();
+        expect(avisoResubida?.textContent).toContain('Se guardará como versión 3');
+
+        const avisoNuevo = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="aviso-resubida-nuevo-plano.pdf"]');
+        expect(avisoNuevo).toBeNull();
+    });
+
+    it('Confirmar_subida_manda_archivos_y_observaciones_al_servicio', () => {
+        serviceMock.subirArchivos.and.returnValue(of(undefined));
+        const mockFile = new File(['abc'], 'reporte.docx');
+        component.archivosParaSubir = [
+            {
+                file: mockFile,
+                nombre: 'reporte.docx',
+                observacion: 'Correcciones de ortografía',
+                esResubida: false,
+                versionSiguiente: 1
+            }
+        ];
+        component.modalSubirArchivosAbierto = true;
+        fixture.detectChanges();
+
+        component.confirmarSubida();
+        expect(serviceMock.subirArchivos).toHaveBeenCalledWith(
+            10,
+            1,
+            1,
+            [mockFile],
+            ['Correcciones de ortografía']
+        );
+        expect(component.modalSubirArchivosAbierto).toBeFalse();
+    });
+
+    it('Subir_archivo_solo_se_permite_en_la_revision_editable', async () => {
+        const detalleConDosRev: CotizacionEtapasDetalleDto = {
+            ...mockDetalle,
+            etapas: [
+                {
+                    ...mockDetalle.etapas[0],
+                    revisiones: [
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 1, resultado: ESTATUS_ETAPA.Rechazada },
+                        { ...mockDetalle.etapas[0].revisiones[0], numero: 2, resultado: ESTATUS_ETAPA.EnProceso }
+                    ]
+                }
+            ]
+        };
+        component.detalle = detalleConDosRev;
+        component.etapaActualDto = detalleConDosRev.etapas[0];
+
+        // En R1 (revisión pasada no editable)
+        component.revisionSeleccionadaArchivos = 1;
+        fixture.detectChanges();
+        expect(component.puedeSubirArchivoActual).toBeFalse();
+
+        // En R2 (última revisión editable)
+        component.revisionSeleccionadaArchivos = 2;
+        fixture.detectChanges();
+        expect(component.puedeSubirArchivoActual).toBeTrue();
+
+        // Verificar botón en la pestaña de archivos
+        const pestanas = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]'));
+        pestanas.find((t) => (t.textContent || '').includes('Archivos'))!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="btn-abrir-subir-archivo"]')).not.toBeNull();
+    });
 });

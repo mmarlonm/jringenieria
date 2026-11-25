@@ -79,17 +79,22 @@ export class CotizacionEtapasService {
         return this._http.get<CotizacionEtapasArchivoDto[]>(`${this._baseUrl}/${id}/etapas/${etapa}/revisiones/${numero}/archivos`);
     }
 
-    subirArchivos(id: number, etapa: number, numero: number, files: File[]): Observable<any> {
+    subirArchivos(id: number, etapa: number, numero: number, files: File[], observaciones?: string[]): Observable<any> {
         const formData = new FormData();
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             formData.append('archivos', file, file.name);
+            if (observaciones && observaciones[i] !== undefined) {
+                formData.append('observaciones', observaciones[i] ?? '');
+            }
         }
         return this._http.post<any>(`${this._baseUrl}/${id}/etapas/${etapa}/revisiones/${numero}/archivos`, formData);
     }
 
-    descargarArchivo(id: number, etapa: number, numero: number, nombre: string): Observable<Blob> {
+    descargarArchivo(id: number, etapa: number, numero: number, nombre: string, version?: number): Observable<Blob> {
         const encoded = encodeURIComponent(nombre);
-        return this._http.get(`${this._baseUrl}/${id}/etapas/${etapa}/revisiones/${numero}/archivos/${encoded}`, {
+        const url = `${this._baseUrl}/${id}/etapas/${etapa}/revisiones/${numero}/archivos/${encoded}${version ? '?version=' + version : ''}`;
+        return this._http.get(url, {
             responseType: 'blob'
         });
     }

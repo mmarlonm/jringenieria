@@ -301,26 +301,26 @@
             <!-- TAB 3: ARCHIVOS -->
             <mat-tab label="Archivos y Evidencias">
                 <div class="py-4 space-y-4">
-                    <!-- Selector de Revision para Archivos -->
-                    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Archivos de la Revisión:</span>
-                            <div class="flex gap-2">
-                                <button
-                                    *ngFor="let r of etapaActualDto?.revisiones"
-                                    type="button"
-                                    (click)="cambiarRevisionArchivos(r.numero)"
-                                    [class]="r.numero === revisionSeleccionadaArchivos ? 'px-3 py-1 rounded-lg text-xs font-bold bg-primary text-white shadow' : 'px-3 py-1 rounded-lg text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
-                                >
-                                    R{{ r.numero }}
-                                </button>
-                            </div>
+                    <!-- Pestañas R1, R2... por cada revisión -->
+                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                        <div class="flex items-center gap-1.5" role="tablist">
+                            <button
+                                *ngFor="let r of etapaActualDto?.revisiones"
+                                type="button"
+                                role="tab"
+                                [attr.aria-selected]="r.numero === revisionSeleccionadaArchivos"
+                                [attr.data-testid]="'tab-revision-' + r.numero"
+                                (click)="cambiarRevisionArchivos(r.numero)"
+                                [class]="r.numero === revisionSeleccionadaArchivos ? 'px-4 py-2 border-b-2 border-primary text-primary font-bold text-xs bg-primary/5 rounded-t-lg shadow-xs' : 'px-4 py-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-semibold text-xs rounded-t-lg'"
+                            >
+                                R{{ r.numero }}
+                            </button>
                         </div>
 
-                        <!-- Boton Subir Archivos -->
+                        <!-- Boton Subir Archivos (solo en la revisión editable) -->
                         <div *ngIf="puedeSubirArchivoActual">
-                            <input #fileInput type="file" multiple (change)="onArchivosSeleccionados($event)" class="hidden" />
-                            <button mat-stroked-button color="primary" (click)="fileInput.click()" [disabled]="cargandoArchivos" class="gap-1 text-xs">
+                            <input #fileInput type="file" multiple (change)="onArchivosSeleccionados($event)" class="hidden" data-testid="input-subir-archivos" />
+                            <button mat-stroked-button color="primary" (click)="fileInput.click()" [disabled]="cargandoArchivos" class="gap-1 text-xs" data-testid="btn-abrir-subir-archivo">
                                 <mat-icon class="scale-90">upload_file</mat-icon>
                                 <span>Subir Archivo</span>
                             </button>
@@ -339,27 +339,71 @@
                     <div *ngIf="!cargandoArchivos && archivosLista.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div
                             *ngFor="let a of archivosLista"
-                            class="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm hover:shadow transition-all"
+                            [attr.data-testid]="'archivo-item-' + a.nombreArchivo"
+                            class="flex flex-col p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm hover:shadow transition-all"
                         >
-                            <div class="flex items-center gap-2.5 overflow-hidden">
-                                <mat-icon class="text-blue-500 scale-90">description</mat-icon>
-                                <span class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
-                                    {{ a.nombreArchivo }}
-                                </span>
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <mat-icon class="text-blue-500 scale-90 shrink-0">description</mat-icon>
+                                    <span class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate" [attr.data-testid]="'nombre-archivo-' + a.nombreArchivo">
+                                        {{ a.nombreArchivo }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" [attr.data-testid]="'version-badge-' + a.nombreArchivo">
+                                        v{{ a.version || 1 }}
+                                    </span>
+                                    <button mat-icon-button (click)="descargarArchivo(a.nombreArchivo)" [matTooltip]="'Descargar'" [attr.data-testid]="'btn-descargar-' + a.nombreArchivo" class="w-7 h-7 min-h-7 text-slate-500 hover:text-indigo-600">
+                                        <mat-icon class="scale-90">download</mat-icon>
+                                    </button>
+                                    <button
+                                        *ngIf="puedeEliminarArchivoActual"
+                                        mat-icon-button
+                                        (click)="eliminarArchivo(a.nombreArchivo)"
+                                        [matTooltip]="'Eliminar archivo y versiones'"
+                                        class="w-7 h-7 min-h-7 text-rose-500 hover:text-rose-700"
+                                        [attr.data-testid]="'btn-eliminar-' + a.nombreArchivo"
+                                    >
+                                        <mat-icon class="scale-90">delete</mat-icon>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <button mat-icon-button (click)="descargarArchivo(a.nombreArchivo)" [matTooltip]="'Descargar'">
-                                    <mat-icon class="scale-90 text-slate-500">download</mat-icon>
-                                </button>
-                                <button
-                                    *ngIf="puedeEliminarArchivoActual"
-                                    mat-icon-button
-                                    (click)="eliminarArchivo(a.nombreArchivo)"
-                                    [matTooltip]="'Eliminar'"
-                                    class="text-rose-500"
-                                >
-                                    <mat-icon class="scale-90">delete</mat-icon>
-                                </button>
+
+                            <!-- Meta: quién y cuándo -->
+                            <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+                                <span [attr.data-testid]="'subido-por-' + a.nombreArchivo">Subido por {{ a.subidoPorNombre || 'Sistema' }}</span>
+                                <span *ngIf="a.fecha">· {{ a.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+                            </div>
+
+                            <!-- Observación del archivo -->
+                            <div *ngIf="a.observacion" class="text-xs text-slate-600 dark:text-slate-300 italic mt-1.5 p-1.5 rounded bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50" [attr.data-testid]="'observacion-archivo-' + a.nombreArchivo">
+                                {{ a.observacion }}
+                            </div>
+
+                            <!-- Desplegable versiones anteriores -->
+                            <div *ngIf="a.versiones && a.versiones.length > 0" class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <details class="text-xs" [attr.data-testid]="'detalles-versiones-' + a.nombreArchivo">
+                                    <summary class="cursor-pointer text-slate-500 hover:text-indigo-600 font-semibold flex items-center gap-1 select-none" [attr.data-testid]="'summary-versiones-' + a.nombreArchivo">
+                                        <span>Versiones anteriores ({{ a.versiones.length }})</span>
+                                    </summary>
+                                    <div class="mt-2 space-y-1.5 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                                        <div *ngFor="let v of a.versiones" class="flex items-center justify-between p-1.5 rounded bg-slate-50 dark:bg-slate-800/40 text-[11px]" [attr.data-testid]="'version-item-' + a.nombreArchivo + '-' + v.version">
+                                            <div class="flex flex-col">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-bold text-blue-700 dark:text-blue-400">v{{ v.version }}</span>
+                                                    <span class="text-slate-400">·</span>
+                                                    <span class="text-slate-600 dark:text-slate-300">{{ v.subidoPorNombre || 'Sistema' }}</span>
+                                                    <span class="text-slate-400">·</span>
+                                                    <span class="text-slate-400">{{ v.fecha ? (v.fecha | date:'dd/MM/yyyy HH:mm') : '' }}</span>
+                                                </div>
+                                                <div *ngIf="v.observacion" class="text-slate-500 italic mt-0.5">{{ v.observacion }}</div>
+                                            </div>
+                                            <button mat-icon-button (click)="descargarArchivo(a.nombreArchivo, v.version)" [matTooltip]="'Descargar v' + v.version" class="w-6 h-6 min-h-6 text-slate-400 hover:text-indigo-600" [attr.data-testid]="'descargar-v-' + a.nombreArchivo + '-' + v.version">
+                                                <mat-icon class="icon-size-3.5">download</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </details>
                             </div>
                         </div>
                     </div>
@@ -770,6 +814,74 @@
                 >
                     <span *ngIf="!guardando">Confirmar no autorización</span>
                     <span *ngIf="guardando">Guardando...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Subir Archivos con Observación y Versión -->
+    <div *ngIf="modalSubirArchivosAbierto" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" data-testid="modal-subir-archivos">
+        <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 dialogo-alto max-h-[90vh] overflow-y-auto">
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <mat-icon class="text-indigo-600">upload_file</mat-icon>
+                <span>Subir Archivos - Revisión R{{ revisionSeleccionadaArchivos }}</span>
+            </h3>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                Revise los archivos seleccionados y agregue una observación opcional para cada uno.
+            </p>
+
+            <div class="space-y-3">
+                <div
+                    *ngFor="let item of archivosParaSubir; let i = index"
+                    class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 space-y-2"
+                    [attr.data-testid]="'item-subir-' + item.nombre"
+                >
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[280px]">
+                            {{ item.nombre }}
+                        </span>
+                        <span
+                            *ngIf="item.esResubida"
+                            class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                            [attr.data-testid]="'aviso-resubida-' + item.nombre"
+                        >
+                            Se guardará como versión {{ item.versionSiguiente }}
+                        </span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-medium text-slate-500">Observación (opcional)</label>
+                        <textarea
+                            [(ngModel)]="item.observacion"
+                            rows="2"
+                            maxlength="1000"
+                            placeholder="Describa el contenido o cambios del archivo..."
+                            class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-xs"
+                            [attr.data-testid]="'textarea-obs-' + item.nombre"
+                        ></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="errorSubidaMsg" class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2" data-testid="error-subida">
+                <mat-icon class="text-red-500 text-base">error_outline</mat-icon>
+                <span>{{ errorSubidaMsg }}</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <button mat-button (click)="cancelarSubida()" [disabled]="cargandoArchivos" data-testid="btn-cancelar-subida">
+                    Cancelar
+                </button>
+                <button
+                    mat-flat-button
+                    color="primary"
+                    (click)="confirmarSubida()"
+                    [disabled]="cargandoArchivos || archivosParaSubir.length === 0"
+                    data-testid="btn-confirmar-subida"
+                >
+                    <span *ngIf="!cargandoArchivos">Subir</span>
+                    <span *ngIf="cargandoArchivos">Subiendo...</span>
                 </button>
             </div>
         </div>

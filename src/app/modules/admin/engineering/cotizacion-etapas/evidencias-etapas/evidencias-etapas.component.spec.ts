@@ -64,6 +64,17 @@ describe('EvidenciasEtapasComponent', () => {
         expect(fila.textContent).toContain('R2');
     });
 
+    it('muestra la version y la observacion de cada archivo cuando existen', () => {
+        crear([
+            { etapa: 1, revision: 1, nombreArchivo: 'plano.pdf', version: 2, observacion: 'Revisión final de cálculo' }
+        ]);
+
+        const fila = html().querySelector('[data-archivo="plano.pdf"]') as HTMLElement;
+        expect(fila.textContent).toContain('v2');
+        expect(fila.textContent).toContain('R1');
+        expect(fila.textContent).toContain('Revisión final de cálculo');
+    });
+
     it('sin archivos muestra que aún no hay evidencias', () => {
         crear([]);
 

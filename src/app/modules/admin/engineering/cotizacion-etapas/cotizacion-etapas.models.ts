@@ -29,8 +29,22 @@ export interface CotizacionEtapasListItemDto {
     cancelado: boolean;
 }
 
+export interface CotizacionEtapaArchivoVersionDto {
+    version: number;
+    observacion?: string | null;
+    subidoPorNombre?: string | null;
+    fecha?: string | null;
+    tamanoBytes?: number;
+}
+
 export interface CotizacionEtapasArchivoDto {
     nombreArchivo: string;
+    version?: number;
+    observacion?: string | null;
+    subidoPorNombre?: string | null;
+    fecha?: string | null;
+    tamanoBytes?: number;
+    versiones?: CotizacionEtapaArchivoVersionDto[];
 }
 
 /** Archivo de evidencia subido en una revisión de una etapa (la API lista los de todas las etapas del caso). */
@@ -38,6 +52,8 @@ export interface CotizacionEtapasArchivoCasoDto {
     etapa: number;
     revision: number;
     nombreArchivo: string;
+    version?: number;
+    observacion?: string | null;
 }
 
 export interface CotizacionEtapasRevisionDto {

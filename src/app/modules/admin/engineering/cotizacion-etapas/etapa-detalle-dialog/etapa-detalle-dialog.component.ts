@@ -302,7 +302,7 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         if (this.etapa5PendienteDelCliente) {
             return this.puedeRegistrarCliente && this.revisionSeleccionadaArchivos === this.ultimaRevision?.numero;
         }
-        return !this.revisionActualEstaCongelada() && this.puedeOperarAcciones;
+        return !this.revisionActualEstaCongelada() && this.puedeOperarAcciones && (this.revisionSeleccionadaArchivos === this.ultimaRevision?.numero);
     }
 
     get puedeEliminarArchivoActual(): boolean {
@@ -773,26 +773,75 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
             });
     }
 
+    archivosParaSubir: {
+        file: File;
+        nombre: string;
+        observacion: string;
+        esResubida: boolean;
+        versionSiguiente: number;
+    }[] = [];
+    modalSubirArchivosAbierto: boolean = false;
+    errorSubidaMsg: string | null = null;
+
     onArchivosSeleccionados(event: any): void {
-        const files: FileList = event.target.files;
+        const files: FileList = event.target?.files;
         if (!files || files.length === 0) return;
 
-        const arrayFiles: File[] = [];
+        this.archivosParaSubir = [];
         for (let i = 0; i < files.length; i++) {
-            arrayFiles.push(files[i]);
+            const file = files[i];
+            const existente = this.archivosLista.find(
+                (a) => a.nombreArchivo.toLowerCase() === file.name.toLowerCase()
+            );
+            const esResubida = !!existente;
+            const versionSiguiente = esResubida ? (existente.version || 1) + 1 : 1;
+            this.archivosParaSubir.push({
+                file,
+                nombre: file.name,
+                observacion: '',
+                esResubida,
+                versionSiguiente
+            });
+        }
+        if (event.target) event.target.value = '';
+        this.errorSubidaMsg = null;
+        this.modalSubirArchivosAbierto = true;
+    }
+
+    cancelarSubida(): void {
+        this.modalSubirArchivosAbierto = false;
+        this.archivosParaSubir = [];
+        this.errorSubidaMsg = null;
+    }
+
+    confirmarSubida(): void {
+        if (this.archivosParaSubir.length === 0) return;
+
+        for (const item of this.archivosParaSubir) {
+            if (item.observacion && item.observacion.length > 1000) {
+                this.errorSubidaMsg = 'La observación admite hasta 1000 caracteres.';
+                return;
+            }
         }
 
+        const files = this.archivosParaSubir.map((x) => x.file);
+        const observaciones = this.archivosParaSubir.map((x) => x.observacion.trim());
+
         this.cargandoArchivos = true;
-        this._service.subirArchivos(this.idSeguimiento, this.etapaNumero, this.revisionSeleccionadaArchivos, arrayFiles)
+        this.errorSubidaMsg = null;
+        this._service
+            .subirArchivos(this.idSeguimiento, this.etapaNumero, this.revisionSeleccionadaArchivos, files, observaciones)
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
                 next: () => {
+                    this.cargandoArchivos = false;
+                    this.modalSubirArchivosAbierto = false;
+                    this.archivosParaSubir = [];
                     this.cargarArchivos();
-                    event.target.value = '';
                 },
                 error: (err) => {
                     this.cargandoArchivos = false;
-                    this.errorMsg = err?.error?.mensaje || 'Error al subir archivos.';
+                    this.errorSubidaMsg = err?.error?.mensaje || 'Error al subir archivos.';
                 }
             });
     }
@@ -812,16 +861,19 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
             });
     }
 
-    descargarArchivo(nombre: string): void {
-        this._descargar(this.etapaNumero, this.revisionSeleccionadaArchivos, nombre);
+    descargarArchivo(nombre: string, version?: number): void {
+        this._descargar(this.etapaNumero, this.revisionSeleccionadaArchivos, nombre, version);
     }
 
     descargarArchivoAnterior(archivo: CotizacionEtapasArchivoCasoDto): void {
-        this._descargar(archivo.etapa, archivo.revision, archivo.nombreArchivo);
+        this._descargar(archivo.etapa, archivo.revision, archivo.nombreArchivo, archivo.version);
     }
 
-    private _descargar(etapa: number, revision: number, nombre: string): void {
-        this._service.descargarArchivo(this.idSeguimiento, etapa, revision, nombre)
+    private _descargar(etapa: number, revision: number, nombre: string, version?: number): void {
+        const peticion = version != null
+            ? this._service.descargarArchivo(this.idSeguimiento, etapa, revision, nombre, version)
+            : this._service.descargarArchivo(this.idSeguimiento, etapa, revision, nombre);
+        peticion
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
                 next: (blob) => {

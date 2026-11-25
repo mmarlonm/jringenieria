@@ -29,22 +29,30 @@
 
             <div *ngFor="let archivo of grupo.archivos; trackBy: trackByArchivo"
                 [attr.data-archivo]="archivo.nombreArchivo"
-                class="flex items-center justify-between p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 rounded-xl transition-all mt-2">
-                <span class="text-xs font-bold text-slate-700 truncate pr-2 flex-auto" [title]="archivo.nombreArchivo">
-                    {{ archivo.nombreArchivo }}
-                </span>
-                <span class="px-1.5 py-0.5 mr-2 rounded bg-slate-200 text-slate-600 text-[10px] font-black shrink-0">R{{ archivo.revision }}</span>
-                <div class="flex items-center gap-1 shrink-0">
-                    <button *ngIf="esPrevisualizable(archivo.nombreArchivo)" mat-icon-button type="button" aria-label="Ver"
-                        class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
-                        (click)="ver(archivo)" matTooltip="Ver">
-                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
-                    </button>
-                    <button mat-icon-button type="button" aria-label="Descargar"
-                        class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
-                        (click)="descargar(archivo)" matTooltip="Descargar">
-                        <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:cloud-arrow-down'"></mat-icon>
-                    </button>
+                class="flex flex-col p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 rounded-xl transition-all mt-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700 truncate pr-2 flex-auto" [title]="archivo.nombreArchivo">
+                        {{ archivo.nombreArchivo }}
+                    </span>
+                    <span *ngIf="archivo.version" class="px-1.5 py-0.5 mr-1.5 rounded bg-blue-100 text-blue-800 text-[10px] font-black shrink-0" [attr.data-testid]="'version-evidencia-' + archivo.nombreArchivo">
+                        v{{ archivo.version }}
+                    </span>
+                    <span class="px-1.5 py-0.5 mr-2 rounded bg-slate-200 text-slate-600 text-[10px] font-black shrink-0">R{{ archivo.revision }}</span>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button *ngIf="esPrevisualizable(archivo.nombreArchivo)" mat-icon-button type="button" aria-label="Ver"
+                            class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-indigo-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
+                            (click)="ver(archivo)" matTooltip="Ver">
+                            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" aria-label="Descargar"
+                            class="w-7 h-7 min-h-7 min-w-7 p-0 text-slate-400 hover:text-emerald-600 hover:bg-slate-200/50 rounded-lg flex items-center justify-center"
+                            (click)="descargar(archivo)" matTooltip="Descargar">
+                            <mat-icon class="icon-size-4" [svgIcon]="'heroicons_solid:cloud-arrow-down'"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+                <div *ngIf="archivo.observacion" class="text-[11px] text-slate-500 italic mt-1.5 pt-1 border-t border-slate-200/50" [attr.data-testid]="'observacion-evidencia-' + archivo.nombreArchivo">
+                    {{ archivo.observacion }}
                 </div>
             </div>
         </div>
