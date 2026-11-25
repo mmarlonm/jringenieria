@@ -41,57 +41,67 @@ describe('OnlyOfficeEditorComponent', () => {
         } catch {}
     });
 
-    it('si_el_editor_no_carga_en_20_s_muestra_mensaje_No_se_pudo_abrir_el_editor_y_boton_Descargar', fakeAsync(() => {
+    it('A_los_20s_muestra_aviso_y_el_editor_sigue_montado', fakeAsync(() => {
         fixture.detectChanges();
 
         expect(component.cargando).toBeTrue();
+        expect(component.tardando).toBeFalse();
         expect(component.errorCarga).toBeFalse();
 
         // Avanzar el reloj 20 segundos
         tick(20000);
         fixture.detectChanges();
 
-        expect(component.cargando).toBeFalse();
-        expect(component.errorCarga).toBeTrue();
-        expect(component.mensajeError).toBe('No se pudo abrir el editor');
+        expect(component.tardando).toBeTrue();
+        expect(component.errorCarga).toBeFalse();
 
         const el = fixture.nativeElement as HTMLElement;
-        const msgError = el.querySelector('[data-testid="mensaje-error-editor"]');
-        expect(msgError).not.toBeNull();
-        expect(msgError?.textContent).toContain('No se pudo abrir el editor');
+        const aviso = el.querySelector('[data-testid="aviso-tardando-editor"]');
+        expect(aviso).not.toBeNull();
+        expect(aviso?.textContent).toContain('El editor está tardando');
 
-        const btnDescargar = el.querySelector<HTMLButtonElement>('[data-testid="btn-descargar-editor-fallo"]');
+        // El editor NO debe estar desmontado
+        expect(el.querySelector('document-editor')).not.toBeNull();
+
+        const btnDescargar = el.querySelector<HTMLButtonElement>('[data-testid="btn-descargar-editor-tardando"]');
         expect(btnDescargar).not.toBeNull();
         btnDescargar?.click();
         expect(onDescargarSpy).toHaveBeenCalled();
-    }));
 
-    it('si_onDocumentReady_ocurre_antes_de_20_s_no_muestra_error', fakeAsync(() => {
-        fixture.detectChanges();
-
-        tick(5000);
-        component.onDocumentReady();
-        fixture.detectChanges();
-
-        expect(component.errorCarga).toBeFalse();
-
-        // Avanzar más allá de los 20 segundos
-        tick(20000);
-        fixture.detectChanges();
-
-        expect(component.errorCarga).toBeFalse();
-        const el = fixture.nativeElement as HTMLElement;
-        expect(el.querySelector('[data-testid="mensaje-error-editor"]')).toBeNull();
         discardPeriodicTasks();
     }));
 
-    it('si_onLoadComponentError_ocurre_muestra_error_y_boton_Descargar', fakeAsync(() => {
+    it('onDocumentReady_tras_el_aviso_lo_oculta', fakeAsync(() => {
+        fixture.detectChanges();
+
+        // Avanzar 20 s para que aparezca el aviso
+        tick(20000);
+        fixture.detectChanges();
+        expect(component.tardando).toBeTrue();
+        const el = fixture.nativeElement as HTMLElement;
+        expect(el.querySelector('[data-testid="aviso-tardando-editor"]')).not.toBeNull();
+
+        // Llega onDocumentReady
+        component.onDocumentReady();
+        fixture.detectChanges();
+
+        expect(component.tardando).toBeFalse();
+        expect(component.cargando).toBeFalse();
+        expect(component.errorCarga).toBeFalse();
+        expect(el.querySelector('[data-testid="aviso-tardando-editor"]')).toBeNull();
+        expect(el.querySelector('document-editor')).not.toBeNull();
+
+        discardPeriodicTasks();
+    }));
+
+    it('onLoadComponentError_muestra_error_y_descargar', fakeAsync(() => {
         fixture.detectChanges();
 
         component.onLoadComponentError(500, 'Connection lost');
         fixture.detectChanges();
 
         expect(component.cargando).toBeFalse();
+        expect(component.tardando).toBeFalse();
         expect(component.errorCarga).toBeTrue();
         expect(component.mensajeError).toBe('No se pudo abrir el editor');
 
@@ -99,6 +109,9 @@ describe('OnlyOfficeEditorComponent', () => {
         const msgError = el.querySelector('[data-testid="mensaje-error-editor"]');
         expect(msgError).not.toBeNull();
         expect(msgError?.textContent).toContain('No se pudo abrir el editor');
+
+        // En error de componente, el editor sí se reemplaza
+        expect(el.querySelector('document-editor')).toBeNull();
 
         const btnDescargar = el.querySelector<HTMLButtonElement>('[data-testid="btn-descargar-editor-fallo"]');
         expect(btnDescargar).not.toBeNull();

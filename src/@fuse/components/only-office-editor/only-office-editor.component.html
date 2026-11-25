@@ -1,6 +1,7 @@
 <h2 mat-dialog-title>Editando: {{ editorConfig?.document?.title }}</h2>
 
 <mat-dialog-content>
+    <!-- Error definitivo (onLoadComponentError) -->
     <div *ngIf="errorCarga" class="flex flex-col items-center justify-center p-8 text-center space-y-4" data-testid="error-editor">
         <mat-icon class="text-rose-500 scale-150">error_outline</mat-icon>
         <p class="text-rose-600 font-bold text-sm" data-testid="mensaje-error-editor">
@@ -12,6 +13,19 @@
         </button>
     </div>
 
+    <!-- Aviso no destructivo si tarda más de 20s (el editor sigue montado) -->
+    <div *ngIf="!errorCarga && tardando" class="mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs flex items-center justify-between gap-3" data-testid="aviso-tardando-editor">
+        <div class="flex items-center gap-2">
+            <mat-icon class="text-amber-600 dark:text-amber-400 text-base">schedule</mat-icon>
+            <span>El editor está tardando en cargar... Si no abre, puede descargar el archivo.</span>
+        </div>
+        <button *ngIf="data?.onDescargar" mat-stroked-button color="warn" (click)="descargar()" class="text-xs shrink-0" data-testid="btn-descargar-editor-tardando">
+            <mat-icon class="scale-75">download</mat-icon>
+            <span>Descargar</span>
+        </button>
+    </div>
+
+    <!-- Editor ONLYOFFICE -->
     <document-editor 
         *ngIf="!errorCarga"
         id="docxEditor" 
