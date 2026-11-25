@@ -511,9 +511,9 @@
             <!-- Siguiente Etapa -->
             <div *ngIf="(etapaConfig?.siguientes || []).length > 0" class="space-y-1">
                 <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Etapa Siguiente Permitida</label>
-                <select [(ngModel)]="etapaSiguienteSeleccionada" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm">
-                    <option *ngFor="let s of etapaConfig?.siguientes" [value]="s">
-                        Etapa {{ s }}
+                <select [(ngModel)]="etapaSiguienteSeleccionada" data-testid="select-etapa-siguiente" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-sm">
+                    <option *ngFor="let s of etapaConfig?.siguientes" [value]="s" [attr.data-testid]="'opcion-siguiente-' + s">
+                        {{ tituloEtapa(s) }}
                     </option>
                 </select>
             </div>

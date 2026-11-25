@@ -534,4 +534,32 @@ describe('EtapaDetalleDialogComponent', () => {
 
         expect(serviceMock.descargarArchivo).toHaveBeenCalledOnceWith(10, 1, 2, 'plano.pdf');
     });
+
+    it('El_selector_de_etapa_siguiente_muestra_el_titulo_de_cada_etapa_y_no_Etapa_sola', () => {
+        component.modalAutorizarAbierto = true;
+        fixture.detectChanges();
+
+        const compiled = fixture.nativeElement as HTMLElement;
+        const select = compiled.querySelector('[data-testid="select-etapa-siguiente"]') as HTMLSelectElement;
+        expect(select).not.toBeNull();
+
+        const opciones = Array.from(select.querySelectorAll('option'));
+        expect(opciones.length).toBe(4);
+
+        for (const op of opciones) {
+            expect(op.textContent?.trim()).not.toMatch(/^Etapa \d+$/);
+        }
+
+        expect(opciones[0].textContent?.trim()).toBe('Levantamiento técnico');
+        expect(opciones[0].value).toBe('2');
+
+        expect(opciones[1].textContent?.trim()).toBe('Diseño/Cálculo e Ingeniería');
+        expect(opciones[1].value).toBe('3');
+
+        expect(opciones[2].textContent?.trim()).toBe('Presupuesto técnico');
+        expect(opciones[2].value).toBe('4');
+
+        expect(opciones[3].textContent?.trim()).toBe('Cotización técnico-comercial');
+        expect(opciones[3].value).toBe('5');
+    });
 });
