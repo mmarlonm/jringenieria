@@ -340,6 +340,8 @@ export class MaterialesTrazabilidadComponent implements OnChanges {
     ref.afterClosed().subscribe(nuevo => {
       if (nuevo) {
         this.reemplazar(nuevo);
+      } else {
+        this.recalcular();
       }
     });
   }
@@ -360,7 +362,13 @@ export class MaterialesTrazabilidadComponent implements OnChanges {
    */
   private reemplazar(nuevo: SeguimientoMaterial): void {
     this.materiales = this.materiales.map(m => m.idMaterial === nuevo.idMaterial
-      ? { ...m, proveedorId: nuevo.proveedorId ?? null, proveedorNombre: nuevo.proveedorNombre ?? null, notas: nuevo.notas ?? null }
+      ? {
+          ...m,
+          proveedorId: nuevo.proveedorId ?? null,
+          proveedorNombre: nuevo.proveedorNombre ?? null,
+          notas: nuevo.notas ?? null,
+          observacionesCount: nuevo.observacionesCount ?? m.observacionesCount ?? 0
+        }
       : m);
     this.recalcular();
   }

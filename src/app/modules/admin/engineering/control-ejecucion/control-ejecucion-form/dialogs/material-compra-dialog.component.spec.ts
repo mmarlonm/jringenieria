@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject, of, throwError } from 'rxjs';
 import { EngineeringService, ProveedorLigero, SeguimientoMaterial } from '../../../engineering.service';
+import { MaterialObservacionesDialogComponent } from '../materiales-trazabilidad/material-observaciones-dialog/material-observaciones-dialog.component';
 import { MaterialCompraDialogComponent } from './material-compra-dialog.component';
 
 function mat(over: Partial<SeguimientoMaterial> = {}): SeguimientoMaterial {
@@ -56,8 +57,36 @@ describe('MaterialCompraDialogComponent', () => {
       configurar(mat({ proveedorId: 31, proveedorNombre: 'Proveedor Ficticio', notas: 'Entrega en obra' }));
 
       expect(q('proveedor-elegido')?.textContent).toContain('Proveedor Ficticio');
-      expect(component.observacionesControl.value).toBe('Entrega en obra');
+      expect(component.observacionesControl.value).toBe('');
+      expect(q('observacion-actual')?.textContent).toContain('Entrega en obra');
       expect(q('sin-proveedor')).toBeNull();
+    });
+
+    it('Nueva observacion empieza vacia y muestra la observacion actual', () => {
+      configurar(mat({ notas: 'Nota actual de prueba', observacionesCount: 2 }));
+      expect(component.observacionesControl.value).toBe('');
+      expect(q('observacion-actual')?.textContent?.trim()).toBe('Nota actual de prueba');
+      expect(q('btn-ver-historial')?.textContent).toContain('2');
+    });
+
+    it('Sin observacion actual muestra Sin observaciones', () => {
+      configurar(mat({ notas: null, observacionesCount: 0 }));
+      expect(component.observacionesControl.value).toBe('');
+      expect(q('observacion-actual')?.textContent?.trim()).toBe('Sin observaciones');
+      expect(q('btn-ver-historial')?.textContent).not.toContain('(');
+    });
+
+    it('Ver historial abre el dialogo de historial con el material', () => {
+      const material = mat({ idMaterial: 901 });
+      configurar(material);
+      const openSpy = spyOn((component as any).dialog, 'open').and.returnValue({ afterClosed: () => of(undefined) } as any);
+
+      boton('btn-ver-historial').click();
+
+      expect(openSpy).toHaveBeenCalledOnceWith(
+        MaterialObservacionesDialogComponent,
+        { width: '600px', maxWidth: '95vw', autoFocus: false, data: { material } }
+      );
     });
 
     it('Sin_proveedor_lo_dice_y_Guardar_esta_deshabilitado_hasta_que_haya_un_cambio', () => {
@@ -175,28 +204,77 @@ describe('MaterialCompraDialogComponent', () => {
       expect(servicio.guardarCompraMaterial).toHaveBeenCalledOnceWith(901, { proveedorId: null, notas: 'Algo' });
     });
 
-    it('Borrar_las_observaciones_envia_notas_null', () => {
-      configurar(mat({ proveedorId: 31, proveedorNombre: 'Proveedor Ficticio', notas: 'Algo' }));
-      servicio.guardarCompraMaterial.and.returnValue(of(mat({ proveedorId: 31, proveedorNombre: 'Proveedor Ficticio' })));
+    it('Guardar solo proveedor manda las notas actuales sin cambios', () => {
+      configurar(mat({ proveedorId: null, notas: 'Nota fija previa' }));
+      servicio.guardarCompraMaterial.and.returnValue(of(mat()));
+
+      elegirOpcion(CATALOGO[0]); // Elige proveedor 31
+      fixture.detectChanges();
+      expect(boton('btn-guardar').disabled).toBeFalse();
+
+      boton('btn-guardar').click();
+      expect(servicio.guardarCompraMaterial).toHaveBeenCalledOnceWith(901, {
+        proveedorId: 31,
+        notas: 'Nota fija previa'
+      });
+    });
+
+    it('Guardar con nueva observacion manda el texto nuevo recortado', () => {
+      configurar(mat({ proveedorId: 31, notas: 'Nota vieja' }));
+      servicio.guardarCompraMaterial.and.returnValue(of(mat()));
+
+      component.observacionesControl.setValue('   Texto nuevo recortado   ');
+      fixture.detectChanges();
+      expect(boton('btn-guardar').disabled).toBeFalse();
+
+      boton('btn-guardar').click();
+      expect(servicio.guardarCompraMaterial).toHaveBeenCalledOnceWith(901, {
+        proveedorId: 31,
+        notas: 'Texto nuevo recortado'
+      });
+    });
+
+    it('Guardar deshabilitado sin cambios o si la nueva es igual a la actual', () => {
+      configurar(mat({ proveedorId: 31, notas: 'Misma nota' }));
+      expect(boton('btn-guardar').disabled).toBeTrue();
+
+      component.observacionesControl.setValue('  Misma nota  ');
+      fixture.detectChanges();
+      expect(boton('btn-guardar').disabled).toBeTrue();
 
       component.observacionesControl.setValue('   ');
       fixture.detectChanges();
-      boton('btn-guardar').click();
-
-      expect(servicio.guardarCompraMaterial).toHaveBeenCalledOnceWith(901, { proveedorId: 31, notas: null });
+      expect(boton('btn-guardar').disabled).toBeTrue();
     });
 
-    it('Observaciones_de_mas_de_1000_caracteres_deshabilitan_Guardar_y_lo_marcan', () => {
-      configurar();
+    it('Guardar deshabilitado con mas de 1000 caracteres', () => {
+      configurar(mat({ proveedorId: 31, notas: 'Nota' }));
       component.observacionesControl.setValue('x'.repeat(1001));
       fixture.detectChanges();
 
       expect(boton('btn-guardar').disabled).toBeTrue();
-      expect(q('contador')?.textContent?.trim()).toBe('1001 / 1000');
+      expect(q('contador')?.textContent?.trim()).toContain('1001 / 1000');
 
       component.observacionesControl.setValue('x'.repeat(1000));
       fixture.detectChanges();
       expect(boton('btn-guardar').disabled).toBeFalse();
+    });
+
+    it('Guardar usa la observacion actual del momento si se agrego desde el historial', () => {
+      const material = mat({ proveedorId: null, notas: 'Inicial' });
+      configurar(material);
+      servicio.guardarCompraMaterial.and.returnValue(of(mat()));
+
+      // Simular que el diálogo de historial agregó una observación y mutó material.notas
+      material.notas = 'Actualizada desde historial';
+      elegirOpcion(CATALOGO[0]); // cambia proveedor para habilitar guardado
+      fixture.detectChanges();
+
+      boton('btn-guardar').click();
+      expect(servicio.guardarCompraMaterial).toHaveBeenCalledOnceWith(901, {
+        proveedorId: 31,
+        notas: 'Actualizada desde historial'
+      });
     });
 
     it('Doble_clic_en_Guardar_envia_una_sola_peticion_y_bloquea_el_cierre', () => {
