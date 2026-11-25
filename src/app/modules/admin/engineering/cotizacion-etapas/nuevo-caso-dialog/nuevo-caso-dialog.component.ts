@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -10,12 +10,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, takeUntil } from 'rxjs';
 import { CotizacionEtapasService } from '../cotizacion-etapas.service';
 import { EngineeringService, Solicitante } from '../../engineering.service';
 import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { SubcontratacionService, SubcontratistaPersonal } from '../../subcontratacion.service';
 import { CrearCasoDto } from '../cotizacion-etapas.models';
+import { SolicitanteDialogComponent } from '../../solicitantes/solicitante-dialog/solicitante-dialog.component';
 
 export interface SucursalOption {
     id: number;
@@ -36,7 +38,9 @@ export interface SucursalOption {
         MatIconModule,
         MatRadioModule,
         MatDatepickerModule,
-        MatNativeDateModule
+        MatNativeDateModule,
+        MatTooltipModule,
+        SolicitanteDialogComponent
     ],
     templateUrl: './nuevo-caso-dialog.component.html',
     styleUrls: ['./nuevo-caso-dialog.component.scss']
@@ -47,6 +51,7 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
     usuariosJr: any[] = [];
     aliados: SubcontratistaPersonal[] = [];
     guardando = false;
+    creandoSolicitante = false;
     errorMsg: string | null = null;
 
     sucursales: SucursalOption[] = [
@@ -70,6 +75,7 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
     constructor(
         private readonly _fb: FormBuilder,
         private readonly _dialogRef: MatDialogRef<NuevoCasoDialogComponent>,
+        private readonly _dialog: MatDialog,
         private readonly _cotizacionService: CotizacionEtapasService,
         private readonly _engineeringService: EngineeringService,
         private readonly _usersService: UsersService,
@@ -167,5 +173,68 @@ export class NuevoCasoDialogComponent implements OnInit, OnDestroy {
 
     cancelar(): void {
         this._dialogRef.close();
+    }
+
+    agregarSolicitante(): void {
+        const dialogRef = this._dialog.open(SolicitanteDialogComponent, {
+            width: '100%',
+            maxWidth: '500px',
+            autoFocus: false
+        });
+
+        dialogRef.afterClosed()
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((valor) => {
+                if (!valor) {
+                    return;
+                }
+
+                this.creandoSolicitante = true;
+                this.errorMsg = null;
+
+                this._engineeringService.saveSolicitante({
+                    ...valor,
+                    idSolicitante: 0,
+                    activo: true
+                })
+                .pipe(takeUntil(this._unsubscribeAll))
+                .subscribe({
+                    next: (res: any) => {
+                        const nuevoId = res?.idSolicitante;
+                        this._engineeringService.getSolicitantes()
+                            .pipe(takeUntil(this._unsubscribeAll))
+                            .subscribe({
+                                next: (lista) => {
+                                    this.solicitantes = (lista || []).filter((s) => s.activo);
+                                    if (nuevoId) {
+                                        this.form.get('idSolicitante')?.setValue(nuevoId);
+                                        this.form.get('idSolicitante')?.markAsTouched();
+                                    }
+                                    this.creandoSolicitante = false;
+                                },
+                                error: () => {
+                                    if (nuevoId) {
+                                        const localItem: Solicitante = {
+                                            idSolicitante: nuevoId,
+                                            nombreCompleto: (valor.nombreCompleto || '').trim().toUpperCase(),
+                                            empresa: (valor.empresa || '').trim().toUpperCase(),
+                                            celular: valor.celular,
+                                            area: valor.area,
+                                            activo: true
+                                        };
+                                        this.solicitantes = [...this.solicitantes, localItem];
+                                        this.form.get('idSolicitante')?.setValue(nuevoId);
+                                        this.form.get('idSolicitante')?.markAsTouched();
+                                    }
+                                    this.creandoSolicitante = false;
+                                }
+                            });
+                    },
+                    error: () => {
+                        this.creandoSolicitante = false;
+                        this.errorMsg = 'No se pudo crear el solicitante.';
+                    }
+                });
+            });
     }
 }
