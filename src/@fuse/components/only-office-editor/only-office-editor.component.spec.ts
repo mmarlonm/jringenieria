@@ -82,6 +82,7 @@ describe('OnlyOfficeEditorComponent', () => {
         expect(component.errorCarga).toBeFalse();
         const el = fixture.nativeElement as HTMLElement;
         expect(el.querySelector('[data-testid="mensaje-error-editor"]')).toBeNull();
+        discardPeriodicTasks();
     }));
 
     it('si_onLoadComponentError_ocurre_muestra_error_y_boton_Descargar', fakeAsync(() => {
@@ -103,5 +104,6 @@ describe('OnlyOfficeEditorComponent', () => {
         expect(btnDescargar).not.toBeNull();
         btnDescargar?.click();
         expect(onDescargarSpy).toHaveBeenCalled();
+        discardPeriodicTasks();
     }));
 });
