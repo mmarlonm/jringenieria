@@ -177,12 +177,12 @@ export class EtapaDetalleDialogComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** Igual que el backend: administra quien tiene el rol «admin» o «pruebas». El login guarda los roles en `roles`. */
+    /** Igual que el backend: en Ingeniería solo el rol «admin» tiene poderes de administrador («pruebas» ya no). El login guarda los roles en `roles`. */
     get esAdmin(): boolean {
         try {
             const info = JSON.parse(localStorage.getItem('userInformation') || '{}');
             const roles: unknown[] = Array.isArray(info?.roles) ? info.roles : [];
-            return roles.some((r) => ['admin', 'pruebas'].includes(String(r ?? '').toLowerCase()));
+            return roles.some((r) => String(r ?? '').toLowerCase() === 'admin');
         } catch {
             return false;
         }

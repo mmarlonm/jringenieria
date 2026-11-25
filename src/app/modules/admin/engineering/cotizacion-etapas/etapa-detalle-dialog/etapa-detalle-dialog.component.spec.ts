@@ -215,12 +215,20 @@ describe('EtapaDetalleDialogComponent', () => {
         );
     }
 
-    it('un administrador (rol admin o pruebas, sin importar mayusculas) puede autorizar y cambiar al autorizador aunque haya otro designado', () => {
-        for (const rol of ['Admin', 'PRUEBAS']) {
+    it('un administrador (rol admin, sin importar mayusculas) puede autorizar y cambiar al autorizador aunque haya otro designado', () => {
+        for (const rol of ['Admin', 'ADMIN']) {
             conSesion([rol], 88); // 88 no es idUsuarioRegistro (42)
             expect(component.esAdmin).withContext(rol).toBeTrue();
             expect(component.puedeAutorizarAccion).withContext(rol).toBeTrue();
             expect(component.puedeCambiarAutorizador).withContext(rol).toBeTrue();
+        }
+
+        // El rol Pruebas ya no cuenta como admin en Ingeniería: no ve Autorizar/Rechazar si no es el designado
+        for (const rol of ['Pruebas', 'PRUEBAS']) {
+            conSesion([rol], 88);
+            expect(component.esAdmin).withContext(rol).toBeFalse();
+            expect(component.puedeAutorizarAccion).withContext(rol).toBeFalse();
+            expect(component.puedeCambiarAutorizador).withContext(rol).toBeFalse();
         }
 
         conSesion(['Usuario'], 88); // 88 no es admin y no es quien registró (42)
@@ -936,8 +944,8 @@ describe('EtapaDetalleDialogComponent', () => {
             component.detalle = { ...mockDetalle, idUsuarioRegistro: 42 };
             expect(component.puedeCambiarAutorizador).toBeTrue();
 
-            conSesion(['pruebas'], 88); // pruebas cuenta como admin
-            expect(component.puedeCambiarAutorizador).toBeTrue();
+            conSesion(['pruebas'], 88); // pruebas ya no cuenta como admin en Ingeniería
+            expect(component.puedeCambiarAutorizador).toBeFalse();
         });
 
         it('En_solo_lectura_nadie_puede', () => {
