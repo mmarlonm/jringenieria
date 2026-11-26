@@ -73,7 +73,7 @@ describe('SeguimientoSgcComponent', () => {
       tipo: 'RespuestaCliente',
       notas: 'Cliente solicitó ajuste de condiciones',
       proximaAccion: 'Enviar propuesta ajustada',
-      fechaProximaAccion: '2026-11-25',
+      fechaProximaAccion: component.hoy,
       probabilidadPorcentaje: 75,
     };
 

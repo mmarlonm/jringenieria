@@ -56,16 +56,21 @@ function extractCleanModuleName(n) {
 }
 
 function layoutSphere3D(feNodes, beNodes, feLegend, beLegend) {
+    const beOffset = feLegend.length;
+
     function processScope(nodes, legend, isCore) {
+        const prefix = isCore ? 'be_' : 'fe_';
+        const commOffset = isCore ? beOffset : 0;
         const commSizes = new Map();
-        nodes.forEach(n => commSizes.set(n.community, (commSizes.get(n.community) || 0) + 1));
+        nodes.forEach(n => commSizes.set(n.community + commOffset, (commSizes.get(n.community + commOffset) || 0) + 1));
 
         // Encontrar líderes de comunidad (nodo con mayor degree)
         const commLeaders = new Map();
         nodes.forEach(n => {
-            const cur = commLeaders.get(n.community);
+            const mappedComm = n.community + commOffset;
+            const cur = commLeaders.get(mappedComm);
             if (!cur || (n.degree || 0) > (cur.degree || 0)) {
-                commLeaders.set(n.community, n.id);
+                commLeaders.set(mappedComm, prefix + n.id);
             }
         });
 
@@ -78,7 +83,7 @@ function layoutSphere3D(feNodes, beNodes, feLegend, beLegend) {
             const y = 1 - 2 * u;
             const theta = 2 * Math.PI * v;
             const ring = Math.sqrt(Math.max(0, 1 - y * y));
-            commDirs.set(c.cid, [
+            commDirs.set(c.cid + commOffset, [
                 ring * Math.cos(theta),
                 y,
                 ring * Math.sin(theta)
@@ -89,8 +94,9 @@ function layoutSphere3D(feNodes, beNodes, feLegend, beLegend) {
         const R_MAX = isCore ? 98 : 235;
 
         return nodes.map(n => {
-            const cDir = commDirs.get(n.community) || [0, 1, 0];
-            const size = commSizes.get(n.community) || 1;
+            const mappedComm = n.community + commOffset;
+            const cDir = commDirs.get(mappedComm) || [0, 1, 0];
+            const size = commSizes.get(mappedComm) || 1;
             // Cobertura angular suave proporcional al tamaño de la comunidad
             const maxAngle = Math.min(0.35, 0.08 + Math.sqrt(size) * 0.03);
 
@@ -135,17 +141,18 @@ function layoutSphere3D(feNodes, beNodes, feLegend, beLegend) {
             const moduleName = extractCleanModuleName(n);
             const isGenericLabel = /^(component|injectable|input|output|hostlistener|inject|viewchild|contentchild)$/i.test(n.label || '');
             const cleanLabel = isGenericLabel ? moduleName : (n.label || moduleName);
-            const isLeader = commLeaders.get(n.community) === n.id;
+            const prefixedId = prefix + n.id;
+            const isLeader = commLeaders.get(mappedComm) === prefixedId;
 
             return {
-                id: n.id,
+                id: prefixedId,
                 label: cleanLabel,
                 moduleName,
                 isLeader,
                 color: n.color?.background || (isCore ? '#F28E2B' : '#4E79A7'),
                 borderColor: n.color?.border || '#4E79A7',
                 size: n.size || 10,
-                community: n.community,
+                community: mappedComm,
                 communityName: moduleName,
                 sourceFile: n.source_file || '',
                 fileType: n.file_type || 'code',
@@ -203,13 +210,14 @@ feNodes3D.forEach(fn => {
 console.log(`🧠 Conexiones sinápticas Corteza ➔ Núcleo detectadas: ${bridgeEdges.length}`);
 
 // Preparar enlaces internos
-const feEdges = fe.rawEdges.map(e => ({ from: e.from, to: e.to, width: e.width || 1, scope: 'frontend' }));
-const beEdges = be.rawEdges.map(e => ({ from: e.from, to: e.to, width: e.width || 1, scope: 'backend' }));
+const beOffset = fe.legend.length;
+const feEdges = fe.rawEdges.map(e => ({ from: 'fe_' + e.from, to: 'fe_' + e.to, width: e.width || 1, scope: 'frontend' }));
+const beEdges = be.rawEdges.map(e => ({ from: 'be_' + e.from, to: 'be_' + e.to, width: e.width || 1, scope: 'backend' }));
 
 // Combinar comunidades para el Legend
 const combinedLegend = [
     ...fe.legend.map(c => ({ ...c, scope: 'frontend', label: `[Corteza Front] ${c.label}` })),
-    ...be.legend.map(c => ({ ...c, scope: 'backend', label: `[Núcleo API] ${c.label}` }))
+    ...be.legend.map(c => ({ ...c, cid: c.cid + beOffset, scope: 'backend', label: `[Núcleo API] ${c.label}` }))
 ];
 
 const combinedData = {
