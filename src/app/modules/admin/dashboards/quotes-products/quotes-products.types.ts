@@ -490,3 +490,18 @@ export interface CotizacionOrigen {
     requerimiento?: OrigenRequerimiento | null;
     lead?: OrigenLead | null;
 }
+
+export interface CotizacionArchivoDto {
+    id: number;
+    cotizacionProductosId: number;
+    version: number;
+    nombreOriginal: string;
+    rutaArchivo: string;
+    tamanoBytes: number;
+    extension: string;
+    comentario: string;
+    subidoPorUsuarioId: number;
+    subidoPorNombre: string;
+    fechaSubida: string;
+    esVigente: boolean;
+}

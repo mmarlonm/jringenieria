@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { QuotePdfDialogComponent } from '../../quote-pdf-dialog/quote-pdf-dialog.component';
-import { VersionSgcItem } from '../../quotes-products.types';
+import { VersionSgcItem, CotizacionArchivoDto } from '../../quotes-products.types';
 import Swal from 'sweetalert2';
 
 describe('VersionesSgcComponent', () => {
@@ -45,6 +45,37 @@ describe('VersionesSgcComponent', () => {
     },
   ];
 
+  const archivosDelApi: CotizacionArchivoDto[] = [
+    {
+      id: 2,
+      cotizacionProductosId: 55,
+      version: 2,
+      nombreOriginal: 'Cotizacion_v2_corregida.pdf',
+      rutaArchivo: 'cotizaciones/55/Cotizacion_v2.pdf',
+      tamanoBytes: 204800,
+      extension: '.pdf',
+      comentario: 'Se corrigió precio y tiempo de entrega',
+      subidoPorUsuarioId: 3,
+      subidoPorNombre: 'Ana García',
+      fechaSubida: '2026-11-27T10:00:00Z',
+      esVigente: true,
+    },
+    {
+      id: 1,
+      cotizacionProductosId: 55,
+      version: 1,
+      nombreOriginal: 'Cotizacion_v1_inicial.pdf',
+      rutaArchivo: 'cotizaciones/55/Cotizacion_v1.pdf',
+      tamanoBytes: 102400,
+      extension: '.pdf',
+      comentario: 'Versión inicial emitida',
+      subidoPorUsuarioId: 3,
+      subidoPorNombre: 'Ana García',
+      fechaSubida: '2026-11-20T10:00:00Z',
+      esVigente: false,
+    },
+  ];
+
   beforeEach(async () => {
     mockQuotesService = {
       versiones: jasmine.createSpy('versiones').and.returnValue(of(versionesDelApi)),
@@ -54,6 +85,9 @@ describe('VersionesSgcComponent', () => {
           instantanea: { folio: 'COT-2026-0001', version: 2, cabecera: {}, sgc: {}, partidas: [], totales: { total: 14250 } },
         })
       ),
+      getArchivos: jasmine.createSpy('getArchivos').and.returnValue(of([])),
+      subirArchivo: jasmine.createSpy('subirArchivo').and.returnValue(of({ id: 10, version: 3, esVigente: true })),
+      descargarArchivo: jasmine.createSpy('descargarArchivo').and.returnValue(of(new Blob(['test content'], { type: 'application/pdf' }))),
     };
 
     mockDialog = {
@@ -185,5 +219,71 @@ describe('VersionesSgcComponent', () => {
     expect(fixture.nativeElement.querySelector('img[src="x"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('script')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain(xss);
+  });
+
+  it('Subir_archivo_corregido_manda_archivo_y_comentario', () => {
+    const dummyFile = new File(['dummy content'], 'cotizacion_v3.pdf', { type: 'application/pdf' });
+    component.archivoSeleccionado = dummyFile;
+    component.comentarioArchivoControl.setValue('Se actualizó costo indirecto y margen');
+    fixture.detectChanges();
+
+    const btnSubir = fixture.nativeElement.querySelector('.btn-subir-archivo');
+    expect(btnSubir.disabled).toBeFalse();
+    btnSubir.click();
+
+    expect(mockQuotesService.subirArchivo).toHaveBeenCalledWith(
+      55,
+      dummyFile,
+      'Se actualizó costo indirecto y margen'
+    );
+  });
+
+  it('Historial_con_vigente_en_la_mas_reciente', () => {
+    component.archivos = archivosDelApi;
+    fixture.detectChanges();
+
+    const filas = fixture.nativeElement.querySelectorAll('.fila-archivo');
+    expect(filas.length).toBe(2);
+
+    // Primera fila (v2) es vigente
+    const filaV2 = filas[0];
+    const badgeV2 = filaV2.querySelector('.badge-vigente-archivo');
+    expect(badgeV2).not.toBeNull();
+    expect(badgeV2.textContent.trim()).toBe('Vigente');
+    expect(filaV2.textContent).toContain('Cotizacion_v2_corregida.pdf');
+    expect(filaV2.textContent).toContain('Se corrigió precio y tiempo de entrega');
+    expect(filaV2.textContent).toContain('Ana García');
+    expect(filaV2.textContent).toContain('200 KB');
+
+    // Segunda fila (v1) no es vigente
+    const filaV1 = filas[1];
+    expect(filaV1.querySelector('.badge-vigente-archivo')).toBeNull();
+  });
+
+  it('Descargar_usa_blob_con_sesion', () => {
+    component.archivos = archivosDelApi;
+    fixture.detectChanges();
+
+    const btnDescargar = fixture.nativeElement.querySelector('.btn-descargar-archivo');
+    expect(btnDescargar).not.toBeNull();
+
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:dummy');
+    spyOn(window.URL, 'revokeObjectURL');
+
+    btnDescargar.click();
+
+    expect(mockQuotesService.descargarArchivo).toHaveBeenCalledWith(55, 2);
+  });
+
+  it('Comentario_corto_no_deja_subir', () => {
+    component.archivoSeleccionado = new File(['dummy'], 'archivo.pdf');
+    component.comentarioArchivoControl.setValue('corto'); // 5 caracteres < 10
+    fixture.detectChanges();
+
+    const btnSubir = fixture.nativeElement.querySelector('.btn-subir-archivo');
+    expect(btnSubir.disabled).toBeTrue();
+
+    component.subirArchivoCorregido();
+    expect(mockQuotesService.subirArchivo).not.toHaveBeenCalled();
   });
 });

@@ -23,6 +23,7 @@ import {
   RegistrarSeguimientoDto,
   CierreSgcDto,
   CierreResultado,
+  CotizacionArchivoDto,
   FiltroIndicadoresSgc,
   IndicadoresSgc,
   CotizacionOrigen
@@ -236,5 +237,38 @@ export class QuotesService {
 
   origen(id: number): Observable<CotizacionOrigen> {
     return this.http.get<CotizacionOrigen>(`${this.apiUrl}/${id}/origen`);
+  }
+
+  getArchivos(id: number): Observable<CotizacionArchivoDto[]> {
+    return this.http.get<CotizacionArchivoDto[]>(`${this.apiUrl}/${id}/archivos`);
+  }
+
+  subirArchivo(id: number, archivo: File, comentario: string): Observable<CotizacionArchivoDto> {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('comentario', comentario);
+    return this.http.post<CotizacionArchivoDto>(`${this.apiUrl}/${id}/archivos`, formData);
+  }
+
+  descargarArchivo(id: number, archivoId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/archivos/${archivoId}/descargar`, {
+      responseType: 'blob',
+    });
+  }
+
+  getIngenieriaTecnicoComercial(desde?: string, hasta?: string, unidadId?: number): Observable<any[]> {
+    let params = new HttpParams();
+    if (desde) params = params.set('desde', desde);
+    if (hasta) params = params.set('hasta', hasta);
+    if (unidadId !== undefined && unidadId !== null && unidadId !== 0) {
+      params = params.set('unidadId', unidadId.toString());
+    }
+    return this.http.get<any[]>(`${this.apiUrl}/ingenieria-tecnico-comercial`, { params });
+  }
+
+  descargarArchivoIngenieria(idSeguimiento: number, archivoId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/ingenieria-tecnico-comercial/${idSeguimiento}/archivos/${archivoId}/descargar`, {
+      responseType: 'blob',
+    });
   }
 }
