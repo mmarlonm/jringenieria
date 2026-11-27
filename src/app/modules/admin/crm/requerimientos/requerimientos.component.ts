@@ -19,6 +19,11 @@ import { UsersService } from 'app/modules/admin/security/users/users.service';
 import { RequerimientoDialogComponent } from './requerimiento-dialog/requerimiento-dialog.component';
 import { RequerimientoCalificarDialogComponent } from './requerimiento-calificar-dialog/requerimiento-calificar-dialog.component';
 import { RequerimientoVerDialogComponent } from './requerimiento-ver-dialog/requerimiento-ver-dialog.component';
+import {
+  ConvertirCotizacionDialogData,
+  ConvertirCotizacionDialogResult,
+  RequerimientoConvertirCotizacionDialogComponent
+} from './requerimiento-convertir-cotizacion-dialog/requerimiento-convertir-cotizacion-dialog.component';
 import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import Sortable from 'sortablejs';
@@ -426,6 +431,50 @@ export class RequerimientosComponent implements OnInit, AfterViewInit, OnDestroy
       } else if (res?.accion === 'convertido') {
         // Texto plano: el snackbar no interpreta HTML.
         this.snackBar.open(`Requerimiento convertido en la cotización ${res.resultado?.folioSgc ?? ''}.`, 'OK', { duration: 5000 });
+        this.loadRequerimientos();
+        this.loadKpis();
+      }
+    });
+  }
+
+  dialogoConversionAbierto = false;
+
+  puedeConvertirDesdeTarjeta(r: Requerimiento): boolean {
+    return r.estatus === 'Aprobado para cotización' && !r.cotizacionVinculada;
+  }
+
+  convertirDesdeTarjeta(r: Requerimiento, $event: Event): void {
+    $event.stopPropagation();
+    $event.preventDefault();
+
+    if (this.dialogoConversionAbierto) {
+      return;
+    }
+
+    this.dialogoConversionAbierto = true;
+    this.cdr.detectChanges();
+
+    const dialogRef = this.dialog.open<
+      RequerimientoConvertirCotizacionDialogComponent,
+      ConvertirCotizacionDialogData,
+      ConvertirCotizacionDialogResult
+    >(RequerimientoConvertirCotizacionDialogComponent, {
+      width: '680px',
+      maxWidth: '95vw',
+      autoFocus: false,
+      data: { requerimiento: r }
+    });
+
+    dialogRef.afterClosed().subscribe(res => {
+      this.dialogoConversionAbierto = false;
+      this.cdr.detectChanges();
+
+      if (res?.convertido) {
+        this.snackBar.open(
+          `Requerimiento convertido en la cotización ${res.resultado?.folioSgc ?? ''}.`,
+          'OK',
+          { duration: 5000 }
+        );
         this.loadRequerimientos();
         this.loadKpis();
       }

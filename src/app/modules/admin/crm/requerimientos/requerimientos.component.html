@@ -410,6 +410,16 @@
                     <div class="flex items-center justify-between mt-4 pt-3 border-t">
                         <span class="text-[10px] text-gray-400">{{ r.fechaRecepcion | date:'dd MMM yyyy' }}</span>
                         <div class="flex items-center space-x-1">
+                            <button *ngIf="puedeConvertirDesdeTarjeta(r)"
+                                    mat-stroked-button
+                                    color="primary"
+                                    class="text-xs h-7 px-2"
+                                    [disabled]="dialogoConversionAbierto"
+                                    (click)="convertirDesdeTarjeta(r, $event)"
+                                    [attr.data-testid]="'btn-convertir-tarjeta-' + r.id">
+                                <mat-icon svgIcon="heroicons_outline:document-text" class="icon-size-4 mr-1"></mat-icon>
+                                Convertir a cotización
+                            </button>
                             <button mat-icon-button class="w-8 h-8 min-h-8" matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
                                 <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-4.5 text-gray-500"></mat-icon>
                             </button>
@@ -510,6 +520,15 @@
                     <div class="flex items-center space-x-1">
                         <button mat-icon-button matTooltip="Ver requerimiento" (click)="openVerDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:eye" class="icon-size-5 text-gray-500"></mat-icon>
+                        </button>
+                        <button *ngIf="puedeConvertirDesdeTarjeta(r)"
+                                mat-icon-button
+                                color="primary"
+                                matTooltip="Convertir a cotización"
+                                [disabled]="dialogoConversionAbierto"
+                                (click)="convertirDesdeTarjeta(r, $event)"
+                                [attr.data-testid]="'btn-convertir-lista-' + r.id">
+                            <mat-icon svgIcon="heroicons_outline:document-text" class="icon-size-5"></mat-icon>
                         </button>
                         <button *ngIf="r.estatus !== 'Aprobado para cotización' && r.estatus !== 'No Viable'" mat-icon-button color="primary" matTooltip="Calificar / Checklist SGC" (click)="openCalificarDialog(r)">
                             <mat-icon svgIcon="heroicons_outline:check-badge" class="icon-size-5"></mat-icon>
