@@ -89,7 +89,7 @@ describe('QuoteDetailsComponent SGC', () => {
       get userInformation() {
         return JSON.stringify({ usuario: { id: 7, nombre: 'Test User' } });
       },
-      getEstatus: jasmine.createSpy('getEstatus').and.returnValue(of({ data: [] })),
+      iniciarProceso: jasmine.createSpy('iniciarProceso').and.returnValue(of({ requerimientoFolio: 'REQ-2026-0001' })),
       getQuoteById: jasmine.createSpy('getQuoteById').and.returnValue(of({ code: 200, data: {} })),
       catalogosSgc: jasmine.createSpy('catalogosSgc').and.returnValue(of(mockCatalogos)),
       origen: jasmine.createSpy('origen').and.returnValue(of(mockOrigen)),
@@ -1125,6 +1125,201 @@ describe('QuoteDetailsComponent SGC', () => {
     mockQuotesService.cambiarEstatusSgc.calls.reset();
     component.regresarAEnProceso();
     expect(mockQuotesService.cambiarEstatusSgc).not.toHaveBeenCalled();
+  });
+
+  describe('Campo Estatus de Información General (los 4 estatus, no el catálogo viejo)', () => {
+    const abrirCampo = (): MatSelect => {
+      const sel = fixture.debugElement.query(By.css('[data-testid="campo-estatus"] mat-select')).componentInstance as MatSelect;
+      sel.open();
+      fixture.detectChanges();
+      return sel;
+    };
+    const opcion = (codigo: string): HTMLElement | null =>
+      document.querySelector(`[data-testid="opcion-estatus-${codigo}"]`);
+
+    it('Ofrece_los_cuatro_estatus_y_ya_no_el_catalogo_viejo', () => {
+      component.quotesId = 40;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'EnProceso';
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('mat-select[formcontrolname="estatus"]')).toBeNull();
+      const sel = abrirCampo();
+      expect(['EnProceso', 'EnviadaACliente', 'AprobadaPorCliente', 'Rechazada'].every((c) => !!opcion(c))).toBeTrue();
+      expect(opcion('EnProceso')?.textContent).toContain('En proceso');
+      expect(opcion('AprobadaPorCliente')?.textContent).toContain('Aprobada por cliente');
+      sel.close();
+    });
+
+    it('Desde_En_proceso_solo_se_puede_ir_a_Enviada_a_cliente', () => {
+      component.quotesId = 40;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'EnProceso';
+      fixture.detectChanges();
+      const sel = abrirCampo();
+
+      expect(opcion('EnviadaACliente')?.getAttribute('aria-disabled')).toBe('false');
+      expect(opcion('AprobadaPorCliente')?.getAttribute('aria-disabled')).toBe('true');
+      expect(opcion('Rechazada')?.getAttribute('aria-disabled')).toBe('true');
+      sel.close();
+    });
+
+    it('Las_transiciones_permitidas_son_las_del_API', () => {
+      component.esInformativa = false;
+      const permitidas = (desde: any) => {
+        component.estatusCotizacion = desde;
+        return component.opcionesEstatus.map((o) => o.codigo).filter((c) => c !== desde && component.puedeIrAEstatus(c));
+      };
+      expect(permitidas('EnProceso')).toEqual(['EnviadaACliente']);
+      expect(permitidas('EnviadaACliente')).toEqual(['EnProceso', 'AprobadaPorCliente', 'Rechazada']);
+      expect(permitidas('Rechazada')).toEqual(['EnProceso']);
+      expect(permitidas('AprobadaPorCliente')).toEqual([]);
+    });
+
+    it('Aprobada_por_cliente_es_final_y_deja_el_campo_deshabilitado', () => {
+      component.quotesId = 40;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'AprobadaPorCliente';
+      expect(component.campoEstatusDeshabilitado).toBeTrue();
+      component.estatusCotizacion = 'EnProceso';
+      expect(component.campoEstatusDeshabilitado).toBeFalse();
+      component.cambiandoEstatus = true;
+      expect(component.campoEstatusDeshabilitado).toBeTrue();
+    });
+
+    it('Elegir_Enviada_a_cliente_hace_el_mismo_cambio_que_el_boton_y_el_campo_regresa_al_actual', () => {
+      component.quotesId = 41;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'EnProceso';
+      component.quotesForm.markAsPristine();
+      component.sgcForm.markAsPristine();
+      component.partidasFormArray.markAsPristine();
+      mockQuotesService.cambiarEstatusSgc.calls.reset();
+      const campo = { value: 'EnviadaACliente' as unknown };
+
+      component.cambiarEstatusDesdeCampo('EnviadaACliente', campo);
+
+      expect(mockQuotesService.cambiarEstatusSgc).toHaveBeenCalledWith(41, { estatus: 'EnviadaACliente' });
+      expect(campo.value).toBe('EnProceso'); // solo cambia cuando el API confirma y se recarga
+    });
+
+    it('Elegir_un_destino_no_permitido_no_llama_al_API', () => {
+      component.quotesId = 41;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'EnProceso';
+      mockQuotesService.cambiarEstatusSgc.calls.reset();
+      const campo = { value: 'AprobadaPorCliente' as unknown };
+
+      component.cambiarEstatusDesdeCampo('AprobadaPorCliente', campo);
+
+      expect(mockQuotesService.cambiarEstatusSgc).not.toHaveBeenCalled();
+      expect(campo.value).toBe('EnProceso');
+    });
+
+    it('Elegir_Rechazada_abre_el_dialogo_del_motivo', () => {
+      component.quotesId = 42;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'EnviadaACliente';
+      const abrir = spyOn(component, 'abrirRechazoDialog');
+      component.cambiarEstatusDesdeCampo('Rechazada', { value: 'Rechazada' });
+      expect(abrir).toHaveBeenCalled();
+    });
+
+    it('Elegir_Aprobada_pide_confirmacion_y_si_se_cancela_no_llama_al_API', async () => {
+      component.quotesId = 43;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'EnviadaACliente';
+      mockQuotesService.cambiarEstatusSgc.calls.reset();
+      const swal = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: false } as any));
+
+      component.cambiarEstatusDesdeCampo('AprobadaPorCliente', { value: 'AprobadaPorCliente' });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(swal).toHaveBeenCalled();
+      expect(mockQuotesService.cambiarEstatusSgc).not.toHaveBeenCalled();
+    });
+
+    it('Rechazada_muestra_el_motivo_en_el_campo', () => {
+      component.quotesId = 44;
+      component.esInformativa = false;
+      component.estatusCotizacion = 'Rechazada';
+      component.motivoRechazo = 'Precio';
+      component.comentarioRechazo = 'Lo compraron más barato';
+      expect(component.detalleEstatusCampo).toContain('Motivo: Precio');
+      expect(component.detalleEstatusCampo).toContain('Lo compraron más barato');
+    });
+
+    it('Una_cotizacion_nueva_muestra_En_proceso_sin_poder_cambiarlo', () => {
+      component.quotesId = null as any;
+      fixture.detectChanges();
+      const campo = fixture.nativeElement.querySelector('[data-testid="campo-estatus-sin-proceso"] input') as HTMLInputElement;
+      expect(campo.value).toBe('En proceso');
+      expect(campo.disabled).toBeTrue();
+      expect(fixture.nativeElement.querySelector('[data-testid="btn-iniciar-proceso"]')).toBeNull();
+    });
+  });
+
+  describe('Cotización informativa: estatus e iniciar proceso desde lead', () => {
+    const respuestaInformativa = (): RespuestaObtenerSgc => ({
+      cotizacion: { cotizacionProductosId: 55, folioContpaq: 'A1050' } as any,
+      sgc: {} as any,
+      partidas: [],
+      informativa: true,
+      acciones: { editar: false } as any,
+      totales: { subtotal: 0, iva: 0, total: 0, costoDirecto: 0, utilidad: null, margenPorcentaje: null, margenBajo: false, partidasSinCosto: 0 },
+      faltantes: [],
+    } as any);
+
+    it('Muestra_Sin_proceso_en_el_campo_Estatus_y_el_boton_para_iniciar_el_proceso', () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaInformativa()));
+      component.loadQuotes(55);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="campo-estatus"]')).toBeNull();
+      const campo = fixture.nativeElement.querySelector('[data-testid="campo-estatus-sin-proceso"] input') as HTMLInputElement;
+      expect(campo.value).toBe('Sin proceso (informativa)');
+      expect(fixture.nativeElement.querySelector('[data-testid="btn-iniciar-proceso"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.franja-informativa')?.textContent).toContain('inicia el proceso desde lead');
+    });
+
+    it('Iniciar_proceso_confirma_llama_al_API_y_recarga_la_cotizacion', async () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaInformativa()));
+      component.loadQuotes(55);
+      mockQuotesService.obtenerSgc.calls.reset();
+      mockQuotesService.iniciarProceso.calls.reset();
+      const swal = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+
+      await component.iniciarProceso();
+
+      expect(mockQuotesService.iniciarProceso).toHaveBeenCalledWith(55);
+      expect(mockQuotesService.obtenerSgc).toHaveBeenCalledWith(55);
+      expect(swal.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ icon: 'success' }));
+      expect(component.iniciandoProceso).toBeFalse();
+    });
+
+    it('Si_se_cancela_la_confirmacion_no_llama_al_API', async () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaInformativa()));
+      component.loadQuotes(55);
+      mockQuotesService.iniciarProceso.calls.reset();
+      spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: false } as any));
+
+      await component.iniciarProceso();
+
+      expect(mockQuotesService.iniciarProceso).not.toHaveBeenCalled();
+    });
+
+    it('Iniciar_proceso_con_error_muestra_el_mensaje_del_API', async () => {
+      mockQuotesService.obtenerSgc.and.returnValue(of(respuestaInformativa()));
+      component.loadQuotes(55);
+      mockQuotesService.iniciarProceso.and.returnValue(throwError(() => ({ error: { mensaje: 'La cotización ya cuenta con un proceso iniciado.' } })));
+      const swal = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+
+      await component.iniciarProceso();
+
+      expect(swal.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ icon: 'error', text: 'La cotización ya cuenta con un proceso iniciado.' }));
+      expect(component.iniciandoProceso).toBeFalse();
+    });
   });
 
   it('Botones_de_estatus_segun_transiciones', () => {

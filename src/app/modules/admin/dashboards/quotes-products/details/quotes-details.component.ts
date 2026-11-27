@@ -104,7 +104,6 @@ import { mapearEtapaAEstatus } from "../list/quotes-sgc-merge";
 })
 export class QuoteDetailsComponent implements OnInit {
   quotesForm: FormGroup;
-  estatus: any[] = [];
   unidadesDeNegocio: any[] = [];
   quotesId: number | null = null;
   folioContpaq: string | null = null;
@@ -153,6 +152,23 @@ export class QuoteDetailsComponent implements OnInit {
   soloLectura: boolean = false;
   /** Evita dobles clics mientras el API responde un cambio de estatus. */
   cambiandoEstatus: boolean = false;
+  iniciandoProceso: boolean = false;
+
+  /** Los 4 estatus de la cotización (el catálogo viejo de «Pendiente/Completada…» ya no se usa aquí). */
+  readonly opcionesEstatus: { codigo: EstatusCotizacionSimple; nombre: string }[] = [
+    { codigo: 'EnProceso', nombre: 'En proceso' },
+    { codigo: 'EnviadaACliente', nombre: 'Enviada a cliente' },
+    { codigo: 'AprobadaPorCliente', nombre: 'Aprobada por cliente' },
+    { codigo: 'Rechazada', nombre: 'Rechazada' },
+  ];
+
+  /** Mismas transiciones que valida el API (D2): Aprobada por cliente es final. */
+  private static readonly TRANSICIONES: Record<EstatusCotizacionSimple, EstatusCotizacionSimple[]> = {
+    EnProceso: ['EnviadaACliente'],
+    EnviadaACliente: ['AprobadaPorCliente', 'Rechazada', 'EnProceso'],
+    Rechazada: ['EnProceso'],
+    AprobadaPorCliente: [],
+  };
   /** Cotización que solo viene de CONTPAQ (sin capa SGC): solo consulta, sin flujo. Lo dice el API (contrato v1.2). */
   esInformativa: boolean = false;
   requerimientoVinculado: RequerimientoResumen | null = null;
@@ -245,7 +261,6 @@ export class QuoteDetailsComponent implements OnInit {
       estatus: [null, [Validators.maxLength(50)]],
       observaciones: [null, [Validators.maxLength(300)]],
     });
-    this.getEstatus();
     this.getClientes();
     this.getProspects();
 
@@ -614,6 +629,102 @@ export class QuoteDetailsComponent implements OnInit {
     return !!(this.quotesForm?.dirty || this.sgcForm?.dirty || this.partidasFormArray?.dirty);
   }
 
+  /** El estatus actual siempre se puede ver; solo se habilitan los destinos que el API permite. */
+  puedeIrAEstatus(codigo: string): boolean {
+    const actual = this.estatusSimple;
+    if (!actual) {
+      return false;
+    }
+    return codigo === actual || QuoteDetailsComponent.TRANSICIONES[actual].includes(codigo as EstatusCotizacionSimple);
+  }
+
+  get campoEstatusDeshabilitado(): boolean {
+    const actual = this.estatusSimple;
+    return this.cambiandoEstatus || !actual || QuoteDetailsComponent.TRANSICIONES[actual].length === 0;
+  }
+
+  get detalleEstatusCampo(): string {
+    const actual = this.estatusSimple;
+    if (actual === 'Rechazada') {
+      const motivo = this.nombreMotivoCierre(this.motivoRechazo);
+      const comentario = this.comentarioRechazo ? ` · ${this.comentarioRechazo}` : '';
+      return motivo ? `Motivo: ${motivo}${comentario}` : 'Rechazada por el cliente.';
+    }
+    if (actual === 'AprobadaPorCliente') {
+      return 'Aprobada por el cliente: ya no cambia de estatus.';
+    }
+    return 'Elige el siguiente estatus; se aplica al confirmar.';
+  }
+
+  /**
+   * El campo solo cambia cuando el API confirma (loadQuotes lo refresca), así que se regresa de inmediato al
+   * estatus actual y se dispara la misma acción que el botón del encabezado (confirmaciones y motivo incluidos).
+   */
+  cambiarEstatusDesdeCampo(nuevo: string, campo?: { value: unknown }): void {
+    const actual = this.estatusSimple;
+    if (campo) {
+      campo.value = actual;
+    }
+    if (!nuevo || nuevo === actual || !this.puedeIrAEstatus(nuevo)) {
+      return;
+    }
+    switch (nuevo) {
+      case 'EnviadaACliente':
+        this.enviarACliente();
+        break;
+      case 'AprobadaPorCliente':
+        void this.aprobarPorCliente();
+        break;
+      case 'Rechazada':
+        this.abrirRechazoDialog();
+        break;
+      case 'EnProceso':
+        this.regresarAEnProceso();
+        break;
+    }
+  }
+
+  /** Cotización informativa de CONTPAQ: crea el lead y el requerimiento aprobado y la deja En proceso (con estatus y seguimiento). */
+  async iniciarProceso(): Promise<void> {
+    if (!this.quotesId || this.iniciandoProceso) {
+      return;
+    }
+    const confirmacion = await Swal.fire({
+      title: '¿Iniciar proceso desde lead?',
+      text: 'Se creará un lead y un requerimiento aprobado con los datos de esta cotización',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, iniciar proceso',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!confirmacion.isConfirmed) {
+      return;
+    }
+    this.iniciandoProceso = true;
+    this.quotesService.iniciarProceso(this.quotesId).subscribe({
+      next: (res: any) => {
+        this.iniciandoProceso = false;
+        this.procesoRefresco++;
+        this.loadQuotes(this.quotesId!);
+        Swal.fire({
+          icon: 'success',
+          title: 'Proceso iniciado',
+          text: `Se creó el requerimiento ${res?.requerimientoFolio || ''} y el lead asociado.`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      },
+      error: (err: any) => {
+        this.iniciandoProceso = false;
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al iniciar proceso',
+          text: err?.error?.mensaje || 'No se pudo iniciar el proceso.',
+        });
+      },
+    });
+  }
+
   enviarACliente(): void {
     if (!this.quotesId || this.cambiandoEstatus) return;
     if (this.hayCambiosSinGuardar) {
@@ -947,8 +1058,5 @@ export class QuoteDetailsComponent implements OnInit {
       width: "820px", // un poco más que 794px para márgenes
       panelClass: "dialog-a4",
     });
-  }
-  getEstatus(): void {
-    this.quotesService.getEstatus().subscribe((data) => (this.estatus = data.data));
   }
 }
