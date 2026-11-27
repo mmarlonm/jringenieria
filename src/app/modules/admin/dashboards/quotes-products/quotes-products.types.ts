@@ -307,6 +307,12 @@ export interface VersionSgcDetalle extends VersionSgcItem {
     instantanea?: InstantaneaSgc | null;
 }
 
+export interface CotizacionPedidoInfo {
+    id: number;
+    folio: string;
+    estatus: string;
+}
+
 export interface RespuestaObtenerSgc {
     cotizacionProductosId: number;
     cotizacion?: EncabezadoCotizacionSgc | null;
@@ -326,6 +332,8 @@ export interface RespuestaObtenerSgc {
     prospecto?: ProspectoCotizacion | null;
     /** Contrato v1.2: `true` ⇔ la cotización no tiene capa SGC (solo viene de CONTPAQ): se ve solo como consulta. Si no viene, es `false`. */
     informativa?: boolean;
+    pedido?: CotizacionPedidoInfo | null;
+    puedeConvertirAPedido?: boolean;
 }
 
 export interface ResumenSgc {
@@ -348,6 +356,8 @@ export interface ResumenSgc {
     vencida?: boolean;
     probabilidadPorcentaje?: number | null;
     proximaAccionFecha?: string | Date | null;
+    pedido?: CotizacionPedidoInfo | null;
+    puedeConvertirAPedido?: boolean;
 }
 
 export type ExistenciaMaterial = ProductoBuscadorDto;

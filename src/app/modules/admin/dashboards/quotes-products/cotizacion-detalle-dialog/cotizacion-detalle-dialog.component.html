@@ -71,8 +71,15 @@
         </div>
         <div>
           <span class="text-slate-400 block mb-0.5">Estatus:</span>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <app-estatus-chip *ngIf="!esInformativa; else chipInformativa" [estatus]="estatusSimple"></app-estatus-chip>
+            <span *ngIf="sgcRes?.pedido"
+                  data-testid="chip-pedido"
+                  (click)="irAPedido(sgcRes.pedido.id)"
+                  class="px-2 py-0.5 text-[10px] font-bold rounded-full border border-blue-300 bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200 flex items-center gap-1">
+              <mat-icon class="icon-size-3">shopping_cart</mat-icon>
+              Pedido {{ sgcRes.pedido.folio }}
+            </span>
             <ng-template #chipInformativa>
               <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border border-gray-300 bg-gray-100 text-gray-800">
                 Informativa
@@ -389,6 +396,16 @@
   <!-- Footer Actions -->
   <div
     class="flex-none flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+    <button *ngIf="sgcRes?.puedeConvertirAPedido"
+            mat-flat-button
+            color="accent"
+            type="button"
+            data-testid="btn-convertir-pedido"
+            [disabled]="convirtiendoAPedido"
+            (click)="convertirAPedido()">
+      <mat-icon class="mr-1.5 icon-size-4">shopping_cart</mat-icon>
+      Convertir a pedido
+    </button>
     <button mat-stroked-button type="button" data-testid="btn-cerrar" (click)="cerrar()">
       Cerrar
     </button>

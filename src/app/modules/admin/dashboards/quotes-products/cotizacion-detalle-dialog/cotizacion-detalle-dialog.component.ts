@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import Swal from 'sweetalert2';
 import { QuotesService } from '../quotes-products.service';
+import { PedidosService } from 'app/modules/admin/crm/pedidos/pedidos.service';
 import { CotizacionOrigen, RespuestaObtenerSgc, ProspectoCotizacion, EstatusCotizacionSimple, CotizacionIngenieriaCasoDto, CotizacionIngenieriaArchivoDto } from '../quotes-products.types';
 import { EstatusChipComponent } from '../sgc/estatus-chip/estatus-chip.component';
 import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
@@ -52,11 +53,13 @@ export class CotizacionDetalleDialogComponent implements OnInit {
   procesoRefresco = 0;
   procesoIniciado = false;
   iniciandoProceso = false;
+  convirtiendoAPedido = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: CotizacionDetalleDialogData,
     private dialogRef: MatDialogRef<CotizacionDetalleDialogComponent>,
     private quotesService: QuotesService,
+    private pedidosService: PedidosService,
     private router: Router
   ) {
     this.esInformativa = !!data?.informativa;
@@ -251,6 +254,44 @@ export class CotizacionDetalleDialogComponent implements OnInit {
         });
       }
     });
+  }
+
+  async convertirAPedido(): Promise<void> {
+    if (this.convirtiendoAPedido) return;
+
+    const confirm = await Swal.fire({
+      title: '¿Convertir a pedido?',
+      text: 'Se creará el pedido con los datos de esta cotización',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, convertir a pedido',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    this.convirtiendoAPedido = true;
+    this.pedidosService.convertirDesdeCotizacion(this.data.cotizacionProductosId).subscribe({
+      next: (pedido) => {
+        this.convirtiendoAPedido = false;
+        this.dialogRef.close({ recargar: true });
+        this.router.navigate(['/crm/pedidos', pedido.id]);
+      },
+      error: (err) => {
+        this.convirtiendoAPedido = false;
+        const mensaje = err?.error?.mensaje || 'No se pudo convertir a pedido.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al convertir a pedido',
+          text: mensaje
+        });
+      }
+    });
+  }
+
+  irAPedido(pedidoId: number): void {
+    this.dialogRef.close();
+    this.router.navigate(['/crm/pedidos', pedidoId]);
   }
 
   abrirCotizacion(): void {

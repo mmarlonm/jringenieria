@@ -17,7 +17,7 @@
   </div>
 
   <!-- Linea del proceso -->
-  <ol *ngIf="proceso" class="grid grid-cols-2 sm:grid-cols-4 gap-2 list-none p-0 m-0">
+  <ol *ngIf="proceso" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 list-none p-0 m-0">
     <li *ngFor="let paso of proceso.pasos; trackBy: trackPaso"
         class="proceso-paso rounded-lg border p-2 flex flex-col gap-1 min-w-0"
         [ngClass]="clases(paso)"

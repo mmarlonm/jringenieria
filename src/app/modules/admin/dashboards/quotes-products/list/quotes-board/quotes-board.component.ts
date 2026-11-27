@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -69,7 +70,12 @@ export class QuotesBoardComponent implements OnInit, OnChanges {
   /** Una respuesta tardía de una carga vieja no debe pisar a la nueva. */
   private readonly solicitudes: Record<TipoCotizacionSgc, number> = { CS: 0, CT: 0, CE: 0 };
 
-  constructor(private quotesService: QuotesService, private cdr: ChangeDetectorRef, private dialog: MatDialog) { }
+  constructor(private quotesService: QuotesService, private cdr: ChangeDetectorRef, private dialog: MatDialog, private router: Router) { }
+
+  irAPedido(pedidoId: number, $event?: MouseEvent): void {
+    if ($event) $event.stopPropagation();
+    this.router.navigate(['/crm/pedidos', pedidoId]);
+  }
 
   ngOnInit(): void {
     this.cargarCasosIngenieria();

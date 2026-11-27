@@ -25,6 +25,8 @@ export function aplicarResumenSgc(q: any, r: any): void {
   q.vencida = r.vencida;
   q.probabilidadPorcentaje = r.probabilidadPorcentaje;
   q.proximaAccionFecha = r.proximaAccionFecha;
+  q.pedido = r.pedido;
+  q.puedeConvertirAPedido = r.puedeConvertirAPedido;
 }
 
 export function mapearEtapaAEstatus(etapa: string | null | undefined): string | null {
