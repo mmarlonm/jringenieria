@@ -22,6 +22,9 @@ import {
     PedidoValidacionItem,
     PedidoArchivoItem,
     CotizacionArchivoItem,
+    FacturacionFila,
+    PedidoBitacoraItem,
+    PedidoModificacionItem,
     ActualizarPedidoDto
 } from '../pedidos.types';
 
@@ -79,6 +82,50 @@ export class PedidoDetalleComponent implements OnInit {
     // Liberación a operación (F4)
     liberandoOperacion = false;
     faltantesLiberacion: string[] = [];
+
+    // Facturación programada (F5)
+    nuevaFacturacionConcepto = '';
+    nuevaFacturacionFecha = '';
+    nuevaFacturacionMonto: number | null = null;
+    programandoFactura = false;
+    columnasFacturacion: string[] = [
+        'concepto',
+        'fechaProgramada',
+        'monto',
+        'estatus',
+        'folioFactura',
+        'fechaFactura',
+        'fechaCobro',
+        'acciones'
+    ];
+
+    // Seguimiento y Bitácora (F5)
+    bitacoraItems: PedidoBitacoraItem[] = [];
+    bitacoraPage = 1;
+    bitacoraSize = 10;
+    cargandoBitacora = false;
+    nuevaBitacoraTipo = 'Observacion';
+    nuevaBitacoraTexto = '';
+    guardandoBitacora = false;
+    faltantesCierre: string[] = [];
+    ejecutandoAccionEstatus = false;
+
+    // Modificaciones (F5)
+    nuevaModDescripcion = '';
+    nuevaModImpactoTecnico = '';
+    nuevaModImpactoEconomico: number | null = 0;
+    nuevaModRequiereCotizacion = false;
+    nuevaModCotizacionFolio = '';
+    registrandoModificacion = false;
+    columnasModificaciones: string[] = [
+        'consecutivo',
+        'descripcion',
+        'impactoEconomico',
+        'estatus',
+        'registradaPor',
+        'fechaRegistro',
+        'acciones'
+    ];
 
     columnasPartidas: string[] = [
         'partida',
@@ -184,6 +231,7 @@ export class PedidoDetalleComponent implements OnInit {
 
         // Verificación items
         this.verificacionItems = (p.verificacion || []).map((v) => ({ ...v }));
+        this.cargarBitacora(1);
     }
 
     guardarResumen(): void {
@@ -659,6 +707,685 @@ export class PedidoDetalleComponent implements OnInit {
                     this._cdr.markForCheck();
                 }
             });
+    }
+
+    // ==================== FACTURACIÓN PROGRAMADA (F5) ====================
+    get facturacionProgramado(): number {
+        return (this.pedido?.facturacion?.filas || [])
+            .filter((f) => f.estatus !== 'Cancelada')
+            .reduce((acc, f) => acc + (f.monto || 0), 0);
+    }
+
+    get facturacionFacturado(): number {
+        return (this.pedido?.facturacion?.filas || [])
+            .filter((f) => f.estatus === 'Facturada' || f.estatus === 'Cobrada')
+            .reduce((acc, f) => acc + (f.monto || 0), 0);
+    }
+
+    get facturacionCobrado(): number {
+        return (this.pedido?.facturacion?.filas || [])
+            .filter((f) => f.estatus === 'Cobrada')
+            .reduce((acc, f) => acc + (f.monto || 0), 0);
+    }
+
+    get facturacionPendientePorProgramar(): number {
+        const total = this.pedido?.montoPedido || 0;
+        return Math.max(0, total - this.facturacionProgramado);
+    }
+
+    get facturacionPorcentajeCobrado(): number {
+        const total = this.pedido?.montoPedido || 1;
+        return Math.min(100, Math.round((this.facturacionCobrado / total) * 100));
+    }
+
+    programarFactura(): void {
+        if (!this.pedido?.permisos?.puedeFacturar || this.programandoFactura) return;
+
+        if (!this.nuevaFacturacionConcepto || this.nuevaFacturacionConcepto.trim().length === 0) {
+            Swal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Ingresa un concepto para la facturación.' });
+            return;
+        }
+
+        if (!this.nuevaFacturacionFecha) {
+            Swal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Selecciona una fecha programada.' });
+            return;
+        }
+
+        const monto = Number(this.nuevaFacturacionMonto);
+        if (isNaN(monto) || monto <= 0) {
+            Swal.fire({ icon: 'warning', title: 'Monto inválido', text: 'El monto debe ser un valor numérico positivo.' });
+            return;
+        }
+
+        if (monto > this.facturacionPendientePorProgramar) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Monto excedido',
+                text: `No puedes programar más que el monto pendiente (${this.facturacionPendientePorProgramar.toFixed(2)}).`
+            });
+            return;
+        }
+
+        this.programandoFactura = true;
+        this._pedidosService
+            .programarFacturacion(this.pedidoId, {
+                concepto: this.nuevaFacturacionConcepto,
+                fechaProgramada: this.nuevaFacturacionFecha,
+                monto
+            })
+            .subscribe({
+                next: (nuevaFila) => {
+                    this.programandoFactura = false;
+                    this.nuevaFacturacionConcepto = '';
+                    this.nuevaFacturacionFecha = '';
+                    this.nuevaFacturacionMonto = null;
+                    if (this.pedido?.facturacion) {
+                        this.pedido.facturacion.filas = [...(this.pedido.facturacion.filas || []), nuevaFila];
+                        this.pedido.facturacion.programado = this.facturacionProgramado;
+                        this.pedido.facturacion.pendientePorProgramar = this.facturacionPendientePorProgramar;
+                    }
+                    Swal.fire({ icon: 'success', title: 'Factura programada', timer: 1500, showConfirmButton: false });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.programandoFactura = false;
+                    const msg = err?.error?.mensaje || 'No se pudo programar la factura.';
+                    Swal.fire({ icon: 'error', title: 'Error al programar', text: msg });
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    async marcarFacturada(fila: FacturacionFila, folioDirecto?: string, fechaDirecta?: string): Promise<void> {
+        let folio = folioDirecto;
+        let fecha = fechaDirecta;
+
+        if (!folio || !fecha) {
+            const { value: formValues } = await Swal.fire({
+                title: `Registrar Factura para «${fila.concepto}»`,
+                html: `
+                    <div class="flex flex-col gap-3 text-left">
+                        <label class="text-xs font-semibold">Folio de Factura (requerido)</label>
+                        <input id="swal-folio-factura" class="swal2-input !m-0 !w-full" placeholder="F-12345" />
+                        <label class="text-xs font-semibold mt-2">Fecha de Emisión (requerida)</label>
+                        <input id="swal-fecha-factura" type="date" class="swal2-input !m-0 !w-full" />
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Factura',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const f = (document.getElementById('swal-folio-factura') as HTMLInputElement)?.value;
+                    const d = (document.getElementById('swal-fecha-factura') as HTMLInputElement)?.value;
+                    if (!f || !d) {
+                        Swal.showValidationMessage('Debes proporcionar el folio y la fecha de factura.');
+                        return null;
+                    }
+                    return { folio: f, fecha: d };
+                }
+            });
+
+            if (!formValues) return;
+            folio = formValues.folio;
+            fecha = formValues.fecha;
+        }
+
+        this._pedidosService
+            .actualizarFacturacionFila(this.pedidoId, fila.id, {
+                concepto: fila.concepto,
+                fechaProgramada: fila.fechaProgramada,
+                monto: fila.monto,
+                estatus: 'Facturada',
+                folioFactura: folio,
+                fechaFactura: fecha
+            })
+            .subscribe({
+                next: (act) => {
+                    Object.assign(fila, act);
+                    if (this.pedido?.facturacion) {
+                        this.pedido.facturacion.facturado = this.facturacionFacturado;
+                    }
+                    Swal.fire({ icon: 'success', title: 'Factura registrada', timer: 1500, showConfirmButton: false });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    const msg = err?.error?.mensaje || 'No se pudo actualizar la factura.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                }
+            });
+    }
+
+    async marcarCobrada(fila: FacturacionFila, fechaDirecta?: string): Promise<void> {
+        let fecha = fechaDirecta;
+
+        if (!fecha) {
+            const { value: fCobro } = await Swal.fire({
+                title: `Registrar Cobro para «${fila.concepto}»`,
+                html: `
+                    <div class="flex flex-col gap-2 text-left">
+                        <label class="text-xs font-semibold">Fecha de Cobro (requerida)</label>
+                        <input id="swal-fecha-cobro" type="date" class="swal2-input !m-0 !w-full" />
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Cobro',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const d = (document.getElementById('swal-fecha-cobro') as HTMLInputElement)?.value;
+                    if (!d) {
+                        Swal.showValidationMessage('Debes seleccionar la fecha de cobro.');
+                        return null;
+                    }
+                    return d;
+                }
+            });
+
+            if (!fCobro) return;
+            fecha = fCobro;
+        }
+
+        this._pedidosService
+            .actualizarFacturacionFila(this.pedidoId, fila.id, {
+                concepto: fila.concepto,
+                fechaProgramada: fila.fechaProgramada,
+                monto: fila.monto,
+                estatus: 'Cobrada',
+                folioFactura: fila.folioFactura,
+                fechaFactura: fila.fechaFactura,
+                fechaCobro: fecha
+            })
+            .subscribe({
+                next: (act) => {
+                    Object.assign(fila, act);
+                    if (this.pedido?.facturacion) {
+                        this.pedido.facturacion.cobrado = this.facturacionCobrado;
+                    }
+                    Swal.fire({ icon: 'success', title: 'Cobro registrado', timer: 1500, showConfirmButton: false });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    const msg = err?.error?.mensaje || 'No se pudo registrar el cobro.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                }
+            });
+    }
+
+    async cancelarFacturaFila(fila: FacturacionFila): Promise<void> {
+        const confirm = await Swal.fire({
+            title: `¿Cancelar factura «${fila.concepto}»?`,
+            text: 'La fila quedará con estatus Cancelada y liberará el monto pendiente.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cancelar fila',
+            cancelButtonText: 'No',
+            confirmButtonColor: '#dc2626'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        this._pedidosService
+            .actualizarFacturacionFila(this.pedidoId, fila.id, {
+                concepto: fila.concepto,
+                fechaProgramada: fila.fechaProgramada,
+                monto: fila.monto,
+                estatus: 'Cancelada'
+            })
+            .subscribe({
+                next: (act) => {
+                    Object.assign(fila, act);
+                    Swal.fire({ icon: 'info', title: 'Factura cancelada', timer: 1500, showConfirmButton: false });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    const msg = err?.error?.mensaje || 'No se pudo cancelar la fila.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                }
+            });
+    }
+
+    // ==================== SEGUIMIENTO Y BITÁCORA (F5) ====================
+    cargarBitacora(page: number = 1): void {
+        this.cargandoBitacora = true;
+        this.bitacoraPage = page;
+        this._pedidosService.obtenerBitacora(this.pedidoId, page, this.bitacoraSize).subscribe({
+            next: (items) => {
+                this.cargandoBitacora = false;
+                this.bitacoraItems = items || [];
+                this._cdr.markForCheck();
+            },
+            error: () => {
+                this.cargandoBitacora = false;
+                this._cdr.markForCheck();
+            }
+        });
+    }
+
+    agregarNotaBitacora(): void {
+        if (this.guardandoBitacora || !this.nuevaBitacoraTexto || this.nuevaBitacoraTexto.trim().length < 5) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Texto requerido',
+                text: 'La nota de bitácora debe tener al menos 5 caracteres.'
+            });
+            return;
+        }
+
+        this.guardandoBitacora = true;
+        this._pedidosService
+            .agregarBitacora(this.pedidoId, {
+                tipo: this.nuevaBitacoraTipo as any,
+                texto: this.nuevaBitacoraTexto
+            })
+            .subscribe({
+                next: () => {
+                    this.guardandoBitacora = false;
+                    this.nuevaBitacoraTexto = '';
+                    Swal.fire({ icon: 'success', title: 'Nota agregada', timer: 1500, showConfirmButton: false });
+                    this.cargarBitacora(1);
+                },
+                error: (err) => {
+                    this.guardandoBitacora = false;
+                    const msg = err?.error?.mensaje || 'No se pudo registrar en bitácora.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    // Transiciones de Ciclo de Vida
+    async iniciarEjecucion(): Promise<void> {
+        if (this.ejecutandoAccionEstatus) return;
+
+        const confirm = await Swal.fire({
+            title: '¿Iniciar ejecución del pedido?',
+            text: 'El pedido pasará a estatus «En ejecución».',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, iniciar ejecución',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        this.ejecutandoAccionEstatus = true;
+        this._pedidosService.iniciarEjecucion(this.pedidoId).subscribe({
+            next: () => {
+                this.ejecutandoAccionEstatus = false;
+                Swal.fire({ icon: 'success', title: 'Pedido en ejecución', timer: 1500, showConfirmButton: false });
+                this.cargarPedido();
+            },
+            error: (err) => {
+                this.ejecutandoAccionEstatus = false;
+                const msg = err?.error?.mensaje || 'No se pudo iniciar la ejecución.';
+                Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                this._cdr.markForCheck();
+            }
+        });
+    }
+
+    async entregarPedido(fechaDirecta?: string, comentarioDirecto?: string): Promise<void> {
+        if (this.ejecutandoAccionEstatus) return;
+
+        let fecha = fechaDirecta;
+        let comentario = comentarioDirecto;
+
+        if (!fecha && fechaDirecta === undefined) {
+            const { value: formVals } = await Swal.fire({
+                title: 'Entregar Pedido',
+                html: `
+                    <div class="flex flex-col gap-3 text-left">
+                        <label class="text-xs font-semibold">Fecha de Entrega (opcional, hoy por omisión)</label>
+                        <input id="swal-fecha-entrega" type="date" class="swal2-input !m-0 !w-full" />
+                        <label class="text-xs font-semibold mt-2">Comentario de Entrega (opcional)</label>
+                        <textarea id="swal-comentario-entrega" class="swal2-textarea !m-0 !w-full" placeholder="Detalles de recepción o entrega..."></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Marcar Entregado',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const f = (document.getElementById('swal-fecha-entrega') as HTMLInputElement)?.value;
+                    const c = (document.getElementById('swal-comentario-entrega') as HTMLTextAreaElement)?.value;
+                    return { fecha: f || undefined, comentario: c || undefined };
+                }
+            });
+
+            if (!formVals) return;
+            fecha = formVals.fecha;
+            comentario = formVals.comentario;
+        }
+
+        this.ejecutandoAccionEstatus = true;
+        this._pedidosService.entregar(this.pedidoId, { fechaEntrega: fecha, comentario }).subscribe({
+            next: () => {
+                this.ejecutandoAccionEstatus = false;
+                Swal.fire({ icon: 'success', title: 'Pedido entregado', timer: 1500, showConfirmButton: false });
+                this.cargarPedido();
+            },
+            error: (err) => {
+                this.ejecutandoAccionEstatus = false;
+                const msg = err?.error?.mensaje || 'No se pudo marcar como entregado.';
+                Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                this._cdr.markForCheck();
+            }
+        });
+    }
+
+    async reabrirEjecucion(comentarioDirecto?: string): Promise<void> {
+        if (this.ejecutandoAccionEstatus) return;
+
+        let comentario = comentarioDirecto;
+        if (!comentario) {
+            const { value: motivo } = await Swal.fire({
+                title: 'Reabrir Ejecución del Pedido',
+                input: 'textarea',
+                inputLabel: 'Motivo de reapertura (obligatorio, mínimo 10 caracteres)',
+                inputPlaceholder: 'Indica la razón por la cual se reabre el pedido entregado...',
+                inputValidator: (val) => {
+                    if (!val || val.trim().length < 10) {
+                        return 'Debes ingresar un motivo de al menos 10 caracteres.';
+                    }
+                    return null;
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Reabrir pedido',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#eab308'
+            });
+
+            if (!motivo) return;
+            comentario = motivo;
+        }
+
+        this.ejecutandoAccionEstatus = true;
+        this._pedidosService.reabrirEjecucion(this.pedidoId, { comentario }).subscribe({
+            next: () => {
+                this.ejecutandoAccionEstatus = false;
+                Swal.fire({ icon: 'info', title: 'Pedido reabierto', timer: 1500, showConfirmButton: false });
+                this.cargarPedido();
+            },
+            error: (err) => {
+                this.ejecutandoAccionEstatus = false;
+                const msg = err?.error?.mensaje || 'No se pudo reabrir la ejecución.';
+                Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                this._cdr.markForCheck();
+            }
+        });
+    }
+
+    async cerrarPedido(comentarioDirecto?: string, condicionesCumplidas: boolean = true): Promise<void> {
+        if (!this.pedido?.permisos?.puedeCerrar || this.ejecutandoAccionEstatus) return;
+
+        let comentario = comentarioDirecto;
+        if (!comentario) {
+            const { value: formVals } = await Swal.fire({
+                title: 'Cerrar Pedido (SGC 7.10)',
+                html: `
+                    <div class="flex flex-col gap-3 text-left">
+                        <label class="flex items-center gap-2">
+                            <input id="swal-condiciones" type="checkbox" checked />
+                            <span class="text-xs font-semibold">Todas las condiciones comerciales y técnicas se han cumplido</span>
+                        </label>
+                        <label class="text-xs font-semibold mt-2">Comentario de Cierre (obligatorio, mínimo 10 caracteres)</label>
+                        <textarea id="swal-comentario-cierre" class="swal2-textarea !m-0 !w-full" placeholder="Comentario de conformidad final..."></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Cerrar Pedido',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const chk = (document.getElementById('swal-condiciones') as HTMLInputElement)?.checked;
+                    const c = (document.getElementById('swal-comentario-cierre') as HTMLTextAreaElement)?.value;
+                    if (!chk) {
+                        Swal.showValidationMessage('Debes confirmar el cumplimiento de condiciones.');
+                        return null;
+                    }
+                    if (!c || c.trim().length < 10) {
+                        Swal.showValidationMessage('El comentario de cierre debe tener al menos 10 caracteres.');
+                        return null;
+                    }
+                    return { condiciones: chk, comentario: c };
+                }
+            });
+
+            if (!formVals) return;
+            comentario = formVals.comentario;
+            condicionesCumplidas = formVals.condiciones;
+        }
+
+        this.ejecutandoAccionEstatus = true;
+        this.faltantesCierre = [];
+
+        this._pedidosService
+            .cerrar(this.pedidoId, {
+                condicionesCumplidas,
+                comentario
+            })
+            .subscribe({
+                next: () => {
+                    this.ejecutandoAccionEstatus = false;
+                    Swal.fire({ icon: 'success', title: 'Pedido cerrado', timer: 2000, showConfirmButton: false });
+                    this.cargarPedido();
+                },
+                error: (err) => {
+                    this.ejecutandoAccionEstatus = false;
+                    const msg = err?.error?.mensaje || 'No se pudo cerrar el pedido.';
+                    this.faltantesCierre = err?.error?.faltantes || [msg];
+                    Swal.fire({ icon: 'warning', title: 'Cierre no completado', text: msg });
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    async cancelarPedido(motivoDirecto?: string): Promise<void> {
+        if (!this.pedido?.permisos?.puedeCancelar || this.ejecutandoAccionEstatus) return;
+
+        let motivo = motivoDirecto;
+        if (!motivo) {
+            const { value } = await Swal.fire({
+                title: `¿Cancelar el pedido ${this.pedido.folio}?`,
+                input: 'textarea',
+                inputLabel: 'Motivo de la cancelación (obligatorio, 10 a 1000 caracteres)',
+                inputPlaceholder: 'Ingresa la razón por la que se cancela este pedido...',
+                inputValidator: (val) => {
+                    if (!val || val.trim().length < 10) {
+                        return 'Debes ingresar un motivo de al menos 10 caracteres.';
+                    }
+                    return null;
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cancelar pedido',
+                cancelButtonText: 'Volver',
+                confirmButtonColor: '#dc2626'
+            });
+
+            if (!value) return;
+            motivo = value;
+        }
+
+        this.ejecutandoAccionEstatus = true;
+        this._pedidosService.cancelar(this.pedidoId, { motivo }).subscribe({
+            next: () => {
+                this.ejecutandoAccionEstatus = false;
+                Swal.fire({ icon: 'info', title: 'Pedido cancelado', timer: 2000, showConfirmButton: false });
+                this.cargarPedido();
+            },
+            error: (err) => {
+                this.ejecutandoAccionEstatus = false;
+                const msg = err?.error?.mensaje || 'No se pudo cancelar el pedido.';
+                Swal.fire({ icon: 'error', title: 'Error al cancelar', text: msg });
+                this._cdr.markForCheck();
+            }
+        });
+    }
+
+    // ==================== MODIFICACIONES (F5) ====================
+    registrarModificacion(): void {
+        if (this.registrandoModificacion) return;
+
+        if (!this.nuevaModDescripcion || this.nuevaModDescripcion.trim().length < 10) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Descripción requerida',
+                text: 'La descripción de la modificación debe tener al menos 10 caracteres.'
+            });
+            return;
+        }
+
+        const impacto = Number(this.nuevaModImpactoEconomico || 0);
+
+        this.registrandoModificacion = true;
+        this._pedidosService
+            .registrarModificacion(this.pedidoId, {
+                descripcion: this.nuevaModDescripcion,
+                impactoTecnico: this.nuevaModImpactoTecnico || undefined,
+                impactoEconomico: impacto,
+                requiereActualizarCotizacion: this.nuevaModRequiereCotizacion,
+                cotizacionActualizadaFolio: this.nuevaModRequiereCotizacion ? this.nuevaModCotizacionFolio : undefined
+            })
+            .subscribe({
+                next: (nuevaMod) => {
+                    this.registrandoModificacion = false;
+                    this.nuevaModDescripcion = '';
+                    this.nuevaModImpactoTecnico = '';
+                    this.nuevaModImpactoEconomico = 0;
+                    this.nuevaModRequiereCotizacion = false;
+                    this.nuevaModCotizacionFolio = '';
+                    if (this.pedido) {
+                        this.pedido.modificaciones = [...(this.pedido.modificaciones || []), nuevaMod];
+                    }
+                    Swal.fire({ icon: 'success', title: 'Modificación registrada', timer: 1500, showConfirmButton: false });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.registrandoModificacion = false;
+                    const msg = err?.error?.mensaje || 'No se pudo registrar la modificación.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    async aprobarModificacion(
+        mod: PedidoModificacionItem,
+        referenciaDirecta?: string,
+        fechaDirecta?: string
+    ): Promise<void> {
+        let referencia = referenciaDirecta;
+        let fecha = fechaDirecta;
+
+        if (!referencia || !fecha) {
+            const { value: formVals } = await Swal.fire({
+                title: `Aprobar Modificación #${mod.consecutivo}`,
+                html: `
+                    <div class="flex flex-col gap-3 text-left">
+                        <label class="text-xs font-semibold">Referencia de Aprobación del Cliente (mínimo 5 caracteres)</label>
+                        <input id="swal-ref-aprobacion" class="swal2-input !m-0 !w-full" placeholder="Correo / Adendum / Minuta" />
+                        <label class="text-xs font-semibold mt-2">Fecha de Aprobación</label>
+                        <input id="swal-fecha-aprobacion" type="date" class="swal2-input !m-0 !w-full" />
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Aprobar por cliente',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const r = (document.getElementById('swal-ref-aprobacion') as HTMLInputElement)?.value;
+                    const d = (document.getElementById('swal-fecha-aprobacion') as HTMLInputElement)?.value;
+                    if (!r || r.trim().length < 5) {
+                        Swal.showValidationMessage('La referencia debe tener al menos 5 caracteres.');
+                        return null;
+                    }
+                    if (!d) {
+                        Swal.showValidationMessage('Debes seleccionar la fecha de aprobación.');
+                        return null;
+                    }
+                    return { referencia: r, fecha: d };
+                }
+            });
+
+            if (!formVals) return;
+            referencia = formVals.referencia;
+            fecha = formVals.fecha;
+        }
+
+        this._pedidosService
+            .aprobarModificacionCliente(this.pedidoId, mod.id, {
+                referencia,
+                fecha
+            })
+            .subscribe({
+                next: () => {
+                    mod.estatus = 'AprobadaPorCliente';
+                    mod.referenciaAprobacion = referencia;
+                    mod.fechaAprobacion = fecha;
+                    Swal.fire({ icon: 'success', title: 'Modificación aprobada', timer: 1500, showConfirmButton: false });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    const msg = err?.error?.mensaje || 'No se pudo aprobar la modificación.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                }
+            });
+    }
+
+    async aplicarModificacion(mod: PedidoModificacionItem): Promise<void> {
+        const confirm = await Swal.fire({
+            title: `¿Aplicar modificación #${mod.consecutivo}?`,
+            text: `Se impactará el monto del pedido en $${mod.impactoEconomico.toFixed(2)}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, aplicar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        this._pedidosService.aplicarModificacion(this.pedidoId, mod.id).subscribe({
+            next: () => {
+                mod.estatus = 'Aplicada';
+                if (this.pedido) {
+                    this.pedido.montoPedido += mod.impactoEconomico;
+                }
+                Swal.fire({ icon: 'success', title: 'Modificación aplicada', timer: 1500, showConfirmButton: false });
+                this.cargarPedido();
+            },
+            error: (err) => {
+                const msg = err?.error?.mensaje || 'No se pudo aplicar la modificación.';
+                Swal.fire({ icon: 'error', title: 'Error', text: msg });
+            }
+        });
+    }
+
+    async cancelarModificacion(mod: PedidoModificacionItem, motivoDirecto?: string): Promise<void> {
+        let motivo = motivoDirecto;
+        if (!motivo) {
+            const { value } = await Swal.fire({
+                title: `Cancelar modificación #${mod.consecutivo}`,
+                input: 'textarea',
+                inputLabel: 'Motivo de la cancelación',
+                inputPlaceholder: 'Ingresa el motivo...',
+                showCancelButton: true,
+                confirmButtonText: 'Cancelar modificación',
+                cancelButtonText: 'Volver',
+                confirmButtonColor: '#dc2626'
+            });
+
+            if (!value) return;
+            motivo = value;
+        }
+
+        this._pedidosService.cancelarModificacion(this.pedidoId, mod.id, motivo).subscribe({
+            next: () => {
+                mod.estatus = 'Cancelada';
+                Swal.fire({ icon: 'info', title: 'Modificación cancelada', timer: 1500, showConfirmButton: false });
+                this._cdr.markForCheck();
+            },
+            error: (err) => {
+                const msg = err?.error?.mensaje || 'No se pudo cancelar la modificación.';
+                Swal.fire({ icon: 'error', title: 'Error', text: msg });
+            }
+        });
     }
 
     obtenerClaseEstatus(estatus: string): string {

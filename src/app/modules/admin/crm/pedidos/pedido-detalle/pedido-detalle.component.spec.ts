@@ -113,7 +113,20 @@ describe('PedidoDetalleComponent (F3)', () => {
             'descargarArchivo',
             'descargarCotizacionArchivo',
             'eliminarArchivo',
-            'liberar'
+            'liberar',
+            'programarFacturacion',
+            'actualizarFacturacionFila',
+            'obtenerBitacora',
+            'agregarBitacora',
+            'iniciarEjecucion',
+            'entregar',
+            'reabrirEjecucion',
+            'cerrar',
+            'cancelar',
+            'registrarModificacion',
+            'aprobarModificacionCliente',
+            'aplicarModificacion',
+            'cancelarModificacion'
         ]);
 
         pedidosServiceSpy.obtenerCatalogos.and.returnValue(
@@ -130,6 +143,7 @@ describe('PedidoDetalleComponent (F3)', () => {
             })
         );
         pedidosServiceSpy.obtenerPorId.and.callFake(() => of(JSON.parse(JSON.stringify(mockPedido))));
+        pedidosServiceSpy.obtenerBitacora.and.returnValue(of([]));
 
         await TestBed.configureTestingModule({
             imports: [PedidoDetalleComponent, NoopAnimationsModule, RouterTestingModule],
@@ -642,5 +656,416 @@ describe('PedidoDetalleComponent (F3)', () => {
         flush();
 
         expect(pedidosServiceSpy.descargarCotizacionArchivo).toHaveBeenCalledWith(10, 501);
+    }));
+
+    // ==================== TAREA F5: FACTURACIÓN, SEGUIMIENTO, MODIFICACIONES Y CIERRE ====================
+
+    it('Facturacion_calcula_resumen_y_valida_reglas_de_estatus', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+
+        component.pedido!.montoPedido = 350000;
+        component.pedido!.permisos.puedeFacturar = true;
+        component.pedido!.facturacion = {
+            programado: 300000,
+            facturado: 250000,
+            cobrado: 100000,
+            pendientePorProgramar: 50000,
+            filas: [
+                {
+                    id: 1,
+                    concepto: 'Anticipo 30%',
+                    fechaProgramada: '2026-11-28',
+                    monto: 100000,
+                    estatus: 'Cobrada',
+                    folioFactura: 'FAC-001',
+                    fechaFactura: '2026-11-28',
+                    fechaCobro: '2026-11-29'
+                },
+                {
+                    id: 2,
+                    concepto: 'Entrega de equipo',
+                    fechaProgramada: '2026-12-05',
+                    monto: 150000,
+                    estatus: 'Facturada',
+                    folioFactura: 'FAC-002',
+                    fechaFactura: '2026-12-05'
+                },
+                {
+                    id: 3,
+                    concepto: 'Finiquito',
+                    fechaProgramada: '2026-12-15',
+                    monto: 50000,
+                    estatus: 'Programada'
+                },
+                {
+                    id: 4,
+                    concepto: 'Adicional cancelado',
+                    fechaProgramada: '2026-12-20',
+                    monto: 20000,
+                    estatus: 'Cancelada'
+                }
+            ]
+        };
+
+        expect(component.facturacionProgramado).toBe(300000);
+        expect(component.facturacionFacturado).toBe(250000);
+        expect(component.facturacionCobrado).toBe(100000);
+        expect(component.facturacionPendientePorProgramar).toBe(50000);
+
+        // Transición: Programada -> Facturada (marcarFacturada)
+        pedidosServiceSpy.actualizarFacturacionFila.and.returnValue(
+            of({
+                ...component.pedido!.facturacion.filas[2],
+                estatus: 'Facturada',
+                folioFactura: 'FAC-003',
+                fechaFactura: '2026-12-15'
+            })
+        );
+        component.marcarFacturada(component.pedido!.facturacion.filas[2], 'FAC-003', '2026-12-15');
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.actualizarFacturacionFila).toHaveBeenCalledWith(
+            10,
+            3,
+            jasmine.objectContaining({
+                estatus: 'Facturada',
+                folioFactura: 'FAC-003',
+                fechaFactura: '2026-12-15'
+            })
+        );
+        expect(component.pedido!.facturacion.filas[2].estatus).toBe('Facturada');
+
+        // Transición: Facturada -> Cobrada (marcarCobrada)
+        pedidosServiceSpy.actualizarFacturacionFila.and.returnValue(
+            of({
+                ...component.pedido!.facturacion.filas[1],
+                estatus: 'Cobrada',
+                fechaCobro: '2026-12-10'
+            })
+        );
+        component.marcarCobrada(component.pedido!.facturacion.filas[1], '2026-12-10');
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.actualizarFacturacionFila).toHaveBeenCalledWith(
+            10,
+            2,
+            jasmine.objectContaining({
+                estatus: 'Cobrada',
+                fechaCobro: '2026-12-10'
+            })
+        );
+        expect(component.pedido!.facturacion.filas[1].estatus).toBe('Cobrada');
+    }));
+
+    it('Bitacora_pagina_y_agrega_observacion', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+
+        // Paginado
+        component.cargarBitacora(2);
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.obtenerBitacora).toHaveBeenCalledWith(10, 2, 10);
+        expect(component.bitacoraPage).toBe(2);
+
+        // Agregar observación
+        component.nuevaBitacoraTipo = 'Observacion';
+        component.nuevaBitacoraTexto = 'Cliente confirma recepción de especificaciones';
+        pedidosServiceSpy.agregarBitacora.and.returnValue(
+            of({
+                id: 99,
+                fechaUtc: '2026-11-27T12:00:00Z',
+                tipo: 'Observacion',
+                usuarioId: 5,
+                usuarioNombre: 'Carlos Vendedor',
+                resumen: 'Cliente confirma recepción de especificaciones'
+            })
+        );
+
+        component.agregarNotaBitacora();
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.agregarBitacora).toHaveBeenCalledWith(10, {
+            tipo: 'Observacion',
+            texto: 'Cliente confirma recepción de especificaciones'
+        });
+        expect(component.nuevaBitacoraTexto).toBe('');
+    }));
+
+    it('Cerrar_muestra_faltantes', fakeAsync(() => {
+        pedidosServiceSpy.obtenerPorId.and.returnValue(
+            of({
+                ...mockPedido,
+                estatus: 'Entregado',
+                permisos: {
+                    ...mockPedido.permisos,
+                    puedeCerrar: true
+                }
+            })
+        );
+
+        component.ngOnInit();
+        tick();
+        component.selectedTabIndex = 5; // Tab Seguimiento
+        fixture.detectChanges();
+        flush();
+
+        pedidosServiceSpy.cerrar.and.returnValue(
+            throwError(() => ({
+                status: 409,
+                error: {
+                    mensaje: 'No se puede cerrar el pedido.',
+                    faltantes: [
+                        'Existen hitos de facturación programados pendientes por facturar.',
+                        'El monto facturado no cubre el monto total del pedido.'
+                    ]
+                }
+            }))
+        );
+
+        component.cerrarPedido('Cierre formal del proyecto tras entrega', true);
+        tick();
+        fixture.detectChanges();
+        flush();
+
+        expect(component.ejecutandoAccionEstatus).toBeFalse();
+        expect(component.faltantesCierre.length).toBe(2);
+        expect(component.faltantesCierre[0]).toContain('pendientes por facturar');
+
+        const el = fixture.nativeElement as HTMLElement;
+        const alertaCierre = el.querySelector('[data-testid="alerta-faltantes-cierre"]');
+        expect(alertaCierre).not.toBeNull();
+        expect(alertaCierre?.textContent).toContain('pendientes por facturar');
+    }));
+
+    it('Cancelar_exige_motivo', fakeAsync(() => {
+        pedidosServiceSpy.obtenerPorId.and.returnValue(
+            of({
+                ...mockPedido,
+                estatus: 'Recibido',
+                permisos: {
+                    ...mockPedido.permisos,
+                    puedeCancelar: true
+                }
+            })
+        );
+
+        component.ngOnInit();
+        tick();
+        flush();
+
+        // Caso 1: El usuario no proporciona motivo o cancela
+        spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ value: '' } as any));
+        component.cancelarPedido();
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.cancelar).not.toHaveBeenCalled();
+
+        // Caso 2: El usuario proporciona motivo válido (>= 10 caracteres)
+        (Swal.fire as jasmine.Spy).and.returnValue(
+            Promise.resolve({ value: 'Cancelado por solicitud del cliente debido a recorte de presupuesto' } as any)
+        );
+        pedidosServiceSpy.cancelar.and.returnValue(of({}));
+
+        component.cancelarPedido();
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.cancelar).toHaveBeenCalledWith(10, {
+            motivo: 'Cancelado por solicitud del cliente debido a recorte de presupuesto'
+        });
+    }));
+
+    it('Modificacion_aprobar_y_aplicar_actualiza_el_monto', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+
+        const modItem = {
+            id: 201,
+            consecutivo: 1,
+            descripcion: 'Ampliación de tablero con 2 circuitos adicionales',
+            impactoTecnico: 'Requiere interruptores 3x100A',
+            impactoEconomico: 50000,
+            requiereActualizarCotizacion: false,
+            estatus: 'Registrada',
+            registradaPorNombre: 'Ing. López',
+            fechaRegistro: '2026-11-27T10:00:00Z'
+        };
+        component.pedido!.montoPedido = 350000;
+        component.pedido!.modificaciones = [modItem];
+
+        // Paso 1: Aprobar por el cliente
+        pedidosServiceSpy.aprobarModificacionCliente.and.returnValue(of({}));
+        component.aprobarModificacion(modItem, 'Minuta de cambio #01 firmada', '2026-11-27');
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.aprobarModificacionCliente).toHaveBeenCalledWith(10, 201, {
+            referencia: 'Minuta de cambio #01 firmada',
+            fecha: '2026-11-27'
+        });
+        expect(modItem.estatus).toBe('AprobadaPorCliente');
+
+        // Paso 2: Aplicar la modificación
+        spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+        pedidosServiceSpy.aplicarModificacion.and.callFake(() => {
+            pedidosServiceSpy.obtenerPorId.and.returnValue(
+                of({
+                    ...component.pedido!,
+                    montoPedido: 400000
+                })
+            );
+            return of({});
+        });
+
+        component.aplicarModificacion(modItem);
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.aplicarModificacion).toHaveBeenCalledWith(10, 201);
+        expect(modItem.estatus).toBe('Aplicada');
+        expect(component.pedido!.montoPedido).toBe(400000);
+    }));
+
+    it('Botones_segun_permisos', fakeAsync(() => {
+        // Caso 1: permisos = false
+        pedidosServiceSpy.obtenerPorId.and.returnValue(
+            of({
+                ...mockPedido,
+                estatus: 'Entregado',
+                permisos: {
+                    puedeEditar: false,
+                    puedeVerificar: false,
+                    puedeValidar: [],
+                    puedeLiberar: false,
+                    puedeFacturar: false,
+                    puedeCerrar: false,
+                    puedeCancelar: false
+                }
+            })
+        );
+        component.ngOnInit();
+        tick();
+        component.selectedTabIndex = 4; // Facturación
+        fixture.detectChanges();
+        flush();
+
+        const el = fixture.nativeElement as HTMLElement;
+        const formFacturacion = el.querySelector('[data-testid="form-facturacion"]');
+        expect(formFacturacion).toBeNull();
+
+        component.selectedTabIndex = 5; // Seguimiento
+        fixture.detectChanges();
+        flush();
+
+        const btnCerrar = el.querySelector('[data-testid="btn-cerrar-pedido"]');
+        expect(btnCerrar).toBeNull();
+
+        const btnCancelar = el.querySelector('[data-testid="btn-cancelar-pedido"]');
+        expect(btnCancelar).toBeNull();
+
+        // Caso 2: permisos = true
+        pedidosServiceSpy.obtenerPorId.and.returnValue(
+            of({
+                ...mockPedido,
+                estatus: 'Entregado',
+                permisos: {
+                    puedeEditar: true,
+                    puedeVerificar: true,
+                    puedeValidar: ['Sucursal'],
+                    puedeLiberar: true,
+                    puedeFacturar: true,
+                    puedeCerrar: true,
+                    puedeCancelar: true
+                }
+            })
+        );
+        component.ngOnInit();
+        tick();
+        component.selectedTabIndex = 4; // Facturación
+        fixture.detectChanges();
+        flush();
+
+        const formFacturacion2 = el.querySelector('[data-testid="form-facturacion"]');
+        expect(formFacturacion2).not.toBeNull();
+
+        component.selectedTabIndex = 5; // Seguimiento
+        fixture.detectChanges();
+        flush();
+
+        const btnCerrar2 = el.querySelector('[data-testid="btn-cerrar-pedido"]');
+        expect(btnCerrar2).not.toBeNull();
+
+        const btnCancelar2 = el.querySelector('[data-testid="btn-cancelar-pedido"]');
+        expect(btnCancelar2).not.toBeNull();
+    }));
+
+    it('Fechas_con_menos_0600_y_dias_con_UTC', fakeAsync(() => {
+        pedidosServiceSpy.obtenerPorId.and.returnValue(
+            of({
+                ...mockPedido,
+                fechaOC: '2026-11-20',
+                facturacion: {
+                    programado: 100000,
+                    facturado: 100000,
+                    cobrado: 0,
+                    pendientePorProgramar: 250000,
+                    filas: [
+                        {
+                            id: 1,
+                            concepto: 'Entrega inicial',
+                            fechaProgramada: '2026-11-28',
+                            monto: 100000,
+                            estatus: 'Facturada',
+                            folioFactura: 'FAC-100',
+                            fechaFactura: '2026-11-28'
+                        }
+                    ]
+                }
+            })
+        );
+
+        // Simulamos bitácora con hora UTC 16:00 (en CDMX -0600 corresponde a 10:00)
+        pedidosServiceSpy.obtenerBitacora.and.returnValue(
+            of([
+                {
+                    id: 10,
+                    fechaUtc: '2026-11-27T16:00:00Z',
+                    tipo: 'Avance',
+                    usuarioId: 5,
+                    usuarioNombre: 'Carlos',
+                    resumen: 'Fabricación al 50%'
+                }
+            ])
+        );
+
+        component.ngOnInit();
+        tick();
+
+        // Revisamos en Tab Facturación (fecha solo-día debe formatearse UTC -> 28/11/2026)
+        component.selectedTabIndex = 4;
+        fixture.detectChanges();
+        flush();
+
+        const el = fixture.nativeElement as HTMLElement;
+        const tablaFact = el.querySelector('[data-testid="tabla-facturacion"]');
+        expect(tablaFact?.textContent).toContain('28/11/2026');
+
+        // Revisamos en Tab Seguimiento (fecha y hora UTC con -0600 -> 27/11/2026 10:00)
+        component.selectedTabIndex = 5;
+        fixture.detectChanges();
+        flush();
+
+        const lineaBitacora = el.querySelector('[data-testid="panel-linea-tiempo-bitacora"]');
+        expect(lineaBitacora?.textContent).toContain('27/11/2026 10:00');
     }));
 });
