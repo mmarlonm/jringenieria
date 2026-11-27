@@ -336,13 +336,20 @@ describe('QuoteListComponent', () => {
     expect(chips.length).toBeGreaterThan(0);
   });
 
-  it('Las_filas_sin_registro_conservan_el_estatus_viejo', () => {
+  it('Las_filas_sin_registro_muestran_Informativa_y_ya_no_el_estatus_viejo', () => {
     const item2 = component.dataSource.data.find((q) => q.cotizacionProductosId === 102);
     expect(component.tieneRegistroSgc(item2)).toBeFalse();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    // Row 102 preserves legacy status name
-    expect(compiled.textContent).toContain('Pendiente');
+    // Antes mostraban el catálogo viejo («Pendiente», con menú para cambiarlo); ahora son «Informativa», sin menú.
+    expect(compiled.querySelector('[data-testid="chip-informativa-lista"]')).not.toBeNull();
+    expect(compiled.querySelector('[data-testid="chip-informativa-lista"]')?.textContent).toContain('Informativa');
+    expect(compiled.textContent).not.toContain('Pendiente');
+  });
+
+  it('La_lista_ya_no_consulta_el_catalogo_viejo_de_estatus', () => {
+    expect(mockQuotesService.getEstatus).not.toHaveBeenCalled();
+    expect(mockQuotesService.cambiarEstatus).not.toHaveBeenCalled();
   });
 
   it('El_filtro_por_etapa_filtra_las_filas_cargadas', () => {

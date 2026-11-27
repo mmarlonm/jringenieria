@@ -359,17 +359,9 @@
                   <app-estatus-chip [estatus]="obtenerEstatus(quote)"></app-estatus-chip>
                 </ng-container>
                 <ng-template #legacyStatus>
-                  <div
-                    class="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-extrabold text-white uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer"
-                    [style.background-color]="getColorByEstatusId(quote.estatus)"
-                    [matMenuTriggerFor]="statusMenu">
-                    {{ getStatusName(quote.estatus) }}
-                  </div>
-                  <mat-menu #statusMenu="matMenu">
-                    <button mat-menu-item *ngFor="let cat of estatusList" (click)="onEstatusChange(quote, cat.id)">
-                      {{ cat.nombre }}
-                    </button>
-                  </mat-menu>
+                  <span data-testid="chip-informativa-lista"
+                        class="px-2 py-0.5 text-[10px] font-bold rounded uppercase bg-slate-200 text-slate-700"
+                        matTooltip="Cotización de CONTPAQ sin proceso: inicia el proceso desde lead para darle estatus">Informativa</span>
                 </ng-template>
               </td>
             </ng-container>
@@ -494,19 +486,10 @@
             </div>
             <ng-template #legacyStatusMobile>
               <div class="mt-2 text-xs text-gray-500">Estatus</div>
-              <div
-                class="w-full mt-1 rounded-full cursor-pointer overflow-hidden text-center shadow-md active:scale-95 transition-transform"
-                [style.background-color]="getColorByEstatusId(quote.estatus)" [matMenuTriggerFor]="statusMenuMobile">
-                <div
-                  class="flex items-center justify-center text-[10px] font-extrabold text-white uppercase tracking-wider py-2.5">
-                  {{ getStatusName(quote.estatus) }}
-                </div>
+              <div class="mt-1">
+                <span data-testid="chip-informativa-lista-movil"
+                      class="px-2 py-0.5 text-[10px] font-bold rounded uppercase bg-slate-200 text-slate-700">Informativa</span>
               </div>
-              <mat-menu #statusMenuMobile="matMenu">
-                <button mat-menu-item *ngFor="let cat of estatusList" (click)="onEstatusChange(quote, cat.id)">
-                  {{ cat.nombre }}
-                </button>
-              </mat-menu>
             </ng-template>
 
             <div class="flex gap-2 mt-4">

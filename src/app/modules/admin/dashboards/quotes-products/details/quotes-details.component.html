@@ -74,8 +74,13 @@
   </div>
 
   <!-- Cotización de CONTPAQ sin capa SGC: solo consulta -->
-  <div *ngIf="esInformativa" class="franja-informativa bg-slate-50 border-l-4 border-slate-400 p-4 mb-4 text-slate-700 text-sm">
-    Cotización informativa de CONTPAQ: solo consulta y sin flujo de seguimiento. Las cotizaciones con flujo se crean al convertir un requerimiento aprobado.
+  <div *ngIf="esInformativa" class="franja-informativa bg-slate-50 border-l-4 border-slate-400 p-4 mb-4 text-slate-700 text-sm flex items-center justify-between gap-4 flex-wrap">
+    <span>Cotización informativa de CONTPAQ: solo consulta y sin estatus. Para trabajarla (estatus, seguimiento y trazabilidad) inicia el proceso desde lead.</span>
+    <button mat-flat-button color="primary" type="button" data-testid="btn-iniciar-proceso"
+            [disabled]="iniciandoProceso" (click)="iniciarProceso()">
+      <mat-icon class="mr-1">play_arrow</mat-icon>
+      Iniciar proceso desde lead
+    </button>
   </div>
 
   <!-- Alerta de errores de validación del guardado (400 / error) -->
@@ -231,15 +236,23 @@
 
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Estatus -->
-          <mat-form-field appearance="fill" class="w-full">
+          <!-- Estatus: los 4 de la cotización (el catálogo viejo ya no se usa) -->
+          <mat-form-field *ngIf="quotesId && !esInformativa; else estatusSinProceso" appearance="fill" class="w-full" data-testid="campo-estatus">
             <mat-label>Estatus</mat-label>
-            <mat-select formControlName="estatus">
-              <mat-option *ngFor="let cat of estatus" [value]="cat.id">{{
-                cat.nombre
-                }}</mat-option>
+            <mat-select #campoEstatus [value]="estatusSimple" [disabled]="campoEstatusDeshabilitado"
+                        (selectionChange)="cambiarEstatusDesdeCampo($event.value, campoEstatus)">
+              <mat-option *ngFor="let op of opcionesEstatus" [value]="op.codigo" [disabled]="!puedeIrAEstatus(op.codigo)"
+                          [attr.data-testid]="'opcion-estatus-' + op.codigo">{{ op.nombre }}</mat-option>
             </mat-select>
+            <mat-hint data-testid="detalle-estatus">{{ detalleEstatusCampo }}</mat-hint>
           </mat-form-field>
+          <ng-template #estatusSinProceso>
+            <mat-form-field appearance="fill" class="w-full" data-testid="campo-estatus-sin-proceso">
+              <mat-label>Estatus</mat-label>
+              <input matInput disabled [value]="quotesId ? 'Sin proceso (informativa)' : 'En proceso'" />
+              <mat-hint>{{ quotesId ? 'Inicia el proceso desde lead para darle estatus.' : 'Toda cotización nueva empieza En proceso.' }}</mat-hint>
+            </mat-form-field>
+          </ng-template>
 
           <!-- Estado -->
           <mat-form-field appearance="fill" class="w-full">

@@ -148,7 +148,6 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   historialData: any[] = [];
-  estatusList: any[] = [];
   constructor(
     private quotesService: QuotesService,
     private router: Router,
@@ -168,7 +167,6 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.vista === 'lista') {
       this.getQuotes();
     }
-    this.getEstatus();
     this.obtenerPermisos();
   }
 
@@ -394,68 +392,6 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch {
       input.focus();
     }
-  }
-
-  getEstatus(): void {
-    this.quotesService.getEstatus().subscribe((res: any) => {
-      if (res && res.code === 200) {
-        this.estatusList = res.data;
-      }
-    });
-  }
-
-  onEstatusChange(quote: any, nuevoEstatusId: number): void {
-    const estatusNuevo = this.estatusList.find(e => e.id === nuevoEstatusId);
-
-    Swal.fire({
-      title: '¿Cambiar estatus?',
-      text: `¿Estás seguro de cambiar el estatus a "${estatusNuevo?.nombre || 'Nuevo'}"?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, cambiar',
-      cancelButtonText: 'Cancelar',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.quotesService.cambiarEstatus(quote.cotizacionProductosId, nuevoEstatusId).subscribe({
-          next: (res: any) => {
-            if (res.code === 200) {
-              quote.estatus = nuevoEstatusId;
-              this._chatNotificationService.showSuccess('Éxito', 'Estatus actualizado correctamente', 3000);
-              this._changeDetectorRef.markForCheck();
-            } else {
-              this._chatNotificationService.showError('Error', 'Error al actualizar estatus', 3000);
-              this.getQuotes();
-            }
-          },
-          error: () => {
-            this._chatNotificationService.showError('Error', 'Error de conexión', 3000);
-            this.getQuotes();
-          }
-        });
-      } else {
-        this.getQuotes();
-      }
-    });
-  }
-
-  getStatusName(estatusId: number): string {
-    const estatus = this.estatusList.find(e => e.id === estatusId);
-    return estatus ? estatus.nombre : 'Sin Estatus';
-  }
-
-  getColorByEstatusId(estatusId: number): string {
-    const nombre = this.getStatusName(estatusId).toLowerCase();
-    if (nombre.includes('pendiente')) return '#FB275D';
-    if (nombre.includes('proceso')) return '#FFCB00';
-    if (nombre.includes('completad') || nombre.includes('finalizad') || nombre.includes('aprobada')) return '#00C875';
-    if (nombre.includes('rechazad') || nombre.includes('cancelad')) return '#D9534F';
-    return '#C4C4C4';
-  }
-
-  getFillColorByEstatusId(estatusId: number): string {
-    const color = this.getColorByEstatusId(estatusId);
-    return color + '15';
   }
 
   /**
