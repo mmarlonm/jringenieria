@@ -42,6 +42,7 @@ export const TAM_PAGINA_TABLERO = 15;
 export class QuotesBoardComponent implements OnChanges {
   @Input() desde: string | null = null;
   @Input() hasta: string | null = null;
+  @Input() unidadId: number | null = null;
   @Input() texto = '';
   @Input() etapa = 'todas';
   @Input() marcas = 'todas';
@@ -81,7 +82,7 @@ export class QuotesBoardComponent implements OnChanges {
   }
 
   ngOnChanges(cambios: SimpleChanges): void {
-    if (cambios['desde'] || cambios['hasta']) {
+    if (cambios['desde'] || cambios['hasta'] || cambios['unidadId']) {
       this.recargarTodo();
       return;
     }
@@ -108,7 +109,11 @@ export class QuotesBoardComponent implements OnChanges {
     }
     this.cdr.markForCheck();
 
-    this.quotesService.getQuotesPorRango(pagina, TAM_PAGINA_TABLERO, this.desde || null, this.hasta || null, col.tipo).subscribe({
+    const req$ = this.unidadId != null
+      ? this.quotesService.getQuotesPorRango(pagina, TAM_PAGINA_TABLERO, this.desde || null, this.hasta || null, col.tipo, this.unidadId)
+      : this.quotesService.getQuotesPorRango(pagina, TAM_PAGINA_TABLERO, this.desde || null, this.hasta || null, col.tipo);
+
+    req$.subscribe({
       next: (res: any) => {
         if (solicitud !== this.solicitudes[col.tipo]) {
           return;

@@ -56,7 +56,7 @@ export class QuotesService {
   // Listado por rango de fechas de creación (inclusivas): GET listado. El API devuelve { code, message, data, totalCount }.
   // Una fecha vacía deja ese extremo abierto.
   // `tipo` (CS/CT/CE) filtra por tipo SGC; CS incluye además las cotizaciones de CONTPAQ sin capa SGC (informativas). Sin `tipo` trae todo.
-  getQuotesPorRango(page: number, size: number, desde?: string | null, hasta?: string | null, tipo?: TipoCotizacionSgc | null): Observable<any> {
+  getQuotesPorRango(page: number, size: number, desde?: string | null, hasta?: string | null, tipo?: TipoCotizacionSgc | null, unidadId?: number | null): Observable<any> {
     let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
     if (tipo) {
       params = params.set('tipo', tipo);
@@ -67,7 +67,28 @@ export class QuotesService {
     if (hasta) {
       params = params.set('hasta', hasta);
     }
+    if (unidadId !== undefined && unidadId !== null && unidadId !== 0) {
+      params = params.set('unidadId', unidadId.toString());
+    }
     return this.http.get<any>(`${this.apiUrl}/listado`, { params });
+  }
+
+  getKpis(desde?: string | null, hasta?: string | null, unidadId?: number | null): Observable<any> {
+    let params = new HttpParams();
+    if (desde) {
+      params = params.set('desde', desde);
+    }
+    if (hasta) {
+      params = params.set('hasta', hasta);
+    }
+    if (unidadId !== undefined && unidadId !== null && unidadId !== 0) {
+      params = params.set('unidadId', unidadId.toString());
+    }
+    return this.http.get<any>(`${this.apiUrl}/listado/kpis`, { params });
+  }
+
+  getUnidadesDeNegocio(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/Proyecto/unidades-negocio`);
   }
 
   // Obtener una cotización por ID

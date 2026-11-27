@@ -24,6 +24,7 @@ import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
 import { EstatusChipComponent } from '../sgc/estatus-chip/estatus-chip.component';
 import { QuotesBoardComponent } from './quotes-board/quotes-board.component';
 import { CotizacionDetalleDialogComponent } from '../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
+import { CotizacionListadoKpis } from '../quotes-products.types';
 import { aplicarResumenSgc, tieneCapaSgc, puedeEliminarCotizacion, obtenerTituloCliente, tieneLead, obtenerEstatusCotizacion } from './quotes-sgc-merge';
 import moment from 'moment';
 
@@ -118,6 +119,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   fechaHasta: string = moment().format('YYYY-MM-DD');
   errorFechas: string | null = null;
 
+  readonly CLAVE_SUCURSAL = 'cotizaciones.unidadId';
+  unidadesDeNegocio: any[] = [];
+  unidadIdSeleccionada: number | null = null;
+  kpis: CotizacionListadoKpis | null = null;
+
   // Vista: tablero por tipo (Comercial / Técnico-comercial / Estratégica) o la lista de siempre. Se recuerda por navegador.
   vista: VistaCotizaciones = this.leerVistaGuardada();
   // Fechas que ve el tablero: solo se actualizan cuando ya son válidas y la persona terminó de teclear.
@@ -154,12 +160,57 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
+    const guardadaSucursal = localStorage.getItem(this.CLAVE_SUCURSAL);
+    this.unidadIdSeleccionada = guardadaSucursal ? Number(guardadaSucursal) : null;
+    this.cargarUnidades();
+    this.cargarKpis();
     // El tablero pide sus propias páginas; la lista solo se carga cuando se está viendo.
     if (this.vista === 'lista') {
       this.getQuotes();
     }
     this.getEstatus();
     this.obtenerPermisos();
+  }
+
+  cargarUnidades(): void {
+    this.quotesService.getUnidadesDeNegocio().subscribe({
+      next: (res: any) => {
+        this.unidadesDeNegocio = Array.isArray(res) ? res : (res?.data || []);
+        this._changeDetectorRef.markForCheck();
+      },
+      error: () => {
+        this.unidadesDeNegocio = [];
+      }
+    });
+  }
+
+  cargarKpis(): void {
+    this.quotesService.getKpis(this.fechaDesde || null, this.fechaHasta || null, this.unidadIdSeleccionada || null).subscribe({
+      next: (res: any) => {
+        this.kpis = res?.data ?? res;
+        this._changeDetectorRef.markForCheck();
+      },
+      error: () => {
+        this.kpis = null;
+        this._changeDetectorRef.markForCheck();
+      }
+    });
+  }
+
+  onSucursalChange(val: number | null): void {
+    this.unidadIdSeleccionada = val;
+    if (val !== null && val !== undefined) {
+      localStorage.setItem(this.CLAVE_SUCURSAL, val.toString());
+    } else {
+      localStorage.removeItem(this.CLAVE_SUCURSAL);
+    }
+    this.pageIndex = 0;
+    if (this.vista === 'lista') {
+      this.getQuotes();
+    }
+    this.cargarKpis();
+    this.tableroRefresco++;
+    this._changeDetectorRef.markForCheck();
   }
 
   ngAfterViewInit() {
@@ -178,9 +229,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Si llegan respuestas fuera de orden (se cambió la fecha mientras la anterior aún cargaba), solo vale la última
     const solicitud = ++this.solicitudListado;
-    this.quotesService
-      .getQuotesPorRango(this.pageIndex + 1, this.pageSize, this.fechaDesde || null, this.fechaHasta || null)
-      .subscribe({
+    const req$ = this.unidadIdSeleccionada != null
+      ? this.quotesService.getQuotesPorRango(this.pageIndex + 1, this.pageSize, this.fechaDesde || null, this.fechaHasta || null, null, this.unidadIdSeleccionada)
+      : this.quotesService.getQuotesPorRango(this.pageIndex + 1, this.pageSize, this.fechaDesde || null, this.fechaHasta || null);
+
+    req$.subscribe({
         next: (res: any) => {
           if (solicitud !== this.solicitudListado) {
             return;
@@ -290,6 +343,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
         // El tablero se recarga solo al cambiar estas fechas (ya validadas).
         this.boardDesde = this.fechaDesde;
         this.boardHasta = this.fechaHasta;
+        this.cargarKpis();
       }
       if (this.vista === 'lista') {
         this.getQuotes();
