@@ -2,6 +2,8 @@ import { Component, OnInit, LOCALE_ID } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ProcesoComercialComponent } from "app/shared/proceso-comercial/proceso-comercial.component";
 import { QuotesService } from "../quotes-products.service";
+import { PedidosService } from "app/modules/admin/crm/pedidos/pedidos.service";
+import { CotizacionPedidoInfo } from "../quotes-products.types";
 import {
   FormBuilder,
   FormGroup,
@@ -195,6 +197,9 @@ export class QuoteDetailsComponent implements OnInit {
   estatusCotizacion: EstatusCotizacionSimple | null = null;
   motivoRechazo: string | null = null;
   comentarioRechazo: string | null = null;
+  pedidoInfo: CotizacionPedidoInfo | null = null;
+  puedeConvertirAPedido = false;
+  convirtiendoAPedido = false;
 
   get estatusSimple(): EstatusCotizacionSimple | null {
     if (this.esInformativa) {
@@ -230,6 +235,7 @@ export class QuoteDetailsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private quotesService: QuotesService,
+    private pedidosService: PedidosService,
     private route: ActivatedRoute,
     public router: Router,
     private clientsService: ClientsService,
@@ -502,6 +508,8 @@ export class QuoteDetailsComponent implements OnInit {
         }
 
         this.esInformativa = sgcRes.informativa === true;
+        this.pedidoInfo = sgcRes.pedido || null;
+        this.puedeConvertirAPedido = sgcRes.puedeConvertirAPedido === true;
 
         const editablePorEstatus = this.estatusSimple === 'EnProceso' || (!this.quotesId && !this.esInformativa);
         if (!this.acciones.editar || this.esInformativa || !editablePorEstatus) {
@@ -789,6 +797,42 @@ export class QuoteDetailsComponent implements OnInit {
         this._chatNotificationService.showError('Opps', msg, 5000);
       }
     });
+  }
+
+  async convertirAPedido(): Promise<void> {
+    if (!this.quotesId || this.convirtiendoAPedido) return;
+
+    const confirmacion = await Swal.fire({
+      title: '¿Convertir a pedido?',
+      text: 'Se creará el pedido con los datos de esta cotización',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, convertir a pedido',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    this.convirtiendoAPedido = true;
+    this.pedidosService.convertirDesdeCotizacion(this.quotesId).subscribe({
+      next: (pedido) => {
+        this.convirtiendoAPedido = false;
+        this.router.navigate(['/crm/pedidos', pedido.id]);
+      },
+      error: (err) => {
+        this.convirtiendoAPedido = false;
+        const msg = err?.error?.mensaje || 'No se pudo convertir a pedido.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al convertir a pedido',
+          text: msg
+        });
+      }
+    });
+  }
+
+  irAPedido(pedidoId: number): void {
+    this.router.navigate(['/crm/pedidos', pedidoId]);
   }
 
   abrirRechazoDialog(): void {

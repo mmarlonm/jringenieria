@@ -5,6 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
+import { PedidosService } from 'app/modules/admin/crm/pedidos/pedidos.service';
 import { QuotesService } from '../quotes-products.service';
 import { CotizacionOrigen, RespuestaObtenerSgc } from '../quotes-products.types';
 import { CotizacionDetalleDialogComponent } from './cotizacion-detalle-dialog.component';
@@ -163,7 +164,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -198,7 +200,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -227,7 +230,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -292,7 +296,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -324,7 +329,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -375,7 +381,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -434,7 +441,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -481,7 +489,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -523,7 +532,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -561,7 +571,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -597,7 +608,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 
@@ -633,7 +645,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
         { provide: Router, useValue: router },
-        { provide: ProcesoComercialService, useValue: mockProcesoService }
+        { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) }
       ]
     });
 

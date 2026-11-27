@@ -273,6 +273,7 @@ export const defaultNavigation: FuseNavigationItem[] = [
             { id: 'comercializacion.leads', title: 'Leads e Inbox (ISO 9051)', type: 'basic', icon: 'heroicons_outline:chat-bubble-left-right', link: '/crm/leads' },
             { id: 'comercializacion.requerimientos', title: 'Requerimientos (SGC-PRO-COM-02)', type: 'basic', icon: 'heroicons_outline:clipboard-document-list', link: '/crm/requerimientos' },
             { id: 'dashboards.quote-products', title: 'Cotizaciones', type: 'basic', icon: 'heroicons_outline:banknotes', link: '/dashboards/quote-products' },
+            { id: 'comercializacion.pedidos', title: 'Pedidos (SGC-PRO-COM-04)', type: 'basic', icon: 'heroicons_outline:shopping-cart', link: '/crm/pedidos' },
             { id: 'dashboards.tasjks', title: 'Tareas', type: 'basic', icon: 'heroicons_outline:check-circle', link: '/dashboards/tasks' },
             { id: 'dashboards.expenses', title: 'Gastos', type: 'basic', icon: 'heroicons_outline:currency-dollar', link: '/dashboards/expenses' },
             { id: 'dashboards.analytics', title: 'Mapa de Prospectos y clientes', type: 'basic', icon: 'heroicons_outline:map', link: '/dashboards/analytics' },

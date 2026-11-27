@@ -1,9 +1,9 @@
 // Linea del proceso comercial: Lead -> Requerimiento -> Ingenieria / Cotizacion.
 // Lo arma el API (GET api/ProcesoComercial/{tipo}/{id}); aqui solo se muestra.
 
-export type ProcesoTipo = 'lead' | 'requerimiento' | 'caso' | 'cotizacion';
+export type ProcesoTipo = 'lead' | 'requerimiento' | 'caso' | 'cotizacion' | 'pedido';
 
-export type ProcesoClave = 'lead' | 'requerimiento' | 'ingenieria' | 'cotizacion';
+export type ProcesoClave = 'lead' | 'requerimiento' | 'ingenieria' | 'cotizacion' | 'pedido';
 
 export type ProcesoEstadoPaso = 'completado' | 'actual' | 'pendiente' | 'noAplica' | 'detenido';
 

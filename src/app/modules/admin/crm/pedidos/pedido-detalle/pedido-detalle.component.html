@@ -1,0 +1,1163 @@
+<div class="flex flex-col flex-auto min-w-0 bg-card dark:bg-transparent p-4 sm:p-6 md:p-8" *ngIf="pedido">
+    <!-- Cabecera -->
+    <div class="flex flex-col pb-6 border-b">
+        <div class="flex items-center gap-2 text-xs text-secondary mb-2">
+            <a routerLink="/crm/pedidos" class="hover:underline flex items-center gap-1 text-primary">
+                <mat-icon class="icon-size-4">arrow_back</mat-icon>
+                Regresar a pedidos
+            </a>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl font-extrabold tracking-tight m-0" data-testid="cabecera-folio">{{ pedido.folio }}</h1>
+                    <span class="px-2.5 py-1 rounded text-xs font-bold" [ngClass]="obtenerClaseEstatus(pedido.estatus)" data-testid="cabecera-estatus">
+                        {{ pedido.estatus }}
+                    </span>
+                </div>
+
+                <!-- Cadena Lead -> REQ -> COT -> PED -->
+                <div class="flex items-center gap-2 text-sm mt-3 flex-wrap" data-testid="cadena-origen">
+                    <span class="text-xs uppercase font-semibold text-gray-400">Origen:</span>
+                    <a routerLink="/crm/leads" class="text-primary font-medium hover:underline" data-testid="link-lead">Lead</a>
+                    <span class="text-gray-400">→</span>
+                    <ng-container *ngIf="pedido.requerimientoFolio; else sinReq">
+                        <a routerLink="/crm/requerimientos" class="text-primary font-medium hover:underline" data-testid="link-req">
+                            {{ pedido.requerimientoFolio }}
+                        </a>
+                    </ng-container>
+                    <ng-template #sinReq>
+                        <span class="text-amber-600 font-medium" data-testid="link-req">Sin requerimiento ⚠</span>
+                    </ng-template>
+                    <span class="text-gray-400">→</span>
+                    <a [routerLink]="['/dashboards/quote-products', pedido.cotizacionProductosId]" class="text-primary font-medium hover:underline" data-testid="link-cot">
+                        {{ pedido.cotizacionFolio }}
+                    </a>
+                    <span class="text-gray-400">→</span>
+                    <span class="font-bold text-gray-800 dark:text-gray-100" data-testid="link-ped">{{ pedido.folio }}</span>
+                </div>
+            </div>
+
+            <!-- Resumen económico y vendedor -->
+            <div class="flex items-center gap-6 bg-gray-50 dark:bg-gray-800/60 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div>
+                    <div class="text-xs text-gray-500 uppercase">Monto Total</div>
+                    <div class="text-xl font-extrabold text-primary" data-testid="cabecera-monto">
+                        {{ pedido.moneda }} ${{ pedido.montoPedido | number:'1.2-2' }}
+                    </div>
+                </div>
+                <div class="border-l pl-4">
+                    <div class="text-xs text-gray-500 uppercase">Responsable</div>
+                    <div class="font-medium text-sm" data-testid="cabecera-vendedor">{{ pedido.responsableNombre }}</div>
+                </div>
+                <div class="border-l pl-4">
+                    <div class="text-xs text-gray-500 uppercase">Sucursal</div>
+                    <div class="font-medium text-sm" data-testid="cabecera-sucursal">{{ pedido.sucursalNombre }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas del pedido -->
+        <div *ngIf="pedido.alertas && pedido.alertas.length > 0" class="mt-4 flex flex-wrap gap-2" data-testid="contenedor-alertas">
+            <div *ngFor="let a of pedido.alertas" class="px-3 py-1 rounded bg-amber-100 text-amber-800 border border-amber-300 text-xs font-semibold flex items-center gap-1.5">
+                <mat-icon class="icon-size-4">warning</mat-icon>
+                <span>{{ a }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas de Trabajo -->
+    <mat-tab-group [(selectedIndex)]="selectedTabIndex" animationDuration="0ms" class="mt-4">
+        <!-- PESTAÑA 1: RESUMEN -->
+        <mat-tab label="Resumen">
+            <div class="mt-6 flex flex-col gap-8">
+                <!-- Formulario de Campos Editables -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold">Datos Comerciales del Pedido</h2>
+                        <button *ngIf="pedido.permisos?.puedeEditar"
+                                mat-flat-button
+                                color="primary"
+                                type="button"
+                                [disabled]="guardandoResumen"
+                                (click)="guardarResumen()"
+                                data-testid="btn-guardar-resumen">
+                            <mat-icon class="mr-2">save</mat-icon>
+                            Guardar cambios
+                        </button>
+                    </div>
+
+                    <form [formGroup]="resumenForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Número de Orden de Compra (OC)</mat-label>
+                            <input matInput formControlName="numeroOC" placeholder="OC-12345" data-testid="campo-numeroOC" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Fecha de la OC</mat-label>
+                            <input matInput type="date" formControlName="fechaOC" data-testid="campo-fechaOC" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Prioridad</mat-label>
+                            <mat-select formControlName="prioridad" data-testid="campo-prioridad">
+                                <mat-option *ngFor="let p of catalogos?.prioridades" [value]="p.codigo">{{ p.nombre }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Tipo de Servicio</mat-label>
+                            <mat-select formControlName="tipoServicio" data-testid="campo-tipoServicio">
+                                <mat-option *ngFor="let ts of catalogos?.tiposServicio" [value]="ts.codigo">{{ ts.nombre }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                            <mat-label>Condiciones de Pago</mat-label>
+                            <input matInput formControlName="condicionesPago" placeholder="50% anticipo, 50% contra entrega..." data-testid="campo-condicionesPago" />
+                        </mat-form-field>
+
+                        <div class="flex items-center gap-6 md:col-span-3 py-2">
+                            <mat-checkbox formControlName="requiereAnticipo" data-testid="campo-requiereAnticipo">
+                                Requiere anticipo
+                            </mat-checkbox>
+
+                            <mat-form-field *ngIf="resumenForm.get('requiereAnticipo')?.value" appearance="outline" class="w-48">
+                                <mat-label>Monto Anticipo</mat-label>
+                                <input matInput type="number" formControlName="anticipoMonto" placeholder="0.00" data-testid="campo-anticipoMonto" />
+                            </mat-form-field>
+
+                            <mat-checkbox formControlName="tieneContrato" data-testid="campo-tieneContrato">
+                                Tiene contrato firmado / formal
+                            </mat-checkbox>
+                        </div>
+
+                        <mat-form-field appearance="outline" class="w-full md:col-span-3">
+                            <mat-label>Observaciones generales</mat-label>
+                            <textarea matInput formControlName="observaciones" rows="3" placeholder="Comentarios adicionales del cliente o del pedido..." data-testid="campo-observaciones"></textarea>
+                        </mat-form-field>
+                    </form>
+                </div>
+
+                <!-- Datos de la Cotización de Origen (Solo Lectura) -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-bold mb-4">Información de la Cotización de Origen (Solo Lectura)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span class="text-xs text-gray-500 uppercase block">Cliente</span>
+                            <span class="font-semibold">{{ pedido.clienteNombre }}</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500 uppercase block">RFC</span>
+                            <span class="font-mono">{{ pedido.rfc || 'XAXX010101000' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500 uppercase block">Contacto</span>
+                            <span>{{ pedido.contactoNombre || 'N/A' }} ({{ pedido.contactoTelefono || 'Sin teléfono' }})</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500 uppercase block">Moneda / Tipo Cambio</span>
+                            <span>{{ pedido.moneda }} (TC: {{ pedido.tipoCambio }})</span>
+                        </div>
+                        <div class="md:col-span-2">
+                            <span class="text-xs text-gray-500 uppercase block">Dirección Fiscal</span>
+                            <span>{{ pedido.direccionFiscal || 'No capturada' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500 uppercase block">Punto / Condiciones Entrega</span>
+                            <span>{{ pedido.puntoEntrega || 'Almacén central' }} ({{ pedido.condicionesEntrega || 'L.A.B.' }})</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500 uppercase block">Tiempos Requeridos</span>
+                            <span>{{ pedido.tiemposRequeridos || 'Inmediato' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Partidas del Pedido (Foto de la Cotización) -->
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-800 font-bold border-b">
+                        Partidas del Pedido ({{ pedido.partidas?.length || 0 }})
+                    </div>
+                    <table mat-table [dataSource]="pedido.partidas || []" class="w-full" data-testid="tabla-partidas">
+                        <ng-container matColumnDef="partida">
+                            <th mat-header-cell *matHeaderCellDef class="w-16">#</th>
+                            <td mat-cell *matCellDef="let p">{{ p.partida }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="codigo">
+                            <th mat-header-cell *matHeaderCellDef>Código</th>
+                            <td mat-cell *matCellDef="let p" class="font-mono text-xs">{{ p.codigo || '—' }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="descripcion">
+                            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+                            <td mat-cell *matCellDef="let p">{{ p.descripcion }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="unidad">
+                            <th mat-header-cell *matHeaderCellDef>Unidad</th>
+                            <td mat-cell *matCellDef="let p">{{ p.unidad || 'PZA' }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="cantidad">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Cantidad</th>
+                            <td mat-cell *matCellDef="let p" class="text-right">{{ p.cantidad }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="precioUnitario">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">P. Unitario</th>
+                            <td mat-cell *matCellDef="let p" class="text-right">${{ p.precioUnitario | number:'1.2-2' }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="descuento">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Desc. %</th>
+                            <td mat-cell *matCellDef="let p" class="text-right">{{ p.descuento }}%</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="importe">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Importe</th>
+                            <td mat-cell *matCellDef="let p" class="text-right font-semibold">${{ p.importe | number:'1.2-2' }}</td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="columnasPartidas"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasPartidas"></tr>
+                    </table>
+                </div>
+            </div>
+        </mat-tab>
+
+        <!-- PESTAÑA 2: VERIFICACIÓN -->
+        <mat-tab label="Verificación (7.2)">
+            <div class="mt-6 flex flex-col gap-6" data-testid="panel-verificacion">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                    <div>
+                        <div class="font-bold text-base">Verificación del Pedido (13 puntos)</div>
+                        <div class="text-xs text-secondary">
+                            Revisión documental técnica y económica antes de enviar a validación por áreas.
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button *ngIf="pedido.permisos?.puedeVerificar"
+                                mat-stroked-button
+                                (click)="guardarVerificacion()"
+                                [disabled]="guardandoVerificacion"
+                                data-testid="btn-guardar-verificacion">
+                            Guardar verificación
+                        </button>
+
+                        <button *ngIf="pedido.estatus === 'Recibido' && pedido.permisos?.puedeVerificar"
+                                mat-flat-button
+                                color="primary"
+                                (click)="enviarAValidacion()"
+                                [disabled]="enviandoValidacion"
+                                data-testid="btn-enviar-validacion">
+                            <mat-icon class="mr-2">send</mat-icon>
+                            Enviar a validación
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de Faltantes si hubo error 409 -->
+                <div *ngIf="faltantesValidacion.length > 0" class="p-4 rounded-lg bg-amber-50 border border-amber-300 text-amber-900" data-testid="alerta-faltantes-validacion">
+                    <div class="font-bold mb-2 flex items-center gap-2">
+                        <mat-icon class="text-amber-600">error_outline</mat-icon>
+                        No se puede enviar a validación. Faltan los siguientes puntos:
+                    </div>
+                    <ul class="list-disc pl-6 text-sm">
+                        <li *ngFor="let f of faltantesValidacion" class="py-0.5">{{ f }}</li>
+                    </ul>
+                </div>
+
+                <!-- Tabla de Puntos de Verificación -->
+                <div class="overflow-x-auto border rounded-xl">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b bg-gray-100 dark:bg-gray-800 text-left">
+                                <th class="p-3 w-1/4">Punto de Verificación</th>
+                                <th class="p-3 w-28 text-center">Cumple</th>
+                                <th class="p-3 w-48 text-center">Discrepancia Aclarada</th>
+                                <th class="p-3">Comentario / Justificación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let v of verificacionItems; let i = index" class="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                <td class="p-3 font-semibold">{{ v.nombre }}</td>
+                                <td class="p-3 text-center">
+                                    <mat-checkbox [(ngModel)]="v.cumple"
+                                                  [disabled]="!pedido.permisos?.puedeVerificar"
+                                                  [attr.data-testid]="'cumple-' + v.punto">
+                                    </mat-checkbox>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <mat-checkbox *ngIf="v.cumple === false"
+                                                  [(ngModel)]="v.discrepanciaAclarada"
+                                                  [disabled]="!pedido.permisos?.puedeVerificar"
+                                                  [attr.data-testid]="'discrepancia-' + v.punto">
+                                        Aclarada con cliente
+                                    </mat-checkbox>
+                                    <span *ngIf="v.cumple !== false" class="text-gray-400 text-xs">—</span>
+                                </td>
+                                <td class="p-3">
+                                    <input matInput
+                                           [(ngModel)]="v.comentario"
+                                           [disabled]="!pedido.permisos?.puedeVerificar"
+                                           placeholder="Comentario sobre este punto..."
+                                           class="w-full border rounded px-3 py-1.5 text-xs dark:bg-gray-900"
+                                           [attr.data-testid]="'comentario-' + v.punto" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </mat-tab>
+
+        <!-- PESTAÑA 3: VALIDACIÓN -->
+        <mat-tab label="Validación por áreas (7.3)">
+            <div class="mt-6 flex flex-col gap-6" data-testid="panel-validacion">
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                    <div class="font-bold text-base">Validación Interdisciplinaria</div>
+                    <div class="text-xs text-secondary">
+                        Cada área requerida debe aprobar el pedido para que pueda ser liberado a operación.
+                    </div>
+                </div>
+
+                <!-- Tarjetas de Validación -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div *ngFor="let v of pedido.validaciones"
+                         class="p-5 rounded-xl border flex flex-col justify-between"
+                         [ngClass]="{
+                            'bg-green-50/50 border-green-300 dark:bg-green-950/20': v.estatus === 'Aprobada',
+                            'bg-red-50/50 border-red-300 dark:bg-red-950/20': v.estatus === 'Rechazada',
+                            'bg-gray-50 dark:bg-gray-800 border-gray-200': v.estatus === 'Pendiente'
+                         }"
+                         [attr.data-testid]="'card-validacion-' + v.area">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-base m-0">{{ v.nombre }}</h3>
+                                <span class="px-2 py-0.5 rounded text-xs font-bold"
+                                      [ngClass]="{
+                                        'bg-green-100 text-green-800': v.estatus === 'Aprobada',
+                                        'bg-red-100 text-red-800': v.estatus === 'Rechazada',
+                                        'bg-amber-100 text-amber-800': v.estatus === 'Pendiente'
+                                      }">
+                                    {{ v.estatus }}
+                                </span>
+                            </div>
+
+                            <div *ngIf="v.usuarioNombre" class="text-xs text-secondary mb-1">
+                                Por: <span class="font-semibold text-gray-800 dark:text-gray-200">{{ v.usuarioNombre }}</span>
+                            </div>
+                            <div *ngIf="v.fecha" class="text-xs text-secondary mb-2">
+                                Fecha: {{ v.fecha | date:'dd/MM/yyyy HH:mm':'-0600' }}
+                            </div>
+                            <div *ngIf="v.comentario" class="text-xs italic bg-white dark:bg-gray-900 p-2.5 rounded border border-gray-200 dark:border-gray-700 mt-2">
+                                «{{ v.comentario }}»
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción para las Áreas Permitidas -->
+                        <div *ngIf="puedeValidarArea(v.area) && v.estatus === 'Pendiente'" class="flex items-center gap-2 mt-4 pt-4 border-t">
+                            <button mat-flat-button
+                                    class="bg-emerald-600 text-white flex-1"
+                                    (click)="aprobarArea(v.area)"
+                                    [disabled]="validandoArea[v.area]"
+                                    [attr.data-testid]="'btn-aprobar-' + v.area">
+                                <mat-icon class="mr-1 icon-size-4">check</mat-icon>
+                                Aprobar
+                            </button>
+                            <button mat-flat-button
+                                    color="warn"
+                                    class="flex-1"
+                                    (click)="rechazarArea(v.area)"
+                                    [disabled]="validandoArea[v.area]"
+                                    [attr.data-testid]="'btn-rechazar-' + v.area">
+                                <mat-icon class="mr-1 icon-size-4">close</mat-icon>
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
+
+        <!-- PESTAÑA 4: EXPEDIENTE DOCUMENTAL -->
+        <mat-tab label="Expediente documental (7.5)">
+            <div class="mt-6 flex flex-col gap-6" data-testid="panel-expediente">
+                <!-- 3 Campos Opcionales Destacados (OC, Comprobante de pago, Contrato) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="panel-campos-destacados">
+                    <!-- OC -->
+                    <div class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/60">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase font-bold text-gray-500">Orden de Compra</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">Opcional</span>
+                        </div>
+                        <div class="font-bold text-base" data-testid="campo-oc-destacado">
+                            {{ pedido.numeroOC || 'Sin número de OC' }}
+                        </div>
+                        <div class="text-xs text-secondary mt-1">
+                            Fecha: {{ pedido.fechaOC ? (pedido.fechaOC | date:'dd/MM/yyyy':'UTC') : 'Sin fecha' }}
+                        </div>
+                    </div>
+
+                    <!-- Comprobante de pago / anticipo -->
+                    <div class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/60">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase font-bold text-gray-500">Comprobante de Pago</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                  [ngClass]="pedido.requiereAnticipo ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'">
+                                {{ pedido.requiereAnticipo ? 'Requerido por anticipo' : 'Opcional' }}
+                            </span>
+                        </div>
+                        <div class="font-bold text-base" data-testid="campo-anticipo-destacado">
+                            {{ pedido.requiereAnticipo ? ('Requiere anticipo: $' + (pedido.anticipoMonto | number:'1.2-2')) : 'No requiere anticipo' }}
+                        </div>
+                        <div class="text-xs text-secondary mt-1">
+                            Estado: {{ cumpleAnticipo ? 'Comprobante cargado' : 'Pendiente' }}
+                        </div>
+                    </div>
+
+                    <!-- Contrato -->
+                    <div class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/60">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase font-bold text-gray-500">Contrato</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                  [ngClass]="pedido.tieneContrato ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'">
+                                {{ pedido.tieneContrato ? 'Requerido por contrato' : 'Opcional' }}
+                            </span>
+                        </div>
+                        <div class="font-bold text-base" data-testid="campo-contrato-destacado">
+                            {{ pedido.tieneContrato ? 'Tiene contrato formal' : 'Sin contrato' }}
+                        </div>
+                        <div class="text-xs text-secondary mt-1">
+                            Estado: {{ cumpleContrato ? 'Documento cargado' : 'Sin adjunto' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de Subida de Archivos -->
+                <div class="p-5 rounded-xl border bg-white dark:bg-gray-800/40 shadow-sm" data-testid="form-subida-archivo">
+                    <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+                        <mat-icon class="text-primary">cloud_upload</mat-icon>
+                        Adjuntar documento al expediente
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Tipo de Archivo</mat-label>
+                            <mat-select [(ngModel)]="tipoArchivoSeleccionado" data-testid="select-tipo-archivo">
+                                <mat-option *ngFor="let t of catalogos?.tiposArchivo" [value]="t.codigo">{{ t.nombre }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Seleccionar archivo</label>
+                            <input type="file"
+                                   (change)="onArchivoSeleccionado($event)"
+                                   class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:opacity-90 cursor-pointer"
+                                   data-testid="input-archivo" />
+                        </div>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Comentario (opcional)</mat-label>
+                            <input matInput [(ngModel)]="comentarioArchivo" placeholder="Notas sobre el documento..." data-testid="input-comentario-archivo" />
+                        </mat-form-field>
+
+                        <div class="pb-5">
+                            <button mat-flat-button
+                                    color="primary"
+                                    class="w-full h-11"
+                                    (click)="subirArchivo()"
+                                    [disabled]="!archivoSeleccionado || subiendoArchivo"
+                                    data-testid="btn-subir-archivo">
+                                <mat-icon class="mr-1">upload</mat-icon>
+                                Subir archivo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Archivos del Pedido -->
+                <div class="rounded-xl border overflow-hidden">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-800 font-bold border-b flex items-center justify-between">
+                        <span>Documentos del Pedido ({{ pedido.archivos?.length || 0 }})</span>
+                    </div>
+                    <table mat-table [dataSource]="pedido.archivos || []" class="w-full" data-testid="tabla-archivos-pedido">
+                        <ng-container matColumnDef="tipo">
+                            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                            <td mat-cell *matCellDef="let a">
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                    {{ a.tipoNombre || a.tipo }}
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="nombre">
+                            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                            <td mat-cell *matCellDef="let a" [class.line-through]="a.activo === false" [class.text-gray-400]="a.activo === false">
+                                {{ a.nombreOriginal }}
+                                <span *ngIf="a.activo === false" class="text-xs text-red-500 ml-1 font-semibold">(Baja)</span>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="tamano">
+                            <th mat-header-cell *matHeaderCellDef>Tamaño</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs text-secondary font-mono">
+                                {{ (a.tamanoBytes / 1024) | number:'1.1-1' }} KB
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="subidoPor">
+                            <th mat-header-cell *matHeaderCellDef>Subido por</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs">{{ a.subidoPorNombre }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fecha">
+                            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs text-secondary">
+                                {{ a.fechaSubida | date:'dd/MM/yyyy HH:mm':'-0600' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="comentario">
+                            <th mat-header-cell *matHeaderCellDef>Comentario</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs italic">{{ a.comentario || '—' }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="acciones">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+                            <td mat-cell *matCellDef="let a" class="text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button mat-icon-button
+                                            color="primary"
+                                            matTooltip="Descargar"
+                                            (click)="descargarArchivo(a)"
+                                            data-testid="btn-descargar-archivo">
+                                        <mat-icon class="icon-size-4">download</mat-icon>
+                                    </button>
+                                    <button *ngIf="a.activo !== false"
+                                            mat-icon-button
+                                            color="warn"
+                                            matTooltip="Dar de baja"
+                                            (click)="darDeBajaArchivo(a)"
+                                            data-testid="btn-baja-archivo">
+                                        <mat-icon class="icon-size-4">delete_outline</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="columnasArchivos"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasArchivos"></tr>
+                    </table>
+                </div>
+
+                <!-- Sección: Archivos de la Cotización de Origen (Solo lectura) -->
+                <div class="rounded-xl border overflow-hidden mt-2" data-testid="seccion-cotizacion-archivos">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-800 font-bold border-b flex items-center justify-between">
+                        <span>De la cotización de origen (Solo lectura)</span>
+                        <span class="text-xs text-secondary font-normal">{{ pedido.cotizacionArchivos?.length || 0 }} archivos</span>
+                    </div>
+                    <table mat-table [dataSource]="pedido.cotizacionArchivos || []" class="w-full" data-testid="tabla-cotizacion-archivos">
+                        <ng-container matColumnDef="version">
+                            <th mat-header-cell *matHeaderCellDef class="w-20">Versión</th>
+                            <td mat-cell *matCellDef="let ca" class="font-mono text-xs">v{{ ca.version }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="nombre">
+                            <th mat-header-cell *matHeaderCellDef>Nombre del archivo</th>
+                            <td mat-cell *matCellDef="let ca">{{ ca.nombreOriginal }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fecha">
+                            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                            <td mat-cell *matCellDef="let ca" class="text-xs text-secondary">
+                                {{ ca.fechaSubida | date:'dd/MM/yyyy HH:mm':'-0600' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="acciones">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+                            <td mat-cell *matCellDef="let ca" class="text-right">
+                                <button mat-icon-button
+                                        color="primary"
+                                        matTooltip="Descargar"
+                                        (click)="descargarCotizacionArchivo(ca)"
+                                        data-testid="btn-descargar-cotizacion-archivo">
+                                    <mat-icon class="icon-size-4">download</mat-icon>
+                                </button>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="columnasCotizacionArchivos"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasCotizacionArchivos"></tr>
+                    </table>
+                </div>
+
+                <!-- Panel de Respaldo Documental (Reglas D7 y Liberación) -->
+                <div class="p-6 rounded-xl border bg-gray-50 dark:bg-gray-800/40" data-testid="panel-respaldo-documental">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg m-0 flex items-center gap-2">
+                                <mat-icon [color]="reglasRespaldoCumplidas ? 'primary' : 'warn'">
+                                    {{ reglasRespaldoCumplidas ? 'verified' : 'rule' }}
+                                </mat-icon>
+                                Respaldo Documental y Puerta de Liberación (D7)
+                            </h3>
+                            <div class="text-xs text-secondary mt-1">
+                                Reglas que deben cumplirse antes de liberar el pedido a operación.
+                            </div>
+                        </div>
+
+                        <!-- Botón Liberar a operación -->
+                        <button *ngIf="pedido.estatus === 'Validado' && pedido.permisos?.puedeLiberar"
+                                mat-flat-button
+                                class="bg-teal-600 text-white font-bold px-6 py-2"
+                                (click)="liberarOperacion()"
+                                [disabled]="liberandoOperacion"
+                                data-testid="btn-liberar-operacion">
+                            <mat-icon class="mr-2">rocket_launch</mat-icon>
+                            Liberar a operación
+                        </button>
+                    </div>
+
+                    <!-- Lista de Chequeo de Reglas D7 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div class="flex items-center gap-2" data-testid="regla-aceptacion">
+                            <mat-icon class="icon-size-4" [ngClass]="tieneArchivoAceptacion ? 'text-green-600' : 'text-red-500'">
+                                {{ tieneArchivoAceptacion ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Al menos un archivo activo de aceptación (OC, Contrato, Aceptación o Comprobante).</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-anticipo">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleAnticipo ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleAnticipo ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Comprobante de pago si requiere anticipo.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-contrato">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleContrato ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleContrato ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Contrato adjunto si tiene contrato.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-condiciones">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleCondicionesPago ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleCondicionesPago ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Condiciones de pago capturadas.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-servicio">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleTipoServicio ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleTipoServicio ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Tipo de servicio definido.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-estatus">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleEstatusValidado ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleEstatusValidado ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Estatus del pedido en «Validado».</span>
+                        </div>
+                    </div>
+
+                    <!-- Alertas de faltantes de liberación si hubo error 409 -->
+                    <div *ngIf="faltantesLiberacion.length > 0" class="mt-4 p-4 rounded-lg bg-red-50 border border-red-300 text-red-900" data-testid="alerta-faltantes-liberacion">
+                        <div class="font-bold mb-1 flex items-center gap-1.5">
+                            <mat-icon class="text-red-600">error</mat-icon>
+                            No se puede liberar el pedido. Faltantes reportados por el sistema:
+                        </div>
+                        <ul class="list-disc pl-6 text-sm">
+                            <li *ngFor="let f of faltantesLiberacion">{{ f }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
+
+        <!-- PESTAÑA 5: FACTURACIÓN PROGRAMADA (7.7) -->
+        <mat-tab label="Facturación programada (7.7)">
+            <div class="mt-6 flex flex-col gap-6" data-testid="panel-facturacion">
+                <!-- Franja de Resumen Económico de Facturación -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 rounded-xl border bg-gray-50 dark:bg-gray-800/50">
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-semibold">Programado</span>
+                        <div class="text-xl font-bold text-gray-800 dark:text-gray-100" data-testid="facturacion-programado">
+                            ${{ facturacionProgramado | number:'1.2-2' }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-semibold">Facturado</span>
+                        <div class="text-xl font-bold text-blue-600 dark:text-blue-400" data-testid="facturacion-facturado">
+                            ${{ facturacionFacturado | number:'1.2-2' }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-semibold">Cobrado</span>
+                        <div class="text-xl font-bold text-green-600 dark:text-green-400" data-testid="facturacion-cobrado">
+                            ${{ facturacionCobrado | number:'1.2-2' }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-semibold">Pendiente por Programar</span>
+                        <div class="text-xl font-bold text-amber-600 dark:text-amber-400" data-testid="facturacion-pendiente">
+                            ${{ facturacionPendientePorProgramar | number:'1.2-2' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de Alta de Factura (solo con puedeFacturar) -->
+                <div *ngIf="pedido.permisos?.puedeFacturar" class="p-5 rounded-xl border bg-white dark:bg-gray-800/40 shadow-sm" data-testid="form-facturacion">
+                    <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+                        <mat-icon class="text-primary">post_add</mat-icon>
+                        Programar nuevo hito de facturación
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                            <mat-label>Concepto del Hito / Entrega</mat-label>
+                            <input matInput [(ngModel)]="nuevaFacturacionConcepto" placeholder="Anticipo 50% / Entrega de tableros..." data-testid="input-factura-concepto" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Fecha Programada</mat-label>
+                            <input matInput type="date" [(ngModel)]="nuevaFacturacionFecha" data-testid="input-factura-fecha" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Monto</mat-label>
+                            <input matInput type="number" [(ngModel)]="nuevaFacturacionMonto" placeholder="0.00" data-testid="input-factura-monto" />
+                        </mat-form-field>
+
+                        <div class="md:col-span-4 flex justify-end">
+                            <button mat-flat-button
+                                    color="primary"
+                                    (click)="programarFactura()"
+                                    [disabled]="programandoFactura"
+                                    data-testid="btn-programar-factura">
+                                <mat-icon class="mr-1">add_circle</mat-icon>
+                                Programar factura
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Filas de Facturación -->
+                <div class="rounded-xl border overflow-hidden">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-800 font-bold border-b">
+                        Hitos de Facturación ({{ pedido.facturacion?.filas?.length || 0 }})
+                    </div>
+                    <table mat-table [dataSource]="pedido.facturacion?.filas || []" class="w-full" data-testid="tabla-facturacion">
+                        <ng-container matColumnDef="concepto">
+                            <th mat-header-cell *matHeaderCellDef>Concepto</th>
+                            <td mat-cell *matCellDef="let f" class="font-semibold">{{ f.concepto }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fechaProgramada">
+                            <th mat-header-cell *matHeaderCellDef>F. Programada</th>
+                            <td mat-cell *matCellDef="let f" class="text-xs">
+                                {{ f.fechaProgramada | date:'dd/MM/yyyy':'UTC' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="monto">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Monto</th>
+                            <td mat-cell *matCellDef="let f" class="text-right font-mono font-semibold">
+                                ${{ f.monto | number:'1.2-2' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="estatus">
+                            <th mat-header-cell *matHeaderCellDef class="text-center">Estatus</th>
+                            <td mat-cell *matCellDef="let f" class="text-center">
+                                <span class="px-2 py-0.5 rounded text-xs font-bold"
+                                      [ngClass]="{
+                                        'bg-blue-100 text-blue-800': f.estatus === 'Programada',
+                                        'bg-purple-100 text-purple-800': f.estatus === 'Facturada',
+                                        'bg-green-100 text-green-800': f.estatus === 'Cobrada',
+                                        'bg-red-100 text-red-800': f.estatus === 'Cancelada'
+                                      }">
+                                    {{ f.estatus }}
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="folioFactura">
+                            <th mat-header-cell *matHeaderCellDef>Folio Factura</th>
+                            <td mat-cell *matCellDef="let f" class="font-mono text-xs">{{ f.folioFactura || '—' }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fechaFactura">
+                            <th mat-header-cell *matHeaderCellDef>F. Factura</th>
+                            <td mat-cell *matCellDef="let f" class="text-xs">
+                                {{ f.fechaFactura ? (f.fechaFactura | date:'dd/MM/yyyy':'UTC') : '—' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fechaCobro">
+                            <th mat-header-cell *matHeaderCellDef>F. Cobro</th>
+                            <td mat-cell *matCellDef="let f" class="text-xs">
+                                {{ f.fechaCobro ? (f.fechaCobro | date:'dd/MM/yyyy':'UTC') : '—' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="acciones">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+                            <td mat-cell *matCellDef="let f" class="text-right">
+                                <div *ngIf="pedido.permisos?.puedeFacturar" class="flex items-center justify-end gap-1">
+                                    <button *ngIf="f.estatus === 'Programada'"
+                                            mat-stroked-button
+                                            color="primary"
+                                            class="text-xs h-8 px-2"
+                                            (click)="marcarFacturada(f)"
+                                            data-testid="btn-marcar-facturada">
+                                        Facturar
+                                    </button>
+                                    <button *ngIf="f.estatus === 'Facturada'"
+                                            mat-flat-button
+                                            class="bg-emerald-600 text-white text-xs h-8 px-2"
+                                            (click)="marcarCobrada(f)"
+                                            data-testid="btn-marcar-cobrada">
+                                        Cobrar
+                                    </button>
+                                    <button *ngIf="f.estatus === 'Programada'"
+                                            mat-icon-button
+                                            color="warn"
+                                            matTooltip="Cancelar fila"
+                                            (click)="cancelarFacturaFila(f)"
+                                            data-testid="btn-cancelar-factura-fila">
+                                        <mat-icon class="icon-size-4">close</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="columnasFacturacion"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasFacturacion"></tr>
+                    </table>
+                </div>
+            </div>
+        </mat-tab>
+
+        <!-- PESTAÑA 6: SEGUIMIENTO Y BITÁCORA (7.8 y 7.10) -->
+        <mat-tab label="Seguimiento y bitácora (7.8)">
+            <div class="mt-6 flex flex-col gap-6" data-testid="panel-seguimiento">
+                <!-- Barra de Acciones de Ciclo de Vida -->
+                <div class="p-5 rounded-xl border bg-gray-50 dark:bg-gray-800/60 flex flex-wrap items-center justify-between gap-4" data-testid="barra-acciones-ciclo-vida">
+                    <div>
+                        <div class="font-bold text-base">Estado del Ciclo de Vida: {{ pedido.estatus }}</div>
+                        <div class="text-xs text-secondary">Acciones permitidas según la fase y permisos vigentes.</div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button *ngIf="pedido.estatus === 'Liberado'"
+                                mat-flat-button
+                                color="primary"
+                                (click)="iniciarEjecucion()"
+                                [disabled]="ejecutandoAccionEstatus"
+                                data-testid="btn-iniciar-ejecucion">
+                            <mat-icon class="mr-1">play_arrow</mat-icon>
+                            Iniciar ejecución
+                        </button>
+
+                        <button *ngIf="pedido.estatus === 'EnEjecucion'"
+                                mat-flat-button
+                                class="bg-indigo-600 text-white"
+                                (click)="entregarPedido()"
+                                [disabled]="ejecutandoAccionEstatus"
+                                data-testid="btn-entregar-pedido">
+                            <mat-icon class="mr-1">done_all</mat-icon>
+                            Entregar pedido
+                        </button>
+
+                        <button *ngIf="pedido.estatus === 'Entregado'"
+                                mat-stroked-button
+                                (click)="reabrirEjecucion()"
+                                [disabled]="ejecutandoAccionEstatus"
+                                data-testid="btn-reabrir-ejecucion">
+                            <mat-icon class="mr-1">replay</mat-icon>
+                            Reabrir ejecución
+                        </button>
+
+                        <button *ngIf="pedido.estatus === 'Entregado' && pedido.permisos?.puedeCerrar"
+                                mat-flat-button
+                                class="bg-emerald-600 text-white font-bold"
+                                (click)="cerrarPedido()"
+                                [disabled]="ejecutandoAccionEstatus"
+                                data-testid="btn-cerrar-pedido">
+                            <mat-icon class="mr-1">task_alt</mat-icon>
+                            Cerrar pedido
+                        </button>
+
+                        <button *ngIf="pedido.estatus !== 'Cerrado' && pedido.estatus !== 'Cancelado' && pedido.permisos?.puedeCancelar"
+                                mat-stroked-button
+                                color="warn"
+                                (click)="cancelarPedido()"
+                                [disabled]="ejecutandoAccionEstatus"
+                                data-testid="btn-cancelar-pedido">
+                            <mat-icon class="mr-1">block</mat-icon>
+                            Cancelar pedido
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alertas de Faltantes de Cierre si hubo error 409 -->
+                <div *ngIf="faltantesCierre.length > 0" class="p-4 rounded-lg bg-red-50 border border-red-300 text-red-900" data-testid="alerta-faltantes-cierre">
+                    <div class="font-bold mb-1 flex items-center gap-1.5">
+                        <mat-icon class="text-red-600">error</mat-icon>
+                        No se puede cerrar el pedido. Faltantes reportados:
+                    </div>
+                    <ul class="list-disc pl-6 text-sm">
+                        <li *ngFor="let f of faltantesCierre">{{ f }}</li>
+                    </ul>
+                </div>
+
+                <!-- Formulario de Alta para Nota de Bitácora -->
+                <div class="p-5 rounded-xl border bg-white dark:bg-gray-800/40 shadow-sm" data-testid="form-bitacora">
+                    <h3 class="font-bold text-base mb-3 flex items-center gap-2">
+                        <mat-icon class="text-primary">edit_note</mat-icon>
+                        Registrar evento, avance u observación
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Tipo de Evento</mat-label>
+                            <mat-select [(ngModel)]="nuevaBitacoraTipo" data-testid="select-tipo-bitacora">
+                                <mat-option value="Observacion">Observación</mat-option>
+                                <mat-option value="Avance">Avance</mat-option>
+                                <mat-option value="Incidencia">Incidencia</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                            <mat-label>Descripción / Detalle</mat-label>
+                            <textarea matInput [(ngModel)]="nuevaBitacoraTexto" rows="2" placeholder="Detalles del seguimiento..." data-testid="input-texto-bitacora"></textarea>
+                        </mat-form-field>
+
+                        <div class="pt-2">
+                            <button mat-flat-button
+                                    color="primary"
+                                    class="w-full h-11"
+                                    (click)="agregarNotaBitacora()"
+                                    [disabled]="guardandoBitacora"
+                                    data-testid="btn-agregar-bitacora">
+                                <mat-icon class="mr-1">add_comment</mat-icon>
+                                Registrar nota
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Línea de Tiempo de Bitácora -->
+                <div class="p-5 rounded-xl border bg-gray-50 dark:bg-gray-800/30" data-testid="panel-linea-tiempo-bitacora">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-base m-0 flex items-center gap-2">
+                            <mat-icon class="text-primary">history</mat-icon>
+                            Historial y Bitácora Inmutable
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <button mat-stroked-button
+                                    [disabled]="bitacoraPage <= 1 || cargandoBitacora"
+                                    (click)="cargarBitacora(bitacoraPage - 1)"
+                                    data-testid="btn-bitacora-anterior">
+                                Anterior
+                            </button>
+                            <span class="text-xs font-semibold px-2">Página {{ bitacoraPage }}</span>
+                            <button mat-stroked-button
+                                    [disabled]="bitacoraItems.length < bitacoraSize || cargandoBitacora"
+                                    (click)="cargarBitacora(bitacoraPage + 1)"
+                                    data-testid="btn-bitacora-siguiente">
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+
+                    <div *ngIf="bitacoraItems.length === 0" class="p-6 text-center text-secondary text-sm">
+                        No hay eventos registrados en esta página.
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <div *ngFor="let b of bitacoraItems"
+                             class="p-4 rounded-lg border bg-white dark:bg-gray-900 flex flex-col gap-1.5 shadow-xs"
+                             data-testid="item-bitacora">
+                            <div class="flex items-center justify-between flex-wrap gap-2 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded font-bold"
+                                          [ngClass]="{
+                                            'bg-blue-100 text-blue-800': b.tipo === 'Observacion',
+                                            'bg-green-100 text-green-800': b.tipo === 'Avance',
+                                            'bg-red-100 text-red-800': b.tipo === 'Incidencia'
+                                          }">
+                                        {{ b.tipo }}
+                                    </span>
+                                    <span class="font-bold text-gray-800 dark:text-gray-200">{{ b.usuarioNombre }}</span>
+                                </div>
+                                <span class="text-secondary font-mono">
+                                    {{ b.fechaUtc | date:'dd/MM/yyyy HH:mm':'-0600' }}
+                                </span>
+                            </div>
+                            <div class="text-sm font-medium mt-1">{{ b.resumen }}</div>
+                            <div *ngIf="b.detalle" class="text-xs text-secondary mt-0.5 whitespace-pre-wrap">{{ b.detalle }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
+
+        <!-- PESTAÑA 7: MODIFICACIONES (7.9) -->
+        <mat-tab label="Modificaciones (7.9)">
+            <div class="mt-6 flex flex-col gap-6" data-testid="panel-modificaciones">
+                <!-- Formulario de Registro de Modificación -->
+                <div class="p-5 rounded-xl border bg-white dark:bg-gray-800/40 shadow-sm" data-testid="form-modificacion">
+                    <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+                        <mat-icon class="text-primary">published_with_changes</mat-icon>
+                        Registrar solicitud de modificación al pedido
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                            <mat-label>Descripción del Cambio (mínimo 10 caracteres)</mat-label>
+                            <input matInput [(ngModel)]="nuevaModDescripcion" placeholder="Agregar partida / Ampliación de alcance..." data-testid="input-mod-descripcion" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Impacto Económico (±)</mat-label>
+                            <input matInput type="number" [(ngModel)]="nuevaModImpactoEconomico" placeholder="0.00" data-testid="input-mod-impacto" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                            <mat-label>Impacto Técnico (opcional)</mat-label>
+                            <input matInput [(ngModel)]="nuevaModImpactoTecnico" placeholder="Detalles de ingeniería o tiempos..." data-testid="input-mod-impacto-tecnico" />
+                        </mat-form-field>
+
+                        <div class="flex items-center gap-4">
+                            <mat-checkbox [(ngModel)]="nuevaModRequiereCotizacion" data-testid="chk-mod-cotizacion">
+                                Requiere actualizar cotización
+                            </mat-checkbox>
+                            <mat-form-field *ngIf="nuevaModRequiereCotizacion" appearance="outline" class="w-36">
+                                <mat-label>Folio COT</mat-label>
+                                <input matInput [(ngModel)]="nuevaModCotizacionFolio" placeholder="COT-..." data-testid="input-mod-cot-folio" />
+                            </mat-form-field>
+                        </div>
+
+                        <div class="md:col-span-3 flex justify-end">
+                            <button mat-flat-button
+                                    color="primary"
+                                    (click)="registrarModificacion()"
+                                    [disabled]="registrandoModificacion"
+                                    data-testid="btn-registrar-modificacion">
+                                <mat-icon class="mr-1">add_task</mat-icon>
+                                Registrar modificación
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Modificaciones -->
+                <div class="rounded-xl border overflow-hidden">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-800 font-bold border-b">
+                        Modificaciones Registradas ({{ pedido.modificaciones?.length || 0 }})
+                    </div>
+                    <table mat-table [dataSource]="pedido.modificaciones || []" class="w-full" data-testid="tabla-modificaciones">
+                        <ng-container matColumnDef="consecutivo">
+                            <th mat-header-cell *matHeaderCellDef class="w-16">#</th>
+                            <td mat-cell *matCellDef="let m" class="font-bold">#{{ m.consecutivo }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="descripcion">
+                            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+                            <td mat-cell *matCellDef="let m">
+                                <div class="font-semibold">{{ m.descripcion }}</div>
+                                <div *ngIf="m.impactoTecnico" class="text-xs text-secondary mt-0.5">Técnico: {{ m.impactoTecnico }}</div>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="impactoEconomico">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Impacto Económico</th>
+                            <td mat-cell *matCellDef="let m" class="text-right font-mono font-bold"
+                                [ngClass]="m.impactoEconomico >= 0 ? 'text-green-600' : 'text-red-500'">
+                                {{ m.impactoEconomico >= 0 ? '+' : '' }}${{ m.impactoEconomico | number:'1.2-2' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="estatus">
+                            <th mat-header-cell *matHeaderCellDef class="text-center">Estatus</th>
+                            <td mat-cell *matCellDef="let m" class="text-center">
+                                <span class="px-2 py-0.5 rounded text-xs font-bold"
+                                      [ngClass]="{
+                                        'bg-blue-100 text-blue-800': m.estatus === 'Registrada',
+                                        'bg-amber-100 text-amber-800': m.estatus === 'AprobadaPorCliente',
+                                        'bg-green-100 text-green-800': m.estatus === 'Aplicada',
+                                        'bg-red-100 text-red-800': m.estatus === 'Cancelada'
+                                      }">
+                                    {{ m.estatus }}
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="registradaPor">
+                            <th mat-header-cell *matHeaderCellDef>Registrada por</th>
+                            <td mat-cell *matCellDef="let m" class="text-xs">{{ m.registradaPorNombre }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fechaRegistro">
+                            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                            <td mat-cell *matCellDef="let m" class="text-xs text-secondary">
+                                {{ m.fechaRegistro | date:'dd/MM/yyyy HH:mm':'-0600' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="acciones">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+                            <td mat-cell *matCellDef="let m" class="text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button *ngIf="m.estatus === 'Registrada'"
+                                            mat-stroked-button
+                                            color="primary"
+                                            class="text-xs h-8 px-2"
+                                            (click)="aprobarModificacion(m)"
+                                            data-testid="btn-aprobar-modificacion">
+                                        Aprobar Cliente
+                                    </button>
+
+                                    <button *ngIf="m.estatus === 'AprobadaPorCliente'"
+                                            mat-flat-button
+                                            class="bg-emerald-600 text-white text-xs h-8 px-2"
+                                            (click)="aplicarModificacion(m)"
+                                            data-testid="btn-aplicar-modificacion">
+                                        Aplicar
+                                    </button>
+
+                                    <button *ngIf="m.estatus === 'Registrada' || m.estatus === 'AprobadaPorCliente'"
+                                            mat-icon-button
+                                            color="warn"
+                                            matTooltip="Cancelar modificación"
+                                            (click)="cancelarModificacion(m)"
+                                            data-testid="btn-cancelar-modificacion">
+                                        <mat-icon class="icon-size-4">close</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="columnasModificaciones"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasModificaciones"></tr>
+                    </table>
+                </div>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</div>
+
+<!-- Cargando o error de carga general -->
+<div *ngIf="cargando" class="p-12 flex justify-center items-center">
+    <mat-spinner diameter="48"></mat-spinner>
+</div>
+
+<div *ngIf="!cargando && errorCarga" class="p-8 text-center text-red-600">
+    <mat-icon class="text-5xl mb-2">error_outline</mat-icon>
+    <div class="text-lg font-bold">{{ errorCarga }}</div>
+</div>

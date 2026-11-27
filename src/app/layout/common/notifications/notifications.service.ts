@@ -55,6 +55,7 @@ export class NotificationsService {
         switch (item.tipo) {
             case 'CotProducto': return `/dashboards/quote-products/${item.referenciaId}`;
             case 'Requerimiento': return '/crm/requerimientos';
+            case 'Pedido': return '/crm/pedidos/' + item.referenciaId;
             case 'Compra': return '/administration/tablero-compras';
             default: return `/dashboards/tasks?id=${item.referenciaId}`;
         }

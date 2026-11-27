@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
+import { PedidosService } from 'app/modules/admin/crm/pedidos/pedidos.service';
 import Swal from 'sweetalert2';
 import { CatalogosSgc, RespuestaObtenerSgc, EncabezadoCotizacionSgc, CotizacionSgcVista, PartidaSgc, CotizacionOrigen } from '../quotes-products.types';
 import { registerLocaleData } from '@angular/common';
@@ -196,6 +197,7 @@ describe('QuoteDetailsComponent SGC', () => {
         },
         { provide: MatDialog, useValue: { open: jasmine.createSpy('open') } },
         { provide: ProcesoComercialService, useValue: mockProcesoService },
+        { provide: PedidosService, useValue: jasmine.createSpyObj('PedidosService', ['convertirDesdeCotizacion']) },
       ],
     }).compileComponents();
 

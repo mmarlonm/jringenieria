@@ -205,8 +205,9 @@ describe('RequerimientosComponent - Aprobados', () => {
     const filaAprobado = filas.find(f => f.textContent?.includes('REQ-2026-0003'))!;
     expect(filaAprobado).toBeTruthy();
     const btnsFilaAprobado = filaAprobado.querySelectorAll('td[mat-cell]:last-child button');
-    expect(btnsFilaAprobado.length).toBe(1);
+    expect(btnsFilaAprobado.length).toBe(2); // Ver requerimiento y Convertir a cotización
     expect(btnsFilaAprobado[0].getAttribute('mattooltip')).toBe('Ver requerimiento');
+    expect(btnsFilaAprobado[1].getAttribute('mattooltip')).toBe('Convertir a cotización');
 
     const filaNoViable = filas.find(f => f.textContent?.includes('REQ-2026-0005'))!;
     expect(filaNoViable).toBeTruthy();
@@ -269,6 +270,144 @@ describe('RequerimientosComponent - Aprobados', () => {
     expect(swalSpy).toHaveBeenCalledWith('Atención', 'Un requerimiento no viable ya no avanza.', 'warning');
     expect(reloadSpy).toHaveBeenCalled();
     expect(spyCalificar).not.toHaveBeenCalled();
+  });
+
+  // ==================== TAREA F6: CONVERTIR A COTIZACIÓN DESDE TARJETA ====================
+
+  it('Tarjeta_de_aprobados_sin_cotizacion_muestra_Convertir_a_cotizacion', () => {
+    const btn = fixture.nativeElement.querySelector('#kanban-aprobados [data-testid="btn-convertir-tarjeta-3"]');
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toContain('Convertir a cotización');
+  });
+
+  it('Con_cotizacion_vinculada_no_muestra_el_boton_y_si_el_chip', () => {
+    component.requerimientos = mockRequerimientos.map(r => r.id === 3
+      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: '1234', tipo: 'CS' as const, etapa: 'Borrador' } }
+      : r);
+    component.applyFilters();
+    fixture.detectChanges();
+
+    const btn = fixture.nativeElement.querySelector('#kanban-aprobados [data-testid="btn-convertir-tarjeta-3"]');
+    expect(btn).toBeNull();
+
+    const chip = fixture.nativeElement.querySelector('#kanban-aprobados [data-testid="chip-cotizacion"]');
+    expect(chip).not.toBeNull();
+  });
+
+  it('Las_otras_columnas_no_muestran_el_boton', () => {
+    const columnas = ['#kanban-pendiente', '#kanban-comercial', '#kanban-tecnico', '#kanban-no-viable'];
+    for (const col of columnas) {
+      const el = fixture.nativeElement.querySelector(col);
+      expect(el).not.toBeNull();
+      const btns = el.querySelectorAll('[data-testid^="btn-convertir-tarjeta-"]');
+      expect(btns.length).withContext(col).toBe(0);
+    }
+  });
+
+  it('El_clic_abre_el_dialogo_de_conversion_sin_abrir_el_detalle', () => {
+    const dialogSpy = spyOn((component as any).dialog, 'open').and.returnValue({
+      afterClosed: () => of(undefined)
+    } as any);
+    const verSpy = spyOn(component, 'openVerDialog');
+
+    const btn = fixture.nativeElement.querySelector('[data-testid="btn-convertir-tarjeta-3"]') as HTMLElement;
+    btn.click();
+
+    expect(dialogSpy).toHaveBeenCalled();
+    expect(verSpy).not.toHaveBeenCalled();
+  });
+
+  it('El_clic_no_propaga_ni_arrastra_la_tarjeta', () => {
+    const mockEvent = jasmine.createSpyObj('Event', ['stopPropagation', 'preventDefault']);
+    spyOn((component as any).dialog, 'open').and.returnValue({
+      afterClosed: () => of(undefined)
+    } as any);
+
+    component.convertirDesdeTarjeta(mockRequerimientos[2], mockEvent);
+
+    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
+  });
+
+  it('Al_convertir_avisa_con_el_folio_y_recarga_requerimientos_y_kpis', () => {
+    const resultado = {
+      cotizacionProductosId: 401,
+      folioSgc: 'COT-2026-0099',
+      tipo: 'CS',
+      etapa: 'Borrador',
+      requerimientoId: 3,
+      requerimientoFolio: 'REQ-2026-0003'
+    };
+    spyOn((component as any).dialog, 'open').and.returnValue({
+      afterClosed: () => of({ convertido: true, resultado })
+    } as any);
+    const snackSpy = spyOn((component as any).snackBar, 'open');
+    const reqSpy = spyOn(component, 'loadRequerimientos');
+    const kpiSpy = spyOn(component, 'loadKpis');
+
+    component.convertirDesdeTarjeta(mockRequerimientos[2], new MouseEvent('click'));
+
+    expect(snackSpy).toHaveBeenCalledWith(
+      jasmine.stringContaining('COT-2026-0099'),
+      'OK',
+      jasmine.anything()
+    );
+    expect(reqSpy).toHaveBeenCalled();
+    expect(kpiSpy).toHaveBeenCalled();
+  });
+
+  it('Cerrar_el_dialogo_sin_convertir_no_recarga', () => {
+    spyOn((component as any).dialog, 'open').and.returnValue({
+      afterClosed: () => of(undefined)
+    } as any);
+    const reqSpy = spyOn(component, 'loadRequerimientos');
+    const kpiSpy = spyOn(component, 'loadKpis');
+
+    component.convertirDesdeTarjeta(mockRequerimientos[2], new MouseEvent('click'));
+
+    expect(reqSpy).not.toHaveBeenCalled();
+    expect(kpiSpy).not.toHaveBeenCalled();
+  });
+
+  it('La_lista_tambien_trae_el_boton_con_la_misma_regla', () => {
+    component.viewMode = 'list';
+    fixture.detectChanges();
+
+    // El requerimiento 3 (Aprobado sin cotización) sí debe traerlo
+    const btnLista3 = fixture.nativeElement.querySelector('[data-testid="btn-convertir-lista-3"]');
+    expect(btnLista3).not.toBeNull();
+
+    // Los otros requerimientos no
+    for (const id of [1, 2, 4, 5]) {
+      const btnListaOtro = fixture.nativeElement.querySelector(`[data-testid="btn-convertir-lista-${id}"]`);
+      expect(btnListaOtro).toBeNull();
+    }
+
+    // Si tiene cotización vinculada, no lo trae
+    component.requerimientos = mockRequerimientos.map(r => r.id === 3
+      ? { ...r, cotizacionVinculada: { cotizacionProductosId: 311, folioSgc: 'COT-2026-0042', folioContpaq: '1234', tipo: 'CS' as const, etapa: 'Borrador' } }
+      : r);
+    component.applyFilters();
+    fixture.detectChanges();
+
+    const btnLista3ConCot = fixture.nativeElement.querySelector('[data-testid="btn-convertir-lista-3"]');
+    expect(btnLista3ConCot).toBeNull();
+  });
+
+  it('Con_el_dialogo_abierto_no_se_abre_otro', () => {
+    const dialogSpy = spyOn((component as any).dialog, 'open');
+
+    // Marcamos diálogo abierto
+    component.dialogoConversionAbierto = true;
+    fixture.detectChanges();
+
+    component.convertirDesdeTarjeta(mockRequerimientos[2], new MouseEvent('click'));
+
+    expect(dialogSpy).not.toHaveBeenCalled();
+
+    // El botón debe estar deshabilitado en el DOM
+    const btn = fixture.nativeElement.querySelector('[data-testid="btn-convertir-tarjeta-3"]') as HTMLButtonElement;
+    expect(btn.disabled).toBeTrue();
   });
 });
 

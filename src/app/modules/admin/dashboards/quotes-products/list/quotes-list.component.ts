@@ -452,6 +452,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/dashboards/quote-products/indicadores']);
   }
 
+  irAPedido(pedidoId: number, $event?: MouseEvent): void {
+    if ($event) $event.stopPropagation();
+    this.router.navigate(['/crm/pedidos', pedidoId]);
+  }
+
   formatearFechaSoloDia(fechaStr?: string | Date | null): string {
     if (!fechaStr) {
       return '—';

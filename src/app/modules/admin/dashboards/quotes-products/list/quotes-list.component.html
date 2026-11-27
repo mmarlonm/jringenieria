@@ -301,6 +301,12 @@
                     Informativa
                   </span>
                   <app-estatus-chip *ngIf="obtenerEstatus(quote)" [estatus]="obtenerEstatus(quote)"></app-estatus-chip>
+                  <span *ngIf="quote.pedido"
+                        data-testid="chip-pedido"
+                        (click)="irAPedido(quote.pedido.id, $event)"
+                        class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-100 text-blue-700 border border-blue-200 uppercase cursor-pointer hover:bg-blue-200">
+                    Pedido {{ quote.pedido.folio }}
+                  </span>
                   <span *ngIf="quote.vencida" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 marca-vencida">
                     Vencida por cerrar
                   </span>
