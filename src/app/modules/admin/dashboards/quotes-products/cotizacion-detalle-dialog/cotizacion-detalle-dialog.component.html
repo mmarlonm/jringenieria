@@ -20,6 +20,22 @@
   <!-- Content -->
   <div class="flex-auto min-h-0 overflow-y-auto px-6 py-5 flex flex-col gap-6">
 
+    <!-- Proceso comercial -->
+    <app-proceso-comercial [tipo]="'cotizacion'" [id]="data.cotizacionProductosId" [refresco]="procesoRefresco">
+      <button *ngIf="esInformativa"
+              accionProceso
+              type="button"
+              mat-stroked-button
+              color="primary"
+              class="text-xs"
+              data-testid="btn-iniciar-proceso"
+              [disabled]="iniciandoProceso"
+              (click)="iniciarProceso()">
+        <mat-icon class="icon-size-4 mr-1">play_arrow</mat-icon>
+        Iniciar proceso desde lead
+      </button>
+    </app-proceso-comercial>
+
     <!-- SECCION 1: COTIZACIÓN -->
     <div
       class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-4">
@@ -54,11 +70,14 @@
           </span>
         </div>
         <div>
-          <span class="text-slate-400 block mb-0.5">Tipo y etapa:</span>
+          <span class="text-slate-400 block mb-0.5">Estatus:</span>
           <div class="flex items-center gap-2">
-            <span class="font-semibold">{{ sgcRes?.sgc?.tipo || 'CS' }}</span>
-            <app-etapa-chip *ngIf="sgcRes?.sgc?.etapa || cabecera?.etapa"
-              [etapa]="sgcRes?.sgc?.etapa || cabecera?.etapa"></app-etapa-chip>
+            <app-estatus-chip *ngIf="!esInformativa; else chipInformativa" [estatus]="estatusSimple"></app-estatus-chip>
+            <ng-template #chipInformativa>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border border-gray-300 bg-gray-100 text-gray-800">
+                Informativa
+              </span>
+            </ng-template>
           </div>
         </div>
         <div>
@@ -79,39 +98,81 @@
             {{ total | currency:moneda:'symbol':'1.2-2' }}
           </span>
         </div>
+
+        <!-- Motivo y comentario si está rechazada -->
+        <div *ngIf="estatusSimple === 'Rechazada'" data-testid="detalle-motivo-rechazo"
+          class="col-span-full bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-900 text-xs">
+          <span class="text-red-700 dark:text-red-300 font-semibold block mb-0.5">Motivo del rechazo:</span>
+          <span data-testid="motivo-rechazo" class="font-bold text-red-900 dark:text-red-100">{{ motivoRechazo || 'Sin motivo' }}</span>
+          <p *ngIf="comentarioRechazo" data-testid="comentario-rechazo" class="mt-1 text-red-800 dark:text-red-200">{{ comentarioRechazo }}</p>
+        </div>
       </div>
     </div>
 
-    <!-- SECCION 2: CLIENTE Y CONTACTO -->
+    <!-- SECCION 2: PROSPECTO (DEL LEAD) O CLIENTE (CONTPAQ) -->
     <div
       class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-4">
-      <h3
-        class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-        <mat-icon class="icon-size-4 text-primary">person</mat-icon>
-        Cliente y contacto
-      </h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-        <div>
-          <span class="text-slate-400 block mb-0.5">Cliente:</span>
-          <span class="font-semibold text-slate-800 dark:text-slate-100">{{ cabecera?.nombreCliente ||
-            cabecera?.clienteNombre || 'Sin cliente' }}</span>
+      <ng-container *ngIf="prospecto as prosp; else sinLead">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+          <h3
+            class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <mat-icon class="icon-size-4 text-primary">person</mat-icon>
+            Prospecto
+          </h3>
         </div>
-        <div>
-          <span class="text-slate-400 block mb-0.5">Empresa / Razón Social:</span>
-          <span class="font-semibold text-slate-800 dark:text-slate-100">{{ cabecera?.nombreEmpresa || cabecera?.empresa
-            || 'Sin empresa' }}</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div>
+            <span class="text-slate-400 block mb-0.5">Empresa:</span>
+            <span data-testid="prospecto-empresa" class="font-semibold text-slate-800 dark:text-slate-100">{{ prosp.empresa || 'Sin empresa' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Contacto:</span>
+            <span data-testid="prospecto-contacto" class="font-semibold text-slate-800 dark:text-slate-100">{{ prosp.nombreContacto || 'Sin contacto' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Teléfono:</span>
+            <span data-testid="prospecto-telefono" class="font-medium text-slate-700 dark:text-slate-300">{{ prosp.telefono || 'Sin teléfono' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Correo:</span>
+            <span data-testid="prospecto-correo" class="font-medium text-slate-700 dark:text-slate-300">{{ prosp.email || 'Sin correo' }}</span>
+          </div>
         </div>
-        <div>
-          <span class="text-slate-400 block mb-0.5">Correo electrónico:</span>
-          <span class="font-medium text-slate-700 dark:text-slate-300">{{ sgcRes?.sgc?.contactoCorreo ||
-            cabecera?.correo || cabecera?.contactoCorreo || 'Sin correo' }}</span>
+      </ng-container>
+
+      <ng-template #sinLead>
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+          <h3
+            class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+            <mat-icon class="icon-size-4 text-primary">person</mat-icon>
+            Cliente (CONTPAQ)
+          </h3>
+          <span data-testid="aviso-sin-lead"
+            class="px-2 py-0.5 text-xs font-bold rounded uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            Sin lead
+          </span>
         </div>
-        <div>
-          <span class="text-slate-400 block mb-0.5">Teléfono:</span>
-          <span class="font-medium text-slate-700 dark:text-slate-300">{{ sgcRes?.sgc?.contactoTelefono ||
-            cabecera?.telefono || cabecera?.contactoTelefono || 'Sin teléfono' }}</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div>
+            <span class="text-slate-400 block mb-0.5">Cliente:</span>
+            <span class="font-semibold text-slate-800 dark:text-slate-100">{{ cabecera?.nombreCliente ||
+              cabecera?.clienteNombre || 'Sin cliente' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Empresa / Razón Social:</span>
+            <span class="font-semibold text-slate-800 dark:text-slate-100">{{ cabecera?.nombreEmpresa || cabecera?.empresa
+              || 'Sin empresa' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Correo electrónico:</span>
+            <span class="font-medium text-slate-700 dark:text-slate-300">{{ cabecera?.correo || cabecera?.contactoCorreo || 'Sin correo' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Teléfono:</span>
+            <span class="font-medium text-slate-700 dark:text-slate-300">{{ cabecera?.telefono || cabecera?.contactoTelefono || 'Sin teléfono' }}</span>
+          </div>
         </div>
-      </div>
+      </ng-template>
     </div>
 
     <!-- SECCION 3: PARTIDAS -->

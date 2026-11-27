@@ -91,6 +91,14 @@ export class QuotesService {
     return this.http.get<any>(`${environment.apiUrl}/Proyecto/unidades-negocio`);
   }
 
+  iniciarProceso(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/iniciar-proceso`, {});
+  }
+
+  cambiarEstatusSgc(id: number, dto: { estatus: string; motivo?: string | null; comentario?: string | null }): Observable<RespuestaObtenerSgc> {
+    return this.http.post<RespuestaObtenerSgc>(`${this.apiUrl}/${id}/sgc/estatus`, dto);
+  }
+
   // Obtener una cotización por ID
   getQuoteById(id: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${id}`);

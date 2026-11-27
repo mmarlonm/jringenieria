@@ -726,7 +726,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   verDetalle(quote: any): void {
-    this.dialog.open(CotizacionDetalleDialogComponent, {
+    const dialogRef = this.dialog.open(CotizacionDetalleDialogComponent, {
       width: '900px',
       maxWidth: '95vw',
       maxHeight: '90vh',
@@ -734,6 +734,13 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
         cotizacionProductosId: quote.cotizacionProductosId,
         informativa: quote.informativa ?? !this.tieneRegistroSgc(quote),
         unidadNombre: quote.unidadDeNegocio?.nombre || quote.unidadDeNegocioNombre || null
+      }
+    });
+    dialogRef?.afterClosed?.().subscribe((res) => {
+      if (res?.recargar) {
+        this.getQuotes();
+        this.cargarKpis();
+        this.tableroRefresco++;
       }
     });
   }

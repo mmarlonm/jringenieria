@@ -10,6 +10,13 @@ export type TipoCotizacionSgc = 'CS' | 'CT' | 'CE';
 
 export type EstatusCotizacionSimple = 'EnProceso' | 'EnviadaACliente' | 'AprobadaPorCliente' | 'Rechazada';
 
+export interface IniciarProcesoResultado {
+  leadId: number;
+  requerimientoId: number;
+  requerimientoFolio: string;
+  cotizacion: any;
+}
+
 export interface CotizacionKpiMonto {
     moneda: string;
     cotizado: number;

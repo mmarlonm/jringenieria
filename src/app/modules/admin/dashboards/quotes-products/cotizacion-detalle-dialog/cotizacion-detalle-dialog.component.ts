@@ -5,10 +5,13 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import Swal from 'sweetalert2';
 import { QuotesService } from '../quotes-products.service';
-import { CotizacionOrigen, RespuestaObtenerSgc } from '../quotes-products.types';
-import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
+import { CotizacionOrigen, RespuestaObtenerSgc, ProspectoCotizacion, EstatusCotizacionSimple } from '../quotes-products.types';
+import { EstatusChipComponent } from '../sgc/estatus-chip/estatus-chip.component';
+import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
 import { importeLinea } from '../sgc/cotizacion-sgc.utils';
+import { mapearEtapaAEstatus } from '../list/quotes-sgc-merge';
 
 export interface CotizacionDetalleDialogData {
   cotizacionProductosId: number;
@@ -25,7 +28,8 @@ export interface CotizacionDetalleDialogData {
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
-    EtapaChipComponent
+    EstatusChipComponent,
+    ProcesoComercialComponent
   ],
   templateUrl: './cotizacion-detalle-dialog.component.html'
 })
@@ -43,6 +47,9 @@ export class CotizacionDetalleDialogComponent implements OnInit {
   origen: CotizacionOrigen | null = null;
 
   esInformativa = false;
+  procesoRefresco = 0;
+  procesoIniciado = false;
+  iniciandoProceso = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: CotizacionDetalleDialogData,
@@ -137,12 +144,85 @@ export class CotizacionDetalleDialogComponent implements OnInit {
     return this.sgcRes?.sgc?.moneda || this.cabecera?.moneda || 'MXN';
   }
 
+  get prospecto(): ProspectoCotizacion | { empresa?: string | null; nombreContacto?: string | null; telefono?: string | null; email?: string | null } | null {
+    if (this.sgcRes?.prospecto) {
+      return this.sgcRes.prospecto;
+    }
+    if (this.origen?.lead) {
+      return {
+        empresa: this.origen.lead.empresa,
+        nombreContacto: this.origen.lead.nombreContacto,
+        telefono: this.origen.lead.telefono,
+        email: this.origen.lead.email
+      };
+    }
+    return null;
+  }
+
+  get estatusSimple(): EstatusCotizacionSimple | null {
+    if (this.esInformativa) {
+      return null;
+    }
+    const est = this.sgcRes?.estatusCotizacion || mapearEtapaAEstatus(this.sgcRes?.sgc?.etapa || this.cabecera?.etapa);
+    return (est as EstatusCotizacionSimple) || null;
+  }
+
+  get motivoRechazo(): string | null {
+    return this.sgcRes?.motivoRechazo || this.sgcRes?.sgc?.motivoCierre || null;
+  }
+
+  get comentarioRechazo(): string | null {
+    return this.sgcRes?.comentarioRechazo || this.sgcRes?.sgc?.comentarioCierre || null;
+  }
+
+  async iniciarProceso(): Promise<void> {
+    const confirm = await Swal.fire({
+      title: '¿Iniciar proceso desde lead?',
+      text: 'Se creará un lead y un requerimiento aprobado con los datos de esta cotización',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, iniciar proceso',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirm.isConfirmed) {
+      return;
+    }
+
+    this.iniciandoProceso = true;
+    this.quotesService.iniciarProceso(this.data.cotizacionProductosId).subscribe({
+      next: (res) => {
+        this.iniciandoProceso = false;
+        this.esInformativa = false;
+        this.procesoIniciado = true;
+        this.procesoRefresco++;
+        this.cargarDatos();
+        Swal.fire({
+          icon: 'success',
+          title: 'Proceso iniciado',
+          text: `Se creó el requerimiento ${res?.requerimientoFolio || ''} y el lead asociado.`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        this.iniciandoProceso = false;
+        const mensaje = err?.error?.mensaje || 'No se pudo iniciar el proceso.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al iniciar proceso',
+          text: mensaje
+        });
+      }
+    });
+  }
+
   abrirCotizacion(): void {
     this.router.navigate(['dashboards/quote-products', this.data.cotizacionProductosId]);
-    this.dialogRef.close();
+    this.dialogRef.close({ recargar: this.procesoIniciado });
   }
 
   cerrar(): void {
-    this.dialogRef.close();
+    this.dialogRef.close({ recargar: this.procesoIniciado });
   }
 }

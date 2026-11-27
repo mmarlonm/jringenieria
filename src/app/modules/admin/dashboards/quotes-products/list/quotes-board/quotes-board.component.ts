@@ -69,7 +69,7 @@ export class QuotesBoardComponent implements OnChanges {
 
   verDetalle(q: any, event: MouseEvent): void {
     event.stopPropagation();
-    this.dialog.open(CotizacionDetalleDialogComponent, {
+    const dialogRef = this.dialog.open(CotizacionDetalleDialogComponent, {
       width: '900px',
       maxWidth: '95vw',
       maxHeight: '90vh',
@@ -77,6 +77,11 @@ export class QuotesBoardComponent implements OnChanges {
         cotizacionProductosId: q.cotizacionProductosId,
         informativa: !!q.informativa,
         unidadNombre: q.unidadDeNegocio?.nombre || null
+      }
+    });
+    dialogRef?.afterClosed?.().subscribe((res) => {
+      if (res?.recargar) {
+        this.recargarTodo();
       }
     });
   }
