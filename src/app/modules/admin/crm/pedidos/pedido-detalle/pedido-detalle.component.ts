@@ -306,9 +306,10 @@ export class PedidoDetalleComponent implements OnInit {
 
         this.guardandoVerificacion = true;
         this._pedidosService.actualizarVerificacion(this.pedidoId, this.verificacionItems).subscribe({
-            next: (verif) => {
+            next: (detalle) => {
                 this.guardandoVerificacion = false;
-                this.verificacionItems = verif;
+                const verif = detalle?.verificacion || [];
+                this.verificacionItems = verif.map((v) => ({ ...v }));
                 if (this.pedido) this.pedido.verificacion = verif;
                 Swal.fire({
                     icon: 'success',
@@ -774,15 +775,14 @@ export class PedidoDetalleComponent implements OnInit {
                 monto
             })
             .subscribe({
-                next: (nuevaFila) => {
+                next: (resumen) => {
                     this.programandoFactura = false;
                     this.nuevaFacturacionConcepto = '';
                     this.nuevaFacturacionFecha = '';
                     this.nuevaFacturacionMonto = null;
-                    if (this.pedido?.facturacion) {
-                        this.pedido.facturacion.filas = [...(this.pedido.facturacion.filas || []), nuevaFila];
-                        this.pedido.facturacion.programado = this.facturacionProgramado;
-                        this.pedido.facturacion.pendientePorProgramar = this.facturacionPendientePorProgramar;
+                    // El API devuelve el resumen completo (totales y filas): se reemplaza, no se mezcla.
+                    if (this.pedido) {
+                        this.pedido.facturacion = resumen;
                     }
                     Swal.fire({ icon: 'success', title: 'Factura programada', timer: 1500, showConfirmButton: false });
                     this._cdr.markForCheck();
@@ -841,10 +841,9 @@ export class PedidoDetalleComponent implements OnInit {
                 fechaFactura: fecha
             })
             .subscribe({
-                next: (act) => {
-                    Object.assign(fila, act);
-                    if (this.pedido?.facturacion) {
-                        this.pedido.facturacion.facturado = this.facturacionFacturado;
+                next: (resumen) => {
+                    if (this.pedido) {
+                        this.pedido.facturacion = resumen;
                     }
                     Swal.fire({ icon: 'success', title: 'Factura registrada', timer: 1500, showConfirmButton: false });
                     this._cdr.markForCheck();
@@ -896,10 +895,9 @@ export class PedidoDetalleComponent implements OnInit {
                 fechaCobro: fecha
             })
             .subscribe({
-                next: (act) => {
-                    Object.assign(fila, act);
-                    if (this.pedido?.facturacion) {
-                        this.pedido.facturacion.cobrado = this.facturacionCobrado;
+                next: (resumen) => {
+                    if (this.pedido) {
+                        this.pedido.facturacion = resumen;
                     }
                     Swal.fire({ icon: 'success', title: 'Cobro registrado', timer: 1500, showConfirmButton: false });
                     this._cdr.markForCheck();
@@ -932,8 +930,10 @@ export class PedidoDetalleComponent implements OnInit {
                 estatus: 'Cancelada'
             })
             .subscribe({
-                next: (act) => {
-                    Object.assign(fila, act);
+                next: (resumen) => {
+                    if (this.pedido) {
+                        this.pedido.facturacion = resumen;
+                    }
                     Swal.fire({ icon: 'info', title: 'Factura cancelada', timer: 1500, showConfirmButton: false });
                     this._cdr.markForCheck();
                 },

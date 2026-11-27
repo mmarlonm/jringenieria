@@ -77,8 +77,9 @@ export class PedidosService {
         return this._http.put<PedidoDetalle>(`${this.baseUrl}/${id}`, dto);
     }
 
-    actualizarVerificacion(id: number, verificacion: PedidoVerificacionItem[]): Observable<PedidoVerificacionItem[]> {
-        return this._http.put<PedidoVerificacionItem[]>(`${this.baseUrl}/${id}/verificacion`, verificacion);
+    /** El API responde con el pedido completo (no con la lista de puntos). */
+    actualizarVerificacion(id: number, verificacion: PedidoVerificacionItem[]): Observable<PedidoDetalle> {
+        return this._http.put<PedidoDetalle>(`${this.baseUrl}/${id}/verificacion`, verificacion);
     }
 
     enviarValidacion(id: number): Observable<any> {
@@ -149,12 +150,13 @@ export class PedidosService {
         return this._http.get<PedidoFacturacionResumen>(`${this.baseUrl}/${id}/facturacion`);
     }
 
-    programarFacturacion(id: number, dto: GuardarFacturacionFilaDto): Observable<FacturacionFila> {
-        return this._http.post<FacturacionFila>(`${this.baseUrl}/${id}/facturacion`, dto);
+    /** El API responde con el resumen de facturación completo (totales y todas las filas), no con la fila. */
+    programarFacturacion(id: number, dto: GuardarFacturacionFilaDto): Observable<PedidoFacturacionResumen> {
+        return this._http.post<PedidoFacturacionResumen>(`${this.baseUrl}/${id}/facturacion`, dto);
     }
 
-    actualizarFacturacionFila(id: number, filaId: number, dto: GuardarFacturacionFilaDto): Observable<FacturacionFila> {
-        return this._http.put<FacturacionFila>(`${this.baseUrl}/${id}/facturacion/${filaId}`, dto);
+    actualizarFacturacionFila(id: number, filaId: number, dto: GuardarFacturacionFilaDto): Observable<PedidoFacturacionResumen> {
+        return this._http.put<PedidoFacturacionResumen>(`${this.baseUrl}/${id}/facturacion/${filaId}`, dto);
     }
 
     obtenerModificaciones(id: number): Observable<PedidoModificacionItem[]> {

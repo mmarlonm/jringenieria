@@ -257,13 +257,16 @@ describe('PedidoDetalleComponent (F3)', () => {
 
         // Ahora con comentario válido (>= 10)
         component.verificacionItems[0].comentario = 'Aclarado con el cliente mediante correo de fecha 2026-11-27';
-        pedidosServiceSpy.actualizarVerificacion.and.returnValue(of(component.verificacionItems));
+        // El API responde con el PEDIDO completo, no con la lista de puntos.
+        pedidosServiceSpy.actualizarVerificacion.and.returnValue(of({ ...component.pedido!, verificacion: component.verificacionItems.map((v) => ({ ...v })) } as any));
         component.guardarVerificacion();
         tick();
         flush();
 
         expect(pedidosServiceSpy.actualizarVerificacion).toHaveBeenCalledWith(10, component.verificacionItems);
         expect(component.guardandoVerificacion).toBeFalse();
+        expect(Array.isArray(component.verificacionItems)).toBeTrue();
+        expect(component.verificacionItems.length).toBe(component.pedido!.verificacion.length);
     }));
 
     it('Enviar_a_validacion_muestra_los_faltantes_del_API', fakeAsync(() => {
@@ -715,13 +718,20 @@ describe('PedidoDetalleComponent (F3)', () => {
         expect(component.facturacionPendientePorProgramar).toBe(50000);
 
         // Transición: Programada -> Facturada (marcarFacturada)
+        // El API responde con el RESUMEN completo (totales y todas las filas), no con la fila.
+        const resumenTras = (cambio: (f: any) => any): any => {
+            const filas = component.pedido!.facturacion.filas.map((f: any) => cambio({ ...f }));
+            const vivas = filas.filter((f: any) => f.estatus !== 'Cancelada');
+            return {
+                programado: vivas.reduce((a: number, f: any) => a + f.monto, 0),
+                facturado: vivas.filter((f: any) => f.estatus === 'Facturada' || f.estatus === 'Cobrada').reduce((a: number, f: any) => a + f.monto, 0),
+                cobrado: vivas.filter((f: any) => f.estatus === 'Cobrada').reduce((a: number, f: any) => a + f.monto, 0),
+                pendientePorProgramar: 0,
+                filas
+            };
+        };
         pedidosServiceSpy.actualizarFacturacionFila.and.returnValue(
-            of({
-                ...component.pedido!.facturacion.filas[2],
-                estatus: 'Facturada',
-                folioFactura: 'FAC-003',
-                fechaFactura: '2026-12-15'
-            })
+            of(resumenTras((f) => (f.id === 3 ? { ...f, estatus: 'Facturada', folioFactura: 'FAC-003', fechaFactura: '2026-12-15' } : f)))
         );
         component.marcarFacturada(component.pedido!.facturacion.filas[2], 'FAC-003', '2026-12-15');
         tick();
@@ -740,11 +750,7 @@ describe('PedidoDetalleComponent (F3)', () => {
 
         // Transición: Facturada -> Cobrada (marcarCobrada)
         pedidosServiceSpy.actualizarFacturacionFila.and.returnValue(
-            of({
-                ...component.pedido!.facturacion.filas[1],
-                estatus: 'Cobrada',
-                fechaCobro: '2026-12-10'
-            })
+            of(resumenTras((f) => (f.id === 2 ? { ...f, estatus: 'Cobrada', fechaCobro: '2026-12-10' } : f)))
         );
         component.marcarCobrada(component.pedido!.facturacion.filas[1], '2026-12-10');
         tick();
@@ -759,6 +765,36 @@ describe('PedidoDetalleComponent (F3)', () => {
             })
         );
         expect(component.pedido!.facturacion.filas[1].estatus).toBe('Cobrada');
+    }));
+
+    it('Programar_factura_reemplaza_el_resumen_con_el_del_API_y_no_agrega_una_fila_fantasma', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+        component.pedido!.permisos.puedeFacturar = true;
+        component.pedido!.montoPedido = 1000;
+        const anticipo: any = { id: 1, concepto: 'Anticipo', fechaProgramada: '2026-12-01', monto: 400, estatus: 'Programada' };
+        component.pedido!.facturacion = { programado: 400, facturado: 0, cobrado: 0, pendientePorProgramar: 600, filas: [anticipo] };
+
+        // El API responde con el RESUMEN completo (totales y todas las filas), no con la fila nueva.
+        const segunda: any = { id: 2, concepto: 'Segunda', fechaProgramada: '2026-12-15', monto: 300, estatus: 'Programada' };
+        pedidosServiceSpy.programarFacturacion.and.returnValue(
+            of({ programado: 700, facturado: 0, cobrado: 0, pendientePorProgramar: 300, filas: [anticipo, segunda] } as any)
+        );
+        component.nuevaFacturacionConcepto = 'Segunda';
+        component.nuevaFacturacionFecha = '2026-12-15';
+        component.nuevaFacturacionMonto = 300;
+
+        component.programarFactura();
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.programarFacturacion).toHaveBeenCalledWith(10, jasmine.objectContaining({ concepto: 'Segunda', fechaProgramada: '2026-12-15', monto: 300 }));
+        expect(component.pedido!.facturacion.filas.length).toBe(2);
+        expect(component.pedido!.facturacion.filas.every((f: any) => !!f.concepto && f.monto > 0 && !!f.estatus)).toBeTrue();
+        expect(component.pedido!.facturacion.programado).toBe(700);
+        expect(component.facturacionPendientePorProgramar).toBe(300);
+        expect(component.nuevaFacturacionConcepto).toBe('');
     }));
 
     it('Bitacora_pagina_y_agrega_observacion', fakeAsync(() => {
