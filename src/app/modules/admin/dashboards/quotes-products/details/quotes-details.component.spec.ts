@@ -1087,6 +1087,46 @@ describe('QuoteDetailsComponent SGC', () => {
     expect(component.sgcForm.get('contactoCorreo')?.value).toBe('previo@guardado.test');
   });
 
+  it('Enviar_con_cambios_sin_guardar_no_llama_al_API', () => {
+    component.quotesId = 31;
+    mockQuotesService.cambiarEstatusSgc.calls.reset();
+    component.sgcForm.markAsDirty();
+    component.enviarACliente();
+    expect(mockQuotesService.cambiarEstatusSgc).not.toHaveBeenCalled();
+    component.sgcForm.markAsPristine();
+    component.quotesForm.markAsPristine();
+    component.partidasFormArray.markAsPristine();
+    component.enviarACliente();
+    expect(mockQuotesService.cambiarEstatusSgc).toHaveBeenCalledWith(31, { estatus: 'EnviadaACliente' });
+  });
+
+  it('Aprobar_pide_confirmacion_y_no_llama_si_se_cancela', async () => {
+    component.quotesId = 32;
+    mockQuotesService.cambiarEstatusSgc.calls.reset();
+    const swal = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: false } as any));
+    await component.aprobarPorCliente();
+    expect(swal).toHaveBeenCalled();
+    expect(mockQuotesService.cambiarEstatusSgc).not.toHaveBeenCalled();
+    swal.and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+    await component.aprobarPorCliente();
+    expect(mockQuotesService.cambiarEstatusSgc).toHaveBeenCalledWith(32, { estatus: 'AprobadaPorCliente' });
+  });
+
+  it('Botones_de_estatus_deshabilitados_mientras_responde_el_API', () => {
+    component.quotesId = 33;
+    component.esInformativa = false;
+    component.estatusCotizacion = 'EnviadaACliente';
+    component.etapa = 'Emitida';
+    component.cambiandoEstatus = true;
+    fixture.detectChanges();
+    for (const id of ['btn-estatus-aprobar', 'btn-estatus-rechazar', 'btn-estatus-en-proceso']) {
+      expect(fixture.nativeElement.querySelector(`[data-testid="${id}"]`).disabled).withContext(id).toBeTrue();
+    }
+    mockQuotesService.cambiarEstatusSgc.calls.reset();
+    component.regresarAEnProceso();
+    expect(mockQuotesService.cambiarEstatusSgc).not.toHaveBeenCalled();
+  });
+
   it('Botones_de_estatus_segun_transiciones', () => {
     component.quotesId = 30;
     component.esInformativa = false;

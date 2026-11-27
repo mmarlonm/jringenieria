@@ -151,6 +151,8 @@ export class QuoteDetailsComponent implements OnInit {
   revisionesVigentes: RevisionSgc[] = [];
   revisionesRequeridas: string[] = [];
   soloLectura: boolean = false;
+  /** Evita dobles clics mientras el API responde un cambio de estatus. */
+  cambiandoEstatus: boolean = false;
   /** Cotización que solo viene de CONTPAQ (sin capa SGC): solo consulta, sin flujo. Lo dice el API (contrato v1.2). */
   esInformativa: boolean = false;
   requerimientoVinculado: RequerimientoResumen | null = null;
@@ -607,28 +609,54 @@ export class QuoteDetailsComponent implements OnInit {
     });
   }
 
+  /** Cambios del usuario desde que se cargó (guardar regresa a la lista, así que no hay «guardado pero sucio»). */
+  get hayCambiosSinGuardar(): boolean {
+    return !!(this.quotesForm?.dirty || this.sgcForm?.dirty || this.partidasFormArray?.dirty);
+  }
+
   enviarACliente(): void {
-    if (!this.quotesId) return;
+    if (!this.quotesId || this.cambiandoEstatus) return;
+    if (this.hayCambiosSinGuardar) {
+      // La instantánea de la versión se toma de lo guardado: enviar ahora perdería lo editado.
+      this._chatNotificationService.showError('Opps', 'Guarda los cambios antes de enviar la cotización al cliente.', 5000);
+      return;
+    }
+    this.cambiandoEstatus = true;
     this.quotesService.cambiarEstatusSgc(this.quotesId, { estatus: 'EnviadaACliente' }).subscribe({
       next: () => {
+        this.cambiandoEstatus = false;
         this._chatNotificationService.showSuccess('Éxito', 'La cotización fue marcada como enviada a cliente.', 3000);
         this.loadQuotes(this.quotesId!);
       },
       error: (err) => {
+        this.cambiandoEstatus = false;
         const msg = err?.error?.mensaje || 'No se pudo enviar la cotización a cliente.';
         this._chatNotificationService.showError('Opps', msg, 5000);
       }
     });
   }
 
-  aprobarPorCliente(): void {
-    if (!this.quotesId) return;
+  async aprobarPorCliente(): Promise<void> {
+    if (!this.quotesId || this.cambiandoEstatus) return;
+    // «Aprobada por cliente» no tiene vuelta atrás: se confirma.
+    const confirmacion = await Swal.fire({
+      title: '¿El cliente aprobó la cotización?',
+      text: 'Quedará como «Aprobada por cliente» y ya no se podrá cambiar su estatus.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, aprobada',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!confirmacion.isConfirmed) return;
+    this.cambiandoEstatus = true;
     this.quotesService.cambiarEstatusSgc(this.quotesId, { estatus: 'AprobadaPorCliente' }).subscribe({
       next: () => {
+        this.cambiandoEstatus = false;
         this._chatNotificationService.showSuccess('Éxito', 'La cotización fue marcada como aprobada por cliente.', 3000);
         this.loadQuotes(this.quotesId!);
       },
       error: (err) => {
+        this.cambiandoEstatus = false;
         const msg = err?.error?.mensaje || 'No se pudo aprobar la cotización.';
         this._chatNotificationService.showError('Opps', msg, 5000);
       }
@@ -636,13 +664,16 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   regresarAEnProceso(): void {
-    if (!this.quotesId) return;
+    if (!this.quotesId || this.cambiandoEstatus) return;
+    this.cambiandoEstatus = true;
     this.quotesService.cambiarEstatusSgc(this.quotesId, { estatus: 'EnProceso' }).subscribe({
       next: () => {
+        this.cambiandoEstatus = false;
         this._chatNotificationService.showSuccess('Éxito', 'La cotización regresó a En proceso.', 3000);
         this.loadQuotes(this.quotesId!);
       },
       error: (err) => {
+        this.cambiandoEstatus = false;
         const msg = err?.error?.mensaje || 'No se pudo cambiar el estatus.';
         this._chatNotificationService.showError('Opps', msg, 5000);
       }
@@ -650,7 +681,7 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   abrirRechazoDialog(): void {
-    if (!this.quotesId) return;
+    if (!this.quotesId || this.cambiandoEstatus) return;
     const dialogRef = this.dialog.open(RechazoDialogComponent, {
       width: '480px',
       maxWidth: '95vw',
@@ -662,16 +693,19 @@ export class QuoteDetailsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((res: RechazoDialogResultado | undefined) => {
       if (res?.motivo) {
+        this.cambiandoEstatus = true;
         this.quotesService.cambiarEstatusSgc(this.quotesId!, {
           estatus: 'Rechazada',
           motivo: res.motivo,
           comentario: res.comentario
         }).subscribe({
           next: () => {
+            this.cambiandoEstatus = false;
             this._chatNotificationService.showSuccess('Éxito', 'La cotización fue marcada como rechazada.', 3000);
             this.loadQuotes(this.quotesId!);
           },
           error: (err) => {
+            this.cambiandoEstatus = false;
             const msg = err?.error?.mensaje || 'No se pudo rechazar la cotización.';
             this._chatNotificationService.showError('Opps', msg, 5000);
           }

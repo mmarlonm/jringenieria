@@ -17,6 +17,7 @@
         <button *ngIf="estatusSimple === 'EnProceso'"
                 mat-flat-button color="primary" type="button"
                 data-testid="btn-estatus-enviar"
+                [disabled]="cambiandoEstatus"
                 (click)="enviarACliente()">
           <mat-icon class="mr-1">send</mat-icon>
           Enviar a cliente
@@ -26,18 +27,21 @@
         <ng-container *ngIf="estatusSimple === 'EnviadaACliente'">
           <button mat-flat-button class="bg-emerald-600 text-white" type="button"
                   data-testid="btn-estatus-aprobar"
+                [disabled]="cambiandoEstatus"
                   (click)="aprobarPorCliente()">
             <mat-icon class="mr-1">check</mat-icon>
             Aprobada por cliente
           </button>
           <button mat-flat-button color="warn" type="button"
                   data-testid="btn-estatus-rechazar"
+                [disabled]="cambiandoEstatus"
                   (click)="abrirRechazoDialog()">
             <mat-icon class="mr-1">close</mat-icon>
             Rechazada
           </button>
           <button mat-stroked-button type="button"
                   data-testid="btn-estatus-en-proceso"
+                [disabled]="cambiandoEstatus"
                   (click)="regresarAEnProceso()">
             <mat-icon class="mr-1">edit</mat-icon>
             En proceso
@@ -48,6 +52,7 @@
         <button *ngIf="estatusSimple === 'Rechazada'"
                 mat-stroked-button type="button"
                 data-testid="btn-estatus-reactivar"
+                [disabled]="cambiandoEstatus"
                 (click)="regresarAEnProceso()">
           <mat-icon class="mr-1">replay</mat-icon>
           Reactivar cotización
