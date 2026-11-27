@@ -146,6 +146,7 @@ describe('QuoteDetailsComponent SGC', () => {
           faltantes: [],
         })
       ),
+      cambiarEstatusSgc: jasmine.createSpy('cambiarEstatusSgc').and.returnValue(of({})),
       enviarRevision: jasmine.createSpy('enviarRevision').and.returnValue(of({ etapa: 'EnRevision' })),
       requerimientosDisponibles: jasmine.createSpy('requerimientosDisponibles').and.returnValue(of([])),
       revisiones: jasmine.createSpy('revisiones').and.returnValue(of([])),
@@ -854,10 +855,11 @@ describe('QuoteDetailsComponent SGC', () => {
     mockQuotesService.obtenerSgc.and.returnValue(
       of({
         cotizacionProductosId: 10,
-        sgc: { folio: 'COT-01', version: 2, etapa: 'EnRevision' } as any,
+        sgc: { folio: 'COT-01', version: 2, etapa: 'Emitida' } as any,
         partidas: [],
         totales: { subtotal: 0, iva: 0, total: 0 } as any,
         faltantes: [],
+        estatusCotizacion: 'EnviadaACliente',
         acciones: { editar: false, enviarRevision: false, volverBorrador: true, revisar: ['Comercial'], emitir: false, nuevaVersion: false },
       })
     );
@@ -867,7 +869,7 @@ describe('QuoteDetailsComponent SGC', () => {
 
     const franja = fixture.nativeElement.querySelector('.franja-solo-lectura');
     expect(franja).toBeTruthy();
-    expect(franja.textContent).toContain('revisión');
+    expect(franja.textContent).toContain('Enviada a cliente');
     expect(franja.textContent).toContain('2');
   });
 
@@ -875,10 +877,11 @@ describe('QuoteDetailsComponent SGC', () => {
     mockQuotesService.obtenerSgc.and.returnValue(
       of({
         cotizacionProductosId: 10,
-        sgc: { folio: 'COT-01', version: 1, etapa: 'EnSeguimiento' } as any,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'Ganada' } as any,
         partidas: [],
         totales: { subtotal: 0, iva: 0, total: 0 } as any,
         faltantes: [],
+        estatusCotizacion: 'AprobadaPorCliente',
         acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: true },
       })
     );
@@ -887,8 +890,8 @@ describe('QuoteDetailsComponent SGC', () => {
     fixture.detectChanges();
 
     const franja = fixture.nativeElement.querySelector('.franja-solo-lectura');
-    expect(franja.textContent).toContain('En seguimiento');
-    expect(franja.textContent).not.toContain('EnSeguimiento');
+    expect(franja.textContent).toContain('Aprobada por cliente');
+    expect(franja.textContent).not.toContain('AprobadaPorCliente');
   });
 
   it('Una_cotizacion_en_Borrador_sigue_editable', () => {
@@ -919,10 +922,11 @@ describe('QuoteDetailsComponent SGC', () => {
     mockQuotesService.obtenerSgc.and.returnValue(
       of({
         cotizacionProductosId: 10,
-        sgc: { folio: 'COT-01', version: 1, etapa: 'EnRevision' } as any,
+        sgc: { folio: 'COT-01', version: 1, etapa: 'Borrador' } as any,
         partidas: [],
         totales: { subtotal: 0, iva: 0, total: 0 } as any,
         faltantes: [],
+        estatusCotizacion: 'EnProceso',
         acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false },
       })
     );
@@ -930,175 +934,261 @@ describe('QuoteDetailsComponent SGC', () => {
     paramMapSubject.next(convertToParamMap({ id: '10' }));
     fixture.detectChanges();
 
-    const chip = fixture.nativeElement.querySelector('app-etapa-chip');
+    const chip = fixture.nativeElement.querySelector('app-estatus-chip');
     expect(chip).toBeTruthy();
-    expect(chip.textContent).toContain('En revisión');
+    expect(chip.textContent).toContain('En proceso');
   });
 
-  it('Elegir_un_requerimiento_lo_muestra_y_lo_manda_al_guardar', async () => {
-    component.quotesForm.patchValue({ clienteId: 1, unidadDeNegocioId: 2, nombreCliente: 'Cliente' });
-    const req = { id: 101, folio: 'REQ-101', estatus: 'Calificado Comercial' };
-    component.onRequerimientoChange(req as any);
-    component.selectedTabIndex = 4;
+  it('Ya_no_existen_las_pestanas_Requerimiento_y_Revision', () => {
     fixture.detectChanges();
-    await fixture.whenStable();
+    const textoTabs = fixture.nativeElement.textContent;
+    expect(textoTabs).not.toContain('Requerimiento');
+    expect(textoTabs).not.toContain('Revisión');
+    expect(fixture.nativeElement.querySelector('app-requerimiento-sgc')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-revision-sgc')).toBeNull();
+  });
+
+  it('Prospecto_de_solo_lectura_en_Informacion_General', () => {
+    component.prospecto = {
+      leadId: 50,
+      empresa: 'Constructora Beta SA',
+      nombreContacto: 'Ing. Laura Gomez',
+      telefono: '5544332211',
+      email: 'lgomez@beta.test'
+    };
     fixture.detectChanges();
 
-    const reqComp = fixture.nativeElement.querySelector('app-requerimiento-sgc');
-    expect(reqComp).toBeTruthy();
+    const bloque = fixture.nativeElement.querySelector('[data-testid="bloque-prospecto-lead"]');
+    expect(bloque).not.toBeNull();
+    expect(bloque.textContent).toContain('Prospecto (del lead)');
+    expect(bloque.textContent).toContain('Constructora Beta SA');
+    expect(bloque.textContent).toContain('Ing. Laura Gomez');
+    expect(bloque.textContent).toContain('5544332211');
+    expect(bloque.textContent).toContain('lgomez@beta.test');
 
-    component.saveQuotes();
-
-    const dto = mockQuotesService.guardarSgc.calls.mostRecent().args[0];
-    expect(dto.sgc.requerimientoId).toBe(101);
-  });
-
-  it('Quitar_el_vinculo_manda_cero', () => {
-    component.quotesForm.patchValue({ clienteId: 1, unidadDeNegocioId: 2, nombreCliente: 'Cliente' });
-    component.onRequerimientoChange(null);
-    component.saveQuotes();
-
-    const dto = mockQuotesService.guardarSgc.calls.mostRecent().args[0];
-    expect(dto.sgc.requerimientoId).toBe(0);
-  });
-
-  it('Enviar_a_revision_guarda_primero_si_hay_cambios', async () => {
-    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
-    mockQuotesService.enviarRevision.and.returnValue(of({ etapa: 'EnRevision' }));
-    component.quotesId = 15;
-    component.quotesForm.patchValue({ clienteId: 1, unidadDeNegocioId: 2, nombreCliente: 'Cliente' });
-    component.quotesForm.markAsDirty();
-
-    await component.enviarARevision();
-
-    expect(mockQuotesService.guardarSgc).toHaveBeenCalled();
-    expect(mockQuotesService.enviarRevision).toHaveBeenCalledWith(15);
-  });
-
-  it('Enviar_a_revision_pide_confirmacion', async () => {
-    const swalSpy = spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: false } as any));
-    component.quotesId = 15;
-
-    await component.enviarARevision();
-
-    expect(swalSpy).toHaveBeenCalled();
-    expect(mockQuotesService.enviarRevision).not.toHaveBeenCalled();
-  });
-
-  it('Enviar_a_revision_no_se_repite_con_doble_clic', async () => {
-    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
-    mockQuotesService.enviarRevision.and.returnValue(of({ etapa: 'EnRevision' }));
-    component.quotesId = 15;
-    component.quotesForm.markAsPristine();
-    component.sgcForm.markAsPristine();
-
-    const p1 = component.enviarARevision();
-    const p2 = component.enviarARevision();
-    await Promise.all([p1, p2]);
-
-    expect(mockQuotesService.enviarRevision.calls.count()).toBe(1);
-  });
-
-  it('Un_400_muestra_los_faltantes_y_no_recarga', async () => {
-    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
-    mockQuotesService.enviarRevision.and.returnValue(
-      throwError(() => ({
-        status: 400,
-        error: { mensaje: 'Faltan datos para enviar a revisión.', errores: ['Vincula un requerimiento calificado.'] },
-      }))
-    );
-    component.quotesId = 15;
-    component.quotesForm.markAsPristine();
-    component.sgcForm.markAsPristine();
-    const loadSpy = spyOn(component, 'loadQuotes');
-
-    await component.enviarARevision();
-
-    expect(component.erroresGuardado).toEqual(['Vincula un requerimiento calificado.']);
-    expect(loadSpy).not.toHaveBeenCalled();
-  });
-
-  it('El_boton_solo_aparece_si_acciones_enviarRevision', () => {
-    component.acciones = { editar: true, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false };
+    component.prospecto = null;
     fixture.detectChanges();
-    let btnEnviar = Array.from(fixture.nativeElement.querySelectorAll('button')).find((b: any) => b.textContent.includes('Enviar a revisión'));
-    expect(btnEnviar).toBeFalsy();
-
-    component.acciones = { editar: true, enviarRevision: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false };
-    fixture.detectChanges();
-    btnEnviar = Array.from(fixture.nativeElement.querySelectorAll('button')).find((b: any) => b.textContent.includes('Enviar a revisión'));
-    expect(btnEnviar).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="bloque-prospecto-lead"]')).toBeNull();
   });
 
-  it('Despues_de_enviar_la_cotizacion_queda_en_solo_lectura', async () => {
-    spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ isConfirmed: true } as any));
-    mockQuotesService.enviarRevision.and.returnValue(of({ etapa: 'EnRevision' }));
+  it('Con_lead_cliente_no_es_obligatorio', () => {
     mockQuotesService.obtenerSgc.and.returnValue(
       of({
-        cotizacionProductosId: 15,
-        sgc: { folio: 'COT-01', version: 1, etapa: 'EnRevision' } as any,
+        cotizacionProductosId: 20,
+        cotizacion: {
+          cotizacionProductosId: 20,
+          clienteId: null,
+          unidadDeNegocioId: 2,
+          usuarioId: 1,
+          requisitosEspeciales: false,
+          createdDate: '2026-11-20T10:00:00Z',
+          updatedDate: null
+        } as any,
+        sgc: { folio: 'COT-20', version: 1, etapa: 'Borrador' } as any,
         partidas: [],
         totales: { subtotal: 0, iva: 0, total: 0 } as any,
         faltantes: [],
-        acciones: { editar: false, enviarRevision: false, volverBorrador: true, revisar: ['Comercial'], emitir: false, nuevaVersion: false },
+        prospecto: {
+          leadId: 10,
+          empresa: 'Empresa Lead',
+          nombreContacto: 'Contacto Lead',
+          telefono: '1122334455',
+          email: 'lead@test.com'
+        },
+        acciones: { editar: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false }
       })
     );
-    component.quotesId = 15;
-    component.quotesForm.markAsPristine();
-    component.sgcForm.markAsPristine();
 
-    await component.enviarARevision();
+    component.loadQuotes(20);
     fixture.detectChanges();
 
-    expect(component.soloLectura).toBeTrue();
-    expect(component.quotesForm.disabled).toBeTrue();
+    component.quotesForm.get('clienteId')?.setValue(null);
+    expect(component.quotesForm.get('clienteId')?.valid).toBeTrue();
   });
 
-  it('El_boton_Registrar_envio_solo_aparece_si_acciones_emitir', () => {
-    component.acciones = { editar: true, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false };
-    fixture.detectChanges();
-    let btnEmitir = fixture.nativeElement.querySelector('.btn-registrar-envio');
-    expect(btnEmitir).toBeNull();
+  it('Prellena_contacto_desde_el_lead_sin_pisar_lo_guardado', () => {
+    // 1. Campo vacío se prellena
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 21,
+        cotizacion: {
+          cotizacionProductosId: 21,
+          clienteId: null,
+          unidadDeNegocioId: 2,
+          usuarioId: 1,
+          requisitosEspeciales: false,
+          nombreCliente: null,
+          correo: null,
+          createdDate: '2026-11-20T10:00:00Z',
+          updatedDate: null
+        } as any,
+        sgc: {
+          folio: 'COT-21',
+          version: 1,
+          etapa: 'Borrador',
+          contactoNombre: null,
+          contactoCorreo: null
+        } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        prospecto: {
+          leadId: 10,
+          empresa: 'Empresa Lead',
+          nombreContacto: 'Nombre Del Lead',
+          telefono: '1122334455',
+          email: 'correo@lead.test'
+        },
+        acciones: { editar: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false }
+      })
+    );
 
-    component.acciones = { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: true, nuevaVersion: false };
-    fixture.detectChanges();
-    btnEmitir = fixture.nativeElement.querySelector('.btn-registrar-envio');
-    expect(btnEmitir).toBeTruthy();
+    component.loadQuotes(21);
+    expect(component.sgcForm.get('contactoNombre')?.value).toBe('Nombre Del Lead');
+    expect(component.sgcForm.get('contactoCorreo')?.value).toBe('correo@lead.test');
+
+    // 2. Campo ya guardado no se pisa
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 22,
+        cotizacion: {
+          cotizacionProductosId: 22,
+          clienteId: null,
+          unidadDeNegocioId: 2,
+          usuarioId: 1,
+          requisitosEspeciales: false,
+          nombreCliente: 'Guardado Anterior',
+          createdDate: '2026-11-20T10:00:00Z',
+          updatedDate: null
+        } as any,
+        sgc: {
+          folio: 'COT-22',
+          version: 1,
+          etapa: 'Borrador',
+          contactoNombre: 'Guardado En SGC',
+          contactoCorreo: 'previo@guardado.test'
+        } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        faltantes: [],
+        prospecto: {
+          leadId: 10,
+          empresa: 'Empresa Lead',
+          nombreContacto: 'Nombre Del Lead',
+          telefono: '1122334455',
+          email: 'correo@lead.test'
+        },
+        acciones: { editar: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false }
+      })
+    );
+
+    component.loadQuotes(22);
+    expect(component.sgcForm.get('contactoNombre')?.value).toBe('Guardado En SGC');
+    expect(component.sgcForm.get('contactoCorreo')?.value).toBe('previo@guardado.test');
   });
 
-  it('Despues_de_emitir_se_recarga_y_queda_en_solo_lectura', () => {
+  it('Botones_de_estatus_segun_transiciones', () => {
+    component.quotesId = 30;
+    component.esInformativa = false;
+
+    // Desde EnProceso: solo Enviar a cliente
+    component.estatusCotizacion = 'EnProceso';
+    component.etapa = 'Borrador';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-enviar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-aprobar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-rechazar"]')).toBeNull();
+
+    // Desde EnviadaACliente: Aprobada, Rechazada, Regresar a En proceso
+    component.estatusCotizacion = 'EnviadaACliente';
+    component.etapa = 'Emitida';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-enviar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-aprobar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-rechazar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-en-proceso"]')).not.toBeNull();
+
+    // Desde Rechazada: Regresar a En proceso
+    component.estatusCotizacion = 'Rechazada';
+    component.etapa = 'Perdida';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-reactivar"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-aprobar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-enviar"]')).toBeNull();
+
+    // Desde AprobadaPorCliente: ninguno (final)
+    component.estatusCotizacion = 'AprobadaPorCliente';
+    component.etapa = 'Ganada';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-enviar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-aprobar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-estatus-rechazar"]')).toBeNull();
+  });
+
+  it('Rechazar_pide_motivo_y_comentario_con_Otro', () => {
     const mockDialog = TestBed.inject(MatDialog) as any;
     mockDialog.open.and.returnValue({
-      afterClosed: () => of({ guardado: true, data: { folio: 'COT-01', version: 1 } }),
+      afterClosed: () => of({ motivo: 'Precio', comentario: 'Costo elevado' })
     });
 
+    component.quotesId = 45;
+    component.abrirRechazoDialog();
+
+    expect(mockDialog.open).toHaveBeenCalled();
+    expect(mockQuotesService.cambiarEstatusSgc).toHaveBeenCalledWith(45, {
+      estatus: 'Rechazada',
+      motivo: 'Precio',
+      comentario: 'Costo elevado'
+    });
+  });
+
+  it('Fuera_de_En_proceso_es_solo_lectura', () => {
+    // 1. EnProceso y acciones.editar true -> editable
     mockQuotesService.obtenerSgc.and.returnValue(
       of({
-        cotizacionProductosId: 15,
-        cotizacion: {
-          cotizacionProductosId: 15,
-          clienteId: 1,
-          unidadDeNegocioId: 2,
-          usuarioId: 7,
-          requisitosEspeciales: false,
-          createdDate: '2026-11-14T10:00:00Z',
-          updatedDate: null,
-        } as any,
-        sgc: { folio: 'COT-01', version: 1, etapa: 'Emitida' } as any,
+        cotizacionProductosId: 50,
+        cotizacion: { cotizacionProductosId: 50, clienteId: 1, unidadDeNegocioId: 2, usuarioId: 1, requisitosEspeciales: false } as any,
+        sgc: { folio: 'COT-50', version: 1, etapa: 'Borrador' } as any,
         partidas: [],
         totales: { subtotal: 0, iva: 0, total: 0 } as any,
-        faltantes: [],
-        acciones: { editar: false, enviarRevision: false, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: true },
+        estatusCotizacion: 'EnProceso',
+        acciones: { editar: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false }
       })
     );
+    component.loadQuotes(50);
+    expect(component.soloLectura).toBeFalse();
+    expect(component.quotesForm.enabled).toBeTrue();
 
-    component.quotesId = 15;
-    component.abrirEmisionDialog();
-    fixture.detectChanges();
-
-    expect(mockQuotesService.obtenerSgc).toHaveBeenCalledWith(15);
+    // 2. EnviadaACliente -> solo lectura
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 50,
+        cotizacion: { cotizacionProductosId: 50, clienteId: 1, unidadDeNegocioId: 2, usuarioId: 1, requisitosEspeciales: false } as any,
+        sgc: { folio: 'COT-50', version: 1, etapa: 'Emitida' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        estatusCotizacion: 'EnviadaACliente',
+        acciones: { editar: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false }
+      })
+    );
+    component.loadQuotes(50);
     expect(component.soloLectura).toBeTrue();
-    expect(component.etapa).toBe('Emitida');
+    expect(component.quotesForm.disabled).toBeTrue();
+
+    // 3. Rechazada -> solo lectura
+    mockQuotesService.obtenerSgc.and.returnValue(
+      of({
+        cotizacionProductosId: 50,
+        cotizacion: { cotizacionProductosId: 50, clienteId: 1, unidadDeNegocioId: 2, usuarioId: 1, requisitosEspeciales: false } as any,
+        sgc: { folio: 'COT-50', version: 1, etapa: 'Perdida' } as any,
+        partidas: [],
+        totales: { subtotal: 0, iva: 0, total: 0 } as any,
+        estatusCotizacion: 'Rechazada',
+        acciones: { editar: true, volverBorrador: false, revisar: [], emitir: false, nuevaVersion: false }
+      })
+    );
+    component.loadQuotes(50);
+    expect(component.soloLectura).toBeTrue();
     expect(component.quotesForm.disabled).toBeTrue();
   });
 
