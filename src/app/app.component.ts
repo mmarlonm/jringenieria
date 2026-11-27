@@ -102,6 +102,7 @@ export class AppComponent implements OnInit, OnDestroy {
             else if (url.includes('activity-monitor')) moduleName = 'Monitor Actividad';
             else if (url.includes('tasks')) moduleName = 'Tareas';
             else if (url.includes('compras')) moduleName = 'Compras';
+            else if (url.includes('pedidos')) moduleName = 'Pedidos';
         }
 
         const urlPath = event.urlAfterRedirects || event.url;

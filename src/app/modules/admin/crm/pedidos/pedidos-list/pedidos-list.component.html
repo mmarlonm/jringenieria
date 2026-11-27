@@ -1,0 +1,250 @@
+<div class="flex flex-col flex-auto min-w-0 bg-card dark:bg-transparent p-4 sm:p-6 md:p-8">
+    <!-- Encabezado -->
+    <div class="flex flex-col sm:flex-row flex-0 items-start sm:items-center justify-between pb-6 border-b">
+        <div>
+            <div class="text-3xl font-extrabold tracking-tight">Pedidos</div>
+            <div class="text-secondary text-sm">Gestión de pedidos, contratos y órdenes de compra (SGC-PRO-COM-04)</div>
+        </div>
+        <div class="flex items-center gap-3 mt-4 sm:mt-0">
+            <button mat-flat-button color="primary" (click)="exportarExcel()" [disabled]="items.length === 0" data-testid="btn-exportar-excel">
+                <mat-icon class="mr-2">file_download</mat-icon>
+                Exportar a Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Franja de KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 my-6" *ngIf="kpis">
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="text-xs uppercase font-semibold text-gray-500">Total Pedidos Activos</div>
+            <div class="text-2xl font-bold mt-1 text-primary" data-testid="kpi-total">{{ kpis.total }}</div>
+        </div>
+        <div *ngFor="let kpi of kpis.porEstatus" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="text-xs uppercase font-semibold text-gray-500">{{ kpi.estatus }}</div>
+            <div class="text-xl font-bold mt-1" [attr.data-testid]="'kpi-estatus-' + kpi.estatus">{{ kpi.cantidad }}</div>
+            <div class="text-xs text-secondary mt-1 truncate" [matTooltip]="formatearImportes(kpi.importes)">
+                {{ formatearImportes(kpi.importes) }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas -->
+    <mat-tab-group animationDuration="0ms" class="mt-2">
+        <!-- Pestaña 1: Lista de Pedidos -->
+        <mat-tab label="Listado de Pedidos">
+            <!-- Barra de Filtros -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Desde</mat-label>
+                    <input matInput type="date" [(ngModel)]="filtros.desde" (ngModelChange)="aplicarFiltros()" data-testid="filtro-desde" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Hasta</mat-label>
+                    <input matInput type="date" [(ngModel)]="filtros.hasta" (ngModelChange)="aplicarFiltros()" data-testid="filtro-hasta" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Estatus</mat-label>
+                    <mat-select [(ngModel)]="filtros.estatus" (selectionChange)="aplicarFiltros()" data-testid="filtro-estatus">
+                        <mat-option [value]="undefined">Todos</mat-option>
+                        <mat-option *ngFor="let e of catalogos?.estatus" [value]="e.codigo">
+                            {{ e.nombre }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                    <mat-label>Buscar texto</mat-label>
+                    <input matInput [(ngModel)]="filtros.texto" placeholder="Folio, cliente, OC, cotización..." (keyup.enter)="aplicarFiltros()" data-testid="filtro-texto" />
+                    <button *ngIf="filtros.texto" matSuffix mat-icon-button (click)="filtros.texto = ''; aplicarFiltros()">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </mat-form-field>
+
+                <div class="flex items-center gap-2">
+                    <button mat-flat-button color="primary" (click)="aplicarFiltros()" class="flex-1" data-testid="btn-buscar">
+                        Buscar
+                    </button>
+                    <button mat-stroked-button (click)="limpiarFiltros()" data-testid="btn-limpiar">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de Pedidos -->
+            <div class="overflow-x-auto mt-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <table mat-table [dataSource]="items" class="w-full" data-testid="tabla-pedidos">
+                    <!-- Folio -->
+                    <ng-container matColumnDef="folio">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Folio</th>
+                        <td mat-cell *matCellDef="let p">
+                            <span class="font-semibold text-primary cursor-pointer hover:underline" (click)="verDetalle(p)" [attr.data-testid]="'folio-' + p.id">
+                                {{ p.folio }}
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Estatus -->
+                    <ng-container matColumnDef="estatus">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Estatus</th>
+                        <td mat-cell *matCellDef="let p">
+                            <span class="px-2 py-1 rounded text-xs font-semibold" [ngClass]="obtenerClaseEstatus(p.estatus)">
+                                {{ p.estatus }}
+                            </span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Cliente -->
+                    <ng-container matColumnDef="clienteNombre">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Cliente</th>
+                        <td mat-cell *matCellDef="let p" class="max-w-xs truncate" [matTooltip]="p.clienteNombre">
+                            {{ p.clienteNombre }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Cotización -->
+                    <ng-container matColumnDef="cotizacionFolio">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Cotización</th>
+                        <td mat-cell *matCellDef="let p">
+                            <span>{{ p.cotizacionFolio }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Sucursal -->
+                    <ng-container matColumnDef="sucursalNombre">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Sucursal</th>
+                        <td mat-cell *matCellDef="let p">
+                            <span>{{ p.sucursalNombre }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Monto -->
+                    <ng-container matColumnDef="montoPedido">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold text-right">Monto</th>
+                        <td mat-cell *matCellDef="let p" class="text-right font-medium">
+                            {{ p.moneda }} ${{ p.montoPedido | number:'1.2-2' }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Responsable -->
+                    <ng-container matColumnDef="responsableNombre">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Responsable</th>
+                        <td mat-cell *matCellDef="let p">
+                            <span>{{ p.responsableNombre }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Fecha Registro -->
+                    <ng-container matColumnDef="fechaRegistro">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Fecha Reg.</th>
+                        <td mat-cell *matCellDef="let p">
+                            <span>{{ p.fechaRegistro | date:'dd/MM/yyyy HH:mm':'-0600' }}</span>
+                        </td>
+                    </ng-container>
+
+                    <!-- Alertas -->
+                    <ng-container matColumnDef="alertas">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold">Alertas</th>
+                        <td mat-cell *matCellDef="let p">
+                            <div class="flex flex-wrap gap-1">
+                                <span *ngFor="let alerta of p.alertas" class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                    {{ alerta }}
+                                </span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- Acciones -->
+                    <ng-container matColumnDef="acciones">
+                        <th mat-header-cell *matHeaderCellDef class="font-bold text-center">Acciones</th>
+                        <td mat-cell *matCellDef="let p" class="text-center">
+                            <button mat-icon-button (click)="verDetalle(p)" matTooltip="Ver detalle del pedido" [attr.data-testid]="'btn-ver-' + p.id">
+                                <mat-icon>visibility</mat-icon>
+                            </button>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="columnasMostradas"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnasMostradas" class="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"></tr>
+                </table>
+
+                <!-- Estado vacío -->
+                <div *ngIf="!cargando && items.length === 0" class="p-8 text-center text-gray-500" data-testid="estado-vacio">
+                    <mat-icon class="text-4xl text-gray-400 mb-2">inbox</mat-icon>
+                    <div>No se encontraron pedidos con los filtros aplicados.</div>
+                </div>
+
+                <!-- Cargando -->
+                <div *ngIf="cargando" class="p-8 flex justify-center items-center">
+                    <mat-spinner diameter="36"></mat-spinner>
+                </div>
+            </div>
+
+            <!-- Paginador -->
+            <mat-paginator
+                [length]="total"
+                [pageSize]="filtros.size"
+                [pageSizeOptions]="[10, 25, 50, 100]"
+                [pageIndex]="(filtros.page || 1) - 1"
+                (page)="cambiarPagina($event)"
+                showFirstLastButtons
+                class="mt-2"
+                data-testid="paginador-pedidos"
+            ></mat-paginator>
+        </mat-tab>
+
+        <!-- Pestaña 2: Por vendedor y sucursal -->
+        <mat-tab label="Por vendedor y sucursal">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6" data-testid="panel-vendedor-sucursal">
+                <!-- Tabla Por Responsable / Vendedor -->
+                <div class="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                    <div class="text-lg font-bold mb-4">Por Vendedor / Responsable</div>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b text-left text-gray-500">
+                                <th class="pb-2">Vendedor</th>
+                                <th class="pb-2 text-center">Cantidad</th>
+                                <th class="pb-2 text-right">Importes por moneda</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let r of kpis?.porResponsable" class="border-b">
+                                <td class="py-2 font-medium">{{ r.nombre }}</td>
+                                <td class="py-2 text-center">{{ r.cantidad }}</td>
+                                <td class="py-2 text-right text-secondary">{{ formatearImportes(r.importes) }}</td>
+                            </tr>
+                            <tr *ngIf="!kpis?.porResponsable?.length">
+                                <td colspan="3" class="py-4 text-center text-gray-400">Sin registros</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Tabla Por Sucursal -->
+                <div class="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                    <div class="text-lg font-bold mb-4">Por Sucursal</div>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b text-left text-gray-500">
+                                <th class="pb-2">Sucursal</th>
+                                <th class="pb-2 text-center">Cantidad</th>
+                                <th class="pb-2 text-right">Importes por moneda</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let s of kpis?.porSucursal" class="border-b">
+                                <td class="py-2 font-medium">{{ s.nombre }}</td>
+                                <td class="py-2 text-center">{{ s.cantidad }}</td>
+                                <td class="py-2 text-right text-secondary">{{ formatearImportes(s.importes) }}</td>
+                            </tr>
+                            <tr *ngIf="!kpis?.porSucursal?.length">
+                                <td colspan="3" class="py-4 text-center text-gray-400">Sin registros</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</div>

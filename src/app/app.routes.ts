@@ -148,7 +148,8 @@ export const appRoutes: Route[] = [
             {
                 path: 'crm', children: [
                     { path: 'leads', loadChildren: () => import('app/modules/admin/crm/leads/leads.routes') },
-                    { path: 'requerimientos', loadChildren: () => import('app/modules/admin/crm/requerimientos/requerimientos.routes') }
+                    { path: 'requerimientos', loadChildren: () => import('app/modules/admin/crm/requerimientos/requerimientos.routes') },
+                    { path: 'pedidos', loadChildren: () => import('app/modules/admin/crm/pedidos/pedidos.routes') }
                 ]
             },
             {
