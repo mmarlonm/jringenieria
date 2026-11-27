@@ -300,7 +300,7 @@ describe('QuoteListComponent', () => {
     expect(component.displayedColumns).toContain('responsable');
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Borrador');
+    expect(compiled.textContent).toContain('En proceso');
     expect(compiled.textContent).toContain('Juan Perez');
     expect(compiled.textContent).toContain('2026-11-14');
     expect(compiled.textContent).toContain('2026-11-29');
@@ -311,8 +311,8 @@ describe('QuoteListComponent', () => {
     expect(component.tieneRegistroSgc(item1)).toBeTrue();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    // Row 101 has SGC: should render etapa chip
-    const chips = compiled.querySelectorAll('app-etapa-chip');
+    // Row 101 has SGC: should render estatus chip
+    const chips = compiled.querySelectorAll('app-estatus-chip, app-etapa-chip');
     expect(chips.length).toBeGreaterThan(0);
   });
 

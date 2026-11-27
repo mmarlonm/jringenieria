@@ -21,9 +21,10 @@ import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
 import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
+import { EstatusChipComponent } from '../sgc/estatus-chip/estatus-chip.component';
 import { QuotesBoardComponent } from './quotes-board/quotes-board.component';
 import { CotizacionDetalleDialogComponent } from '../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
-import { aplicarResumenSgc, tieneCapaSgc, puedeEliminarCotizacion } from './quotes-sgc-merge';
+import { aplicarResumenSgc, tieneCapaSgc, puedeEliminarCotizacion, obtenerTituloCliente, tieneLead, obtenerEstatusCotizacion } from './quotes-sgc-merge';
 import moment from 'moment';
 
 export type VistaCotizaciones = 'tablero' | 'lista';
@@ -49,6 +50,7 @@ const CLAVE_VISTA = 'cotizaciones.vista';
     MatTooltipModule,
     MatButtonToggleModule,
     EtapaChipComponent,
+    EstatusChipComponent,
     QuotesBoardComponent
   ]
 })
@@ -83,18 +85,28 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   todasLasQuotesDePagina: any[] = [];
   filtroEtapa: string = 'todas';
   filtroMarcas: string = 'todas';
-  etapasFiltro: { codigo: string; nombre: string }[] = [
-    { codigo: 'Borrador', nombre: 'Borrador' },
-    { codigo: 'EnRevision', nombre: 'En revisión' },
-    { codigo: 'Aprobada', nombre: 'Aprobada' },
-    { codigo: 'Emitida', nombre: 'Emitida' },
-    { codigo: 'EnSeguimiento', nombre: 'En seguimiento' },
-    { codigo: 'Ganada', nombre: 'Ganada' },
-    { codigo: 'Perdida', nombre: 'Perdida' },
-    { codigo: 'Cancelada', nombre: 'Cancelada' },
-    { codigo: 'Vencida', nombre: 'Vencida' },
-    { codigo: 'CerradaSinRespuesta', nombre: 'Cerrada sin respuesta' }
+  estatusFiltro: { codigo: string; nombre: string }[] = [
+    { codigo: 'informativa', nombre: 'Informativas' },
+    { codigo: 'EnProceso', nombre: 'En proceso' },
+    { codigo: 'EnviadaACliente', nombre: 'Enviada a cliente' },
+    { codigo: 'AprobadaPorCliente', nombre: 'Aprobada por cliente' },
+    { codigo: 'Rechazada', nombre: 'Rechazada' }
   ];
+  get etapasFiltro() {
+    return this.estatusFiltro;
+  }
+
+  tituloCliente(quote: any): string {
+    return obtenerTituloCliente(quote);
+  }
+
+  tieneLead(quote: any): boolean {
+    return tieneLead(quote);
+  }
+
+  obtenerEstatus(quote: any): string | null {
+    return obtenerEstatusCotizacion(quote);
+  }
 
   // Paginación y Filtro de Fecha
   pageSize: number = 10;
@@ -466,7 +478,14 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     let filtradas = [...this.todasLasQuotesDePagina];
 
     if (this.filtroEtapa && this.filtroEtapa !== 'todas') {
-      filtradas = filtradas.filter((q) => q.etapa === this.filtroEtapa);
+      if (this.filtroEtapa === 'informativa') {
+        filtradas = filtradas.filter((q) => !!q.informativa);
+      } else {
+        filtradas = filtradas.filter((q) => {
+          const est = this.obtenerEstatus(q);
+          return est === this.filtroEtapa || q.etapa === this.filtroEtapa;
+        });
+      }
     }
 
     if (this.filtroMarcas === 'vencidas') {

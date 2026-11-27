@@ -8,6 +8,16 @@ export interface CatalogoItem {
 /** Tipos de cotización SGC: CS comercial simple, CT técnico-comercial, CE estratégica. */
 export type TipoCotizacionSgc = 'CS' | 'CT' | 'CE';
 
+export type EstatusCotizacionSimple = 'EnProceso' | 'EnviadaACliente' | 'AprobadaPorCliente' | 'Rechazada';
+
+export interface ProspectoCotizacion {
+    leadId: number;
+    empresa?: string | null;
+    nombreContacto?: string | null;
+    telefono?: string | null;
+    email?: string | null;
+}
+
 /** Campos que el listado trae por cada cotización (contrato v1.1 §5). */
 export interface CotizacionListadoSgcCampos {
     /** `null` si la cotización solo viene de CONTPAQ y no tiene capa SGC. */
@@ -285,6 +295,10 @@ export interface RespuestaObtenerSgc {
     revisiones?: RevisionSgc[];
     acciones?: AccionesSgc;
     seguimiento?: ResumenSeguimiento | null;
+    estatusCotizacion?: EstatusCotizacionSimple | null;
+    motivoRechazo?: string | null;
+    comentarioRechazo?: string | null;
+    prospecto?: ProspectoCotizacion | null;
     /** Contrato v1.2: `true` ⇔ la cotización no tiene capa SGC (solo viene de CONTPAQ): se ve solo como consulta. Si no viene, es `false`. */
     informativa?: boolean;
 }
@@ -297,6 +311,10 @@ export interface ResumenSgc {
     total: number;
     moneda: string;
     etapa?: string;
+    estatusCotizacion?: EstatusCotizacionSimple | null;
+    motivoRechazo?: string | null;
+    comentarioRechazo?: string | null;
+    prospecto?: ProspectoCotizacion | null;
     fechaEmision?: string | Date | null;
     fechaVencimiento?: string | Date | null;
     creadoPorNombre?: string | null;

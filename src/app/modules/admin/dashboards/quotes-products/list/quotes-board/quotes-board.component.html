@@ -26,17 +26,23 @@
       <div *ngFor="let q of col.visibles; trackBy: trackPorId" class="relative group">
         <button type="button"
                 [attr.data-testid]="'tarjeta-' + q.cotizacionProductosId"
-                class="w-full text-left bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow pr-10"
+                class="w-full text-left bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow pr-20"
                 (click)="abrir.emit(q.cotizacionProductosId)">
-          <div class="flex items-center justify-between gap-2 mb-1 pr-6">
+          <div class="flex items-center flex-wrap gap-1.5 mb-1 pr-16" data-testid="encabezado-tarjeta">
             <span class="text-xs font-bold text-primary font-mono truncate">{{ textoFolio(q) }}</span>
             <span *ngIf="q.informativa" data-testid="etiqueta-informativa"
                   class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-slate-100 text-slate-600 border border-slate-300">
               Informativa
             </span>
-            <app-etapa-chip *ngIf="q.etapa" [etapa]="q.etapa"></app-etapa-chip>
+            <app-estatus-chip *ngIf="obtenerEstatus(q)" [estatus]="obtenerEstatus(q)"></app-estatus-chip>
           </div>
-          <h4 class="font-semibold text-sm leading-tight">{{ q.nombreCliente || 'Sin cliente' }}</h4>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <h4 class="font-semibold text-sm leading-tight truncate" data-testid="titulo-tarjeta">{{ tituloCliente(q) }}</h4>
+            <span *ngIf="tieneLead(q)" data-testid="chip-lead"
+                  class="flex-none px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-100 text-purple-700 border border-purple-200 uppercase">
+              Lead
+            </span>
+          </div>
           <p *ngIf="q.unidadDeNegocio?.nombre" class="text-xs text-gray-400 mt-0.5 truncate">{{ q.unidadDeNegocio?.nombre }}</p>
           <div class="flex items-center justify-between mt-3">
             <span class="text-sm font-black tabular-nums">{{ (q.totalSgc ?? q.total) | currency:(q.moneda || 'MXN'):'symbol':'1.2-2' }}</span>
@@ -59,7 +65,7 @@
           </div>
         </button>
 
-        <div class="absolute top-2 right-2 flex items-center gap-0.5 z-10">
+        <div class="absolute top-2 right-2 flex items-center gap-0.5 z-10" data-testid="botones-accion-tarjeta">
           <button mat-icon-button type="button"
                   [attr.data-testid]="'ver-tarjeta-' + q.cotizacionProductosId"
                   matTooltip="Ver detalle"

@@ -7,8 +7,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { QuotesService } from '../../quotes-products.service';
 import { TipoCotizacionSgc } from '../../quotes-products.types';
 import { EtapaChipComponent } from '../../sgc/etapa-chip/etapa-chip.component';
+import { EstatusChipComponent } from '../../sgc/estatus-chip/estatus-chip.component';
 import { CotizacionDetalleDialogComponent } from '../../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
-import { aplicarResumenSgc, puedeEliminarCotizacion } from '../quotes-sgc-merge';
+import { aplicarResumenSgc, puedeEliminarCotizacion, obtenerTituloCliente, tieneLead, obtenerEstatusCotizacion } from '../quotes-sgc-merge';
 
 export interface ColumnaCotizaciones {
   tipo: TipoCotizacionSgc;
@@ -35,7 +36,7 @@ export const TAM_PAGINA_TABLERO = 15;
 @Component({
   selector: 'app-quotes-board',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, EtapaChipComponent, MatTooltipModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, EtapaChipComponent, EstatusChipComponent, MatTooltipModule],
   templateUrl: './quotes-board.component.html'
 })
 export class QuotesBoardComponent implements OnChanges {
@@ -137,6 +138,18 @@ export class QuotesBoardComponent implements OnChanges {
     return !col.cargando && col.items.length < col.total;
   }
 
+  tituloCliente(q: any): string {
+    return obtenerTituloCliente(q);
+  }
+
+  tieneLead(q: any): boolean {
+    return tieneLead(q);
+  }
+
+  obtenerEstatus(q: any): string | null {
+    return obtenerEstatusCotizacion(q);
+  }
+
   textoFolio(q: any): string {
     if (q?.folio) {
       return q.version && q.version > 1 ? `${q.folio} v${q.version}` : q.folio;
@@ -220,8 +233,17 @@ export class QuotesBoardComponent implements OnChanges {
   private recalcular(col: ColumnaCotizaciones): void {
     const texto = (this.texto || '').trim().toLowerCase();
     col.visibles = col.items.filter((q: any) => {
-      if (this.etapa && this.etapa !== 'todas' && q.etapa !== this.etapa) {
-        return false;
+      if (this.etapa && this.etapa !== 'todas') {
+        if (this.etapa === 'informativa') {
+          if (!q.informativa) {
+            return false;
+          }
+        } else {
+          const est = this.obtenerEstatus(q);
+          if (est !== this.etapa && q.etapa !== this.etapa) {
+            return false;
+          }
+        }
       }
       if (this.marcas === 'vencidas' && !q.vencida) {
         return false;
@@ -232,8 +254,15 @@ export class QuotesBoardComponent implements OnChanges {
       if (!texto) {
         return true;
       }
-      return [this.textoFolio(q), q.folioContpaq, q.nombreCliente, q.unidadDeNegocio?.nombre, q.requerimientoFolio]
-        .some(v => (v ?? '').toString().toLowerCase().includes(texto));
+      return [
+        this.textoFolio(q),
+        q.folioContpaq,
+        q.nombreCliente,
+        q.prospecto?.empresa,
+        q.prospecto?.nombreContacto,
+        q.unidadDeNegocio?.nombre,
+        q.requerimientoFolio
+      ].some(v => (v ?? '').toString().toLowerCase().includes(texto));
     });
     this.cdr.markForCheck();
   }

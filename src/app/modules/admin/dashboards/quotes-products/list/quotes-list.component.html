@@ -57,12 +57,12 @@
               </mat-form-field>
             </div>
 
-            <!-- Etapa Filter -->
+            <!-- Estatus Filter -->
             <div class="w-full sm:w-44">
               <mat-form-field class="fuse-mat-dense fuse-mat-rounded w-full" subscriptSizing="dynamic">
-                <mat-select [(ngModel)]="filtroEtapa" (selectionChange)="filtrarPorEtapa($event.value)" placeholder="Etapa">
-                  <mat-option value="todas">Todas las etapas</mat-option>
-                  <mat-option *ngFor="let e of etapasFiltro" [value]="e.codigo">{{ e.nombre }}</mat-option>
+                <mat-select [(ngModel)]="filtroEtapa" (selectionChange)="filtrarPorEtapa($event.value)" placeholder="Estatus">
+                  <mat-option value="todas">Todos los estatus</mat-option>
+                  <mat-option *ngFor="let e of estatusFiltro" [value]="e.codigo">{{ e.nombre }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
@@ -184,7 +184,13 @@
                 </button>
               </th>
               <td mat-cell *matCellDef="let quote">
-                {{ quote.nombreCliente }}
+                <div class="flex items-center gap-1.5">
+                  <span>{{ tituloCliente(quote) }}</span>
+                  <span *ngIf="tieneLead(quote)" data-testid="chip-lead"
+                        class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-100 text-purple-700 border border-purple-200 uppercase">
+                    Lead
+                  </span>
+                </div>
               </td>
             </ng-container>
 
@@ -237,12 +243,15 @@
               </td>
             </ng-container>
 
-            <!-- Etapa -->
+            <!-- Etapa / Estatus -->
             <ng-container matColumnDef="etapa">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Etapa</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Estatus</th>
               <td mat-cell *matCellDef="let quote">
                 <div class="flex flex-col gap-1 items-start">
-                  <app-etapa-chip *ngIf="quote.etapa" [etapa]="quote.etapa"></app-etapa-chip>
+                  <span *ngIf="quote.informativa" class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-slate-100 text-slate-600 border border-slate-300">
+                    Informativa
+                  </span>
+                  <app-estatus-chip *ngIf="obtenerEstatus(quote)" [estatus]="obtenerEstatus(quote)"></app-estatus-chip>
                   <span *ngIf="quote.vencida" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 marca-vencida">
                     Vencida por cerrar
                   </span>
@@ -298,7 +307,7 @@
               <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-center">Estatus</th>
               <td mat-cell *matCellDef="let quote" class="px-2 py-3 whitespace-nowrap text-center">
                 <ng-container *ngIf="tieneRegistroSgc(quote); else legacyStatus">
-                  <app-etapa-chip [etapa]="quote.etapa || 'Borrador'"></app-etapa-chip>
+                  <app-estatus-chip [estatus]="obtenerEstatus(quote)"></app-estatus-chip>
                 </ng-container>
                 <ng-template #legacyStatus>
                   <div
@@ -398,9 +407,9 @@
               {{ (quote.totalSgc ?? quote.total) | currency:(quote.moneda || 'MXN'):'symbol':'1.2-2' }}
             </div>
 
-            <div *ngIf="quote.etapa" class="mt-2 text-xs text-gray-500">Etapa</div>
-            <div *ngIf="quote.etapa" class="mt-1 flex flex-wrap gap-1 items-center">
-              <app-etapa-chip [etapa]="quote.etapa"></app-etapa-chip>
+            <div *ngIf="obtenerEstatus(quote)" class="mt-2 text-xs text-gray-500">Estatus</div>
+            <div *ngIf="obtenerEstatus(quote)" class="mt-1 flex flex-wrap gap-1 items-center">
+              <app-estatus-chip [estatus]="obtenerEstatus(quote)"></app-estatus-chip>
               <span *ngIf="quote.vencida" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 marca-vencida">
                 Vencida por cerrar
               </span>
@@ -429,9 +438,9 @@
             <div *ngIf="quote.creadoPorNombre">{{ quote.creadoPorNombre }}</div>
 
             <div *ngIf="tieneRegistroSgc(quote); else legacyStatusMobile">
-              <div class="mt-2 text-xs text-gray-500">Estatus / Etapa</div>
+              <div class="mt-2 text-xs text-gray-500">Estatus</div>
               <div class="mt-1">
-                <app-etapa-chip [etapa]="quote.etapa || 'Borrador'"></app-etapa-chip>
+                <app-estatus-chip [estatus]="obtenerEstatus(quote)"></app-estatus-chip>
               </div>
             </div>
             <ng-template #legacyStatusMobile>

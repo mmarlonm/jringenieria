@@ -99,7 +99,7 @@ describe('QuotesBoardComponent', () => {
     expect(t.textContent).toContain('COT-2026-0002');
     expect(t.textContent).toContain('Cliente 2');
     expect(t.textContent).toContain('$500.00');
-    expect(t.textContent).toContain('En seguimiento');
+    expect(t.textContent).toContain('Enviada a cliente');
     expect(t.textContent).toContain('REQ-2026-0057');
     expect(t.textContent).toContain('Seguimiento atrasado');
   });
@@ -387,5 +387,116 @@ describe('QuotesBoardComponent', () => {
 
     expect(q('[data-testid="tarjeta-2"]')).not.toBeNull();
     expect(q('[data-testid="tarjeta-3"]')).toBeNull();
+  });
+
+  it('Botones_de_la_tarjeta_no_se_enciman_con_el_chip', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+
+    const tarjeta = q('[data-testid="tarjeta-2"]');
+    const encabezado = q('[data-testid="encabezado-tarjeta"]');
+    const botones = q('[data-testid="botones-accion-tarjeta"]');
+
+    expect(tarjeta).not.toBeNull();
+    expect(encabezado).not.toBeNull();
+    expect(botones).not.toBeNull();
+    expect(tarjeta?.className).toContain('pr-20');
+    expect(encabezado?.className).toContain('pr-16');
+  });
+
+  it('Titulo_de_la_tarjeta_es_el_prospecto_del_lead', () => {
+    respuestas.CS = () => pagina([cot(2, { nombreCliente: 'MOSTRADOR' })]);
+    resumen.and.returnValue(of([{
+      cotizacionProductosId: 2,
+      folio: 'COT-2026-0002',
+      tipo: 'CS',
+      version: 1,
+      total: 1000,
+      estatusCotizacion: 'EnProceso',
+      prospecto: {
+        leadId: 55,
+        empresa: 'Industrias Alfa',
+        nombreContacto: 'Ing. Perez'
+      }
+    }]));
+    iniciar();
+
+    const tarjeta = q('[data-testid="tarjeta-2"]');
+    const titulo = q('[data-testid="titulo-tarjeta"]');
+    const chipLead = q('[data-testid="chip-lead"]');
+
+    expect(titulo?.textContent?.trim()).toBe('Industrias Alfa');
+    expect(chipLead).not.toBeNull();
+    expect(chipLead?.textContent?.trim()).toBe('Lead');
+  });
+
+  it('Sin_lead_muestra_el_cliente_de_CONTPAQ', () => {
+    respuestas.CS = () => pagina([cot(2, { nombreCliente: 'CLIENTE CONTPAQ S.A.' })]);
+    resumen.and.returnValue(of([{
+      cotizacionProductosId: 2,
+      folio: 'COT-2026-0002',
+      tipo: 'CS',
+      version: 1,
+      total: 1000,
+      estatusCotizacion: 'EnProceso',
+      prospecto: null
+    }]));
+    iniciar();
+
+    const titulo = q('[data-testid="titulo-tarjeta"]');
+    const chipLead = q('[data-testid="chip-lead"]');
+
+    expect(titulo?.textContent?.trim()).toBe('CLIENTE CONTPAQ S.A.');
+    expect(chipLead).toBeNull();
+  });
+
+  it('Chip_de_estatus_con_los_cuatro_nombres', () => {
+    respuestas.CS = () => pagina([
+      cot(1, { estatusCotizacion: 'EnProceso' }),
+      cot(2, { estatusCotizacion: 'EnviadaACliente' }),
+      cot(3, { estatusCotizacion: 'AprobadaPorCliente' }),
+      cot(4, { estatusCotizacion: 'Rechazada' })
+    ]);
+    iniciar();
+
+    const chip1 = q('[data-testid="chip-estatus-EnProceso"]');
+    const chip2 = q('[data-testid="chip-estatus-EnviadaACliente"]');
+    const chip3 = q('[data-testid="chip-estatus-AprobadaPorCliente"]');
+    const chip4 = q('[data-testid="chip-estatus-Rechazada"]');
+
+    expect(chip1?.textContent?.trim()).toBe('En proceso');
+    expect(chip2?.textContent?.trim()).toBe('Enviada a cliente');
+    expect(chip3?.textContent?.trim()).toBe('Aprobada por cliente');
+    expect(chip4?.textContent?.trim()).toBe('Rechazada');
+  });
+
+  it('Filtro_por_estatus', () => {
+    respuestas.CS = () => pagina([
+      cot(1, { estatusCotizacion: 'EnProceso' }),
+      cot(2, { estatusCotizacion: 'EnviadaACliente' }),
+      cot(3, { informativa: true })
+    ]);
+    iniciar();
+
+    expect(q('[data-testid="tarjeta-1"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-2"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).not.toBeNull();
+
+    component.etapa = 'EnProceso';
+    component.ngOnChanges({ etapa: { currentValue: 'EnProceso', previousValue: 'todas', firstChange: false, isFirstChange: () => false } });
+    fixture.detectChanges();
+
+    expect(q('[data-testid="tarjeta-1"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-2"]')).toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).toBeNull();
+
+    component.etapa = 'informativa';
+    component.ngOnChanges({ etapa: { currentValue: 'informativa', previousValue: 'EnProceso', firstChange: false, isFirstChange: () => false } });
+    fixture.detectChanges();
+
+    expect(q('[data-testid="tarjeta-1"]')).toBeNull();
+    expect(q('[data-testid="tarjeta-2"]')).toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).not.toBeNull();
   });
 });
