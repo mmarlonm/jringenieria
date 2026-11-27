@@ -1,6 +1,9 @@
 <section *ngIf="tipo && id" class="proceso-comercial rounded-xl border border-gray-200 dark:border-gray-700 p-3" aria-label="Proceso comercial">
   <div class="flex items-center justify-between gap-2 mb-2">
-    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 m-0">Proceso</h3>
+    <div class="flex items-center gap-2">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 m-0">Proceso</h3>
+      <ng-content select="[accionProceso]"></ng-content>
+    </div>
     <span *ngIf="proceso" class="proceso-mensaje text-xs text-gray-600 dark:text-gray-300 text-right">{{ proceso.mensaje }}</span>
   </div>
 

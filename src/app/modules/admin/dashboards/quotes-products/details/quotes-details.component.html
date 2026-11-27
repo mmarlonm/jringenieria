@@ -6,12 +6,63 @@
         <span *ngIf="folio" class="text-gray-500 font-normal text-lg ml-2">{{ folio }} v{{ version || 1 }}</span>
         <span *ngIf="folioContpaq" data-testid="folio-contpaq-header" class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">CONTPAQ {{ folioContpaq }}</span>
       </h1>
-      <app-etapa-chip *ngIf="quotesId" [etapa]="etapa" class="etapa-chip-header"></app-etapa-chip>
+      <app-estatus-chip *ngIf="quotesId && !esInformativa" [estatus]="estatusSimple" class="estatus-chip-header"></app-estatus-chip>
+      <span *ngIf="quotesId && esInformativa" class="px-2 py-0.5 text-xs font-bold rounded uppercase bg-slate-200 text-slate-700">Informativa</span>
     </div>
 
-    <button mat-flat-button color="accent" (click)="openCotizacionPreview()">
-      <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
-    </button>
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Botones de transición de estatus -->
+      <ng-container *ngIf="quotesId && !esInformativa">
+        <!-- Desde EnProceso: Enviar a cliente -->
+        <button *ngIf="estatusSimple === 'EnProceso'"
+                mat-flat-button color="primary" type="button"
+                data-testid="btn-estatus-enviar"
+                [disabled]="cambiandoEstatus"
+                (click)="enviarACliente()">
+          <mat-icon class="mr-1">send</mat-icon>
+          Enviar a cliente
+        </button>
+
+        <!-- Desde EnviadaACliente: Aprobada, Rechazada, Regresar a En proceso -->
+        <ng-container *ngIf="estatusSimple === 'EnviadaACliente'">
+          <button mat-flat-button class="bg-emerald-600 text-white" type="button"
+                  data-testid="btn-estatus-aprobar"
+                [disabled]="cambiandoEstatus"
+                  (click)="aprobarPorCliente()">
+            <mat-icon class="mr-1">check</mat-icon>
+            Aprobada por cliente
+          </button>
+          <button mat-flat-button color="warn" type="button"
+                  data-testid="btn-estatus-rechazar"
+                [disabled]="cambiandoEstatus"
+                  (click)="abrirRechazoDialog()">
+            <mat-icon class="mr-1">close</mat-icon>
+            Rechazada
+          </button>
+          <button mat-stroked-button type="button"
+                  data-testid="btn-estatus-en-proceso"
+                [disabled]="cambiandoEstatus"
+                  (click)="regresarAEnProceso()">
+            <mat-icon class="mr-1">edit</mat-icon>
+            En proceso
+          </button>
+        </ng-container>
+
+        <!-- Desde Rechazada: Regresar a En proceso (reactivar) -->
+        <button *ngIf="estatusSimple === 'Rechazada'"
+                mat-stroked-button type="button"
+                data-testid="btn-estatus-reactivar"
+                [disabled]="cambiandoEstatus"
+                (click)="regresarAEnProceso()">
+          <mat-icon class="mr-1">replay</mat-icon>
+          Reactivar cotización
+        </button>
+      </ng-container>
+
+      <button mat-flat-button color="accent" (click)="openCotizacionPreview()">
+        <mat-icon>picture_as_pdf</mat-icon> Exportar PDF
+      </button>
+    </div>
   </div>
 
   <!-- Proceso: en que paso va (Lead -> Requerimiento -> Ingenieria / Cotizacion) -->
@@ -49,6 +100,31 @@
   <mat-tab-group animationDuration="0ms" [(selectedIndex)]="selectedTabIndex" class="h-full flex-1 overflow-hidden">
 
     <mat-tab label="Información General">
+      <div *ngIf="prospecto as prosp" data-testid="bloque-prospecto-lead" class="p-4 rounded-xl bg-purple-50/70 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 mb-4">
+        <div class="text-xs font-bold text-purple-900 dark:text-purple-200 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+          <mat-icon class="icon-size-4 text-purple-600">groups</mat-icon>
+          Prospecto (del lead)
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div>
+            <span class="text-slate-400 block mb-0.5">Empresa:</span>
+            <span data-testid="prospecto-empresa" class="font-semibold text-slate-800 dark:text-slate-100">{{ prosp.empresa || 'Sin empresa' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Contacto:</span>
+            <span data-testid="prospecto-contacto" class="font-semibold text-slate-800 dark:text-slate-100">{{ prosp.nombreContacto || 'Sin contacto' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Teléfono:</span>
+            <span data-testid="prospecto-telefono" class="font-medium text-slate-700 dark:text-slate-300">{{ prosp.telefono || 'Sin teléfono' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Correo:</span>
+            <span data-testid="prospecto-correo" class="font-medium text-slate-700 dark:text-slate-300">{{ prosp.email || 'Sin correo' }}</span>
+          </div>
+        </div>
+      </div>
+
       <form [formGroup]="quotesForm" class="flex flex-col gap-4 overflow-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Cliente -->
@@ -302,30 +378,6 @@
       </div>
     </mat-tab>
 
-    <!-- Pestaña Requerimiento -->
-    <mat-tab label="Requerimiento">
-      <app-requerimiento-sgc
-        [requerimiento]="requerimientoVinculado"
-        [soloLectura]="soloLectura"
-        (requerimientoChange)="onRequerimientoChange($event)"
-      ></app-requerimiento-sgc>
-    </mat-tab>
-
-    <!-- Pestaña Revisión -->
-    <mat-tab label="Revisión">
-      <div class="p-6">
-        <app-revision-sgc
-          [cotizacionId]="quotesId"
-          [etapa]="etapa"
-          [revisionesRequeridas]="revisionesRequeridas"
-          [revisionesVigentes]="revisionesVigentes"
-          [acciones]="acciones"
-          [catalogos]="catalogos"
-          (recargar)="loadQuotes(quotesId)"
-        ></app-revision-sgc>
-      </div>
-    </mat-tab>
-
     <!-- Pestaña Versiones -->
     <mat-tab label="Versiones">
       <div class="p-6">
@@ -360,14 +412,7 @@
       <mat-icon class="mr-1">lock</mat-icon>
       Cerrar cotización
     </button>
-    <button *ngIf="acciones.emitir" mat-raised-button color="accent" type="button" class="btn-registrar-envio" (click)="abrirEmisionDialog()">
-      <mat-icon class="mr-1">send</mat-icon>
-      Registrar envío
-    </button>
-    <button *ngIf="acciones.enviarRevision" mat-raised-button color="accent" type="button" [disabled]="enviandoRevision || guardando" (click)="enviarARevision()">
-      Enviar a revisión
-    </button>
-    <button *ngIf="acciones.editar" mat-raised-button color="primary" type="button" [disabled]="guardando || enviandoRevision" (click)="saveQuotes()">
+    <button *ngIf="acciones.editar && !soloLectura" mat-raised-button color="primary" type="button" [disabled]="guardando" (click)="saveQuotes()" data-testid="btn-guardar-cotizacion">
       Guardar
     </button>
     <button mat-button color="warn" type="button" (click)="router.navigate(['/dashboards/quote-products'])">

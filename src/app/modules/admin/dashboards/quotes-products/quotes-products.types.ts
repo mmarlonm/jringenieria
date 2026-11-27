@@ -8,6 +8,41 @@ export interface CatalogoItem {
 /** Tipos de cotización SGC: CS comercial simple, CT técnico-comercial, CE estratégica. */
 export type TipoCotizacionSgc = 'CS' | 'CT' | 'CE';
 
+export type EstatusCotizacionSimple = 'EnProceso' | 'EnviadaACliente' | 'AprobadaPorCliente' | 'Rechazada';
+
+export interface IniciarProcesoResultado {
+  leadId: number;
+  requerimientoId: number;
+  requerimientoFolio: string;
+  cotizacion: any;
+}
+
+export interface CotizacionKpiMonto {
+    moneda: string;
+    cotizado: number;
+    aprobado: number;
+}
+
+export interface CotizacionListadoKpis {
+    total: number;
+    informativas: number;
+    enProceso: number;
+    enviadas: number;
+    aprobadas: number;
+    rechazadas: number;
+    tasaConversionPorcentaje?: number | null;
+    seguimientoAtrasado: number;
+    montos: CotizacionKpiMonto[];
+}
+
+export interface ProspectoCotizacion {
+    leadId: number;
+    empresa?: string | null;
+    nombreContacto?: string | null;
+    telefono?: string | null;
+    email?: string | null;
+}
+
 /** Campos que el listado trae por cada cotización (contrato v1.1 §5). */
 export interface CotizacionListadoSgcCampos {
     /** `null` si la cotización solo viene de CONTPAQ y no tiene capa SGC. */
@@ -285,6 +320,10 @@ export interface RespuestaObtenerSgc {
     revisiones?: RevisionSgc[];
     acciones?: AccionesSgc;
     seguimiento?: ResumenSeguimiento | null;
+    estatusCotizacion?: EstatusCotizacionSimple | null;
+    motivoRechazo?: string | null;
+    comentarioRechazo?: string | null;
+    prospecto?: ProspectoCotizacion | null;
     /** Contrato v1.2: `true` ⇔ la cotización no tiene capa SGC (solo viene de CONTPAQ): se ve solo como consulta. Si no viene, es `false`. */
     informativa?: boolean;
 }
@@ -297,6 +336,10 @@ export interface ResumenSgc {
     total: number;
     moneda: string;
     etapa?: string;
+    estatusCotizacion?: EstatusCotizacionSimple | null;
+    motivoRechazo?: string | null;
+    comentarioRechazo?: string | null;
+    prospecto?: ProspectoCotizacion | null;
     fechaEmision?: string | Date | null;
     fechaVencimiento?: string | Date | null;
     creadoPorNombre?: string | null;
@@ -446,4 +489,43 @@ export interface CotizacionOrigen {
     cotizacionProductosId: number;
     requerimiento?: OrigenRequerimiento | null;
     lead?: OrigenLead | null;
+}
+
+export interface CotizacionArchivoDto {
+    id: number;
+    cotizacionProductosId: number;
+    version: number;
+    nombreOriginal: string;
+    rutaArchivo: string;
+    tamanoBytes: number;
+    extension: string;
+    comentario: string;
+    subidoPorUsuarioId: number;
+    subidoPorNombre: string;
+    fechaSubida: string;
+    esVigente: boolean;
+}
+
+export interface CotizacionIngenieriaArchivoDto {
+    id: number;
+    nombreArchivo: string;
+    revision: number;
+    version: number;
+    revisionAutorizada: boolean;
+    fechaSubida: string;
+}
+
+export interface CotizacionIngenieriaCasoDto {
+    idSeguimiento: number;
+    titulo: string;
+    empresa: string;
+    sucursalId?: number | null;
+    sucursalNombre?: string | null;
+    montoTotalEstimado?: number | null;
+    estatusEtapa5: number;
+    revision: number;
+    requerimientoFolio?: string | null;
+    cotizacionProductosId?: number | null;
+    primeraSubida?: string;
+    archivos: CotizacionIngenieriaArchivoDto[];
 }

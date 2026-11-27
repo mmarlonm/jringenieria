@@ -1,4 +1,154 @@
-﻿<div class="versiones-sgc-container space-y-4">
+<div class="versiones-sgc-container space-y-8">
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN: ARCHIVOS DE LA COTIZACIÓN (F5)   -->
+  <!-- ========================================== -->
+  <div class="seccion-archivos space-y-4">
+    <div>
+      <h3 class="text-base font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+        <mat-icon class="text-primary">attach_file</mat-icon>
+        Archivos de la cotización
+      </h3>
+      <p class="text-xs text-slate-500">Historial de archivos corregidos y versiones documentales subidas.</p>
+    </div>
+
+    <!-- Formulario Subir archivo corregido -->
+    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40 space-y-3">
+      <div class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+        <mat-icon class="icon-size-4 text-primary">upload_file</mat-icon>
+        Subir archivo corregido
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            Seleccionar archivo (PDF, DOCX, XLSX, imágenes)
+          </label>
+          <input
+            type="file"
+            data-testid="input-archivo-corregido"
+            class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:opacity-90 cursor-pointer"
+            (change)="onArchivoSeleccionado($event)"
+          />
+          <div *ngIf="archivoSeleccionado" class="mt-1 text-xs text-emerald-600 font-medium flex items-center gap-1">
+            <mat-icon class="text-sm">check_circle</mat-icon>
+            {{ archivoSeleccionado.name }} ({{ formatearTamano(archivoSeleccionado.size) }})
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            ¿Qué cambió? <span class="text-red-500">*</span> (10–1000 caracteres)
+          </label>
+          <textarea
+            [formControl]="comentarioArchivoControl"
+            data-testid="textarea-comentario-archivo"
+            rows="2"
+            class="w-full text-xs rounded-md border border-slate-300 dark:border-slate-700 p-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Describe qué se corrigió o ajustó en este archivo..."
+          ></textarea>
+          <div *ngIf="comentarioArchivoControl.touched && comentarioArchivoControl.errors" class="text-xs text-red-500 mt-0.5">
+            <span *ngIf="comentarioArchivoControl.errors['required']">El comentario es obligatorio.</span>
+            <span *ngIf="comentarioArchivoControl.errors['minlength']">El comentario debe tener al menos 10 caracteres (actual: {{ comentarioArchivoControl.value?.length || 0 }}).</span>
+            <span *ngIf="comentarioArchivoControl.errors['maxlength']">El comentario no puede exceder 1000 caracteres.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-1">
+        <button
+          mat-flat-button
+          color="primary"
+          class="btn-subir-archivo"
+          type="button"
+          data-testid="btn-subir-archivo"
+          [disabled]="!archivoSeleccionado || comentarioArchivoControl.invalid || subiendoArchivo"
+          (click)="subirArchivoCorregido()"
+        >
+          <mat-icon class="mr-1">cloud_upload</mat-icon>
+          {{ subiendoArchivo ? 'Subiendo...' : 'Subir archivo corregido' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicador de carga -->
+    <div *ngIf="cargandoArchivos" class="text-xs text-slate-400">
+      Cargando archivos...
+    </div>
+
+    <!-- Sin archivos -->
+    <div *ngIf="!cargandoArchivos && (!archivos || archivos.length === 0)" class="text-xs text-slate-400 italic">
+      No hay archivos corregidos registrados para esta cotización.
+    </div>
+
+    <!-- Tabla de archivos corregidos -->
+    <div *ngIf="archivos && archivos.length > 0" class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 tabla-archivos-cotizacion">
+      <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase font-medium">
+          <tr>
+            <th class="px-3 py-2.5">Versión</th>
+            <th class="px-3 py-2.5">Archivo</th>
+            <th class="px-3 py-2.5">Subido por</th>
+            <th class="px-3 py-2.5">Fecha</th>
+            <th class="px-3 py-2.5">¿Qué cambió?</th>
+            <th class="px-3 py-2.5">Tamaño</th>
+            <th class="px-3 py-2.5 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <tr
+            *ngFor="let a of archivos"
+            [class.bg-emerald-50]="a.esVigente"
+            class="fila-archivo hover:bg-slate-50 dark:hover:bg-slate-800/50"
+          >
+            <td class="px-3 py-2.5 font-bold">
+              <span class="inline-flex items-center gap-1.5">
+                v{{ a.version }}
+                <span
+                  *ngIf="a.esVigente"
+                  class="badge-vigente-archivo px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200"
+                >
+                  Vigente
+                </span>
+              </span>
+            </td>
+            <td class="px-3 py-2.5 font-medium text-slate-800 dark:text-slate-200">
+              <div class="flex items-center gap-1.5">
+                <mat-icon class="text-sm text-slate-400">description</mat-icon>
+                <span>{{ a.nombreOriginal }}</span>
+              </div>
+            </td>
+            <td class="px-3 py-2.5">{{ a.subidoPorNombre || '—' }}</td>
+            <td class="px-3 py-2.5">
+              {{ a.fechaSubida ? (a.fechaSubida | date:'dd/MM/yyyy HH:mm':'-0600') : '—' }}
+            </td>
+            <td class="px-3 py-2.5 max-w-xs break-words text-slate-700 dark:text-slate-300">
+              {{ a.comentario || '—' }}
+            </td>
+            <td class="px-3 py-2.5 font-mono text-slate-500">
+              {{ formatearTamano(a.tamanoBytes) }}
+            </td>
+            <td class="px-3 py-2.5 text-center">
+              <button
+                mat-stroked-button
+                class="btn-descargar-archivo !px-2 !py-1 text-xs"
+                (click)="descargar(a)"
+              >
+                <mat-icon class="mr-1 text-sm text-primary">download</mat-icon>
+                Descargar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr class="border-slate-200 dark:border-slate-800 my-6" />
+
+  <!-- ========================================== -->
+  <!-- SECCIÓN: INSTANTÁNEAS Y EMISIONES          -->
+  <!-- ========================================== -->
   <div class="flex items-center justify-between">
     <div>
       <h3 class="text-base font-semibold text-slate-800 dark:text-slate-100">Historial de versiones controladas</h3>

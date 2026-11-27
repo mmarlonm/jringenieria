@@ -23,20 +23,86 @@
     </div>
 
     <div class="space-y-3 overflow-y-auto min-h-0 flex-1">
+      <!-- Grupo «De Ingeniería (n)» solo en columna CT -->
+      <div *ngIf="col.tipo === 'CT' && casosIngenieriaVisibles.length > 0"
+           data-testid="grupo-ingenieria-tecnico-comercial"
+           class="mb-3 space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+          <span class="flex items-center gap-1">
+            <mat-icon class="icon-size-4 text-indigo-600">engineering</mat-icon>
+            De Ingeniería ({{ casosIngenieriaVisibles.length }})
+          </span>
+        </div>
+
+        <div *ngFor="let caso of casosIngenieriaVisibles"
+             [attr.data-testid]="'tarjeta-caso-ingenieria-' + caso.idSeguimiento"
+             class="relative group bg-white dark:bg-gray-800/60 p-3 rounded-xl border border-indigo-200 dark:border-indigo-900 shadow-sm pr-12">
+          <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+            <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-100 text-indigo-700 border border-indigo-200 uppercase"
+                  data-testid="chip-ingenieria">
+              Ingeniería #{{ caso.idSeguimiento }}
+            </span>
+            <span *ngIf="caso.estatusEtapa5 !== undefined"
+                  class="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-slate-100 text-slate-700 border border-slate-300">
+              Etapa 5: {{ nombreEstatusEtapa5(caso.estatusEtapa5) }}
+            </span>
+            <span *ngIf="caso.archivos?.length"
+                  class="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-slate-100 text-slate-600 flex items-center gap-0.5">
+              <mat-icon class="text-[12px]">attach_file</mat-icon> {{ caso.archivos.length }}
+            </span>
+          </div>
+
+          <h4 class="font-semibold text-xs leading-tight text-slate-800 dark:text-slate-100 mb-0.5"
+              data-testid="titulo-caso-ingenieria">
+            {{ caso.titulo }}
+          </h4>
+          <p class="text-xs text-slate-500 truncate" data-testid="empresa-caso-ingenieria">{{ caso.empresa }}</p>
+
+          <div class="flex items-center justify-between mt-2 pt-1 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <span class="font-bold tabular-nums text-slate-800 dark:text-slate-200">
+              {{ caso.montoTotalEstimado ? (caso.montoTotalEstimado | currency:'MXN':'symbol':'1.2-2') : '—' }}
+            </span>
+            <span *ngIf="caso.sucursalNombre" class="text-[10px] text-slate-400">
+              {{ caso.sucursalNombre }}
+            </span>
+          </div>
+
+          <div class="absolute top-2 right-2">
+            <button mat-icon-button type="button"
+                    [attr.data-testid]="'ver-caso-ingenieria-' + caso.idSeguimiento"
+                    matTooltip="Ver caso de ingeniería"
+                    class="text-slate-400 hover:text-primary"
+                    (click)="verCasoIngenieria(caso, $event)">
+              <mat-icon class="icon-size-4">visibility</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div *ngFor="let q of col.visibles; trackBy: trackPorId" class="relative group">
         <button type="button"
                 [attr.data-testid]="'tarjeta-' + q.cotizacionProductosId"
-                class="w-full text-left bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow pr-10"
+                class="w-full text-left bg-card dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow pr-20"
                 (click)="abrir.emit(q.cotizacionProductosId)">
-          <div class="flex items-center justify-between gap-2 mb-1 pr-6">
+          <div class="flex items-center flex-wrap gap-1.5 mb-1 pr-16" data-testid="encabezado-tarjeta">
             <span class="text-xs font-bold text-primary font-mono truncate">{{ textoFolio(q) }}</span>
             <span *ngIf="q.informativa" data-testid="etiqueta-informativa"
                   class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase bg-slate-100 text-slate-600 border border-slate-300">
               Informativa
             </span>
-            <app-etapa-chip *ngIf="q.etapa" [etapa]="q.etapa"></app-etapa-chip>
+            <app-estatus-chip *ngIf="obtenerEstatus(q)" [estatus]="obtenerEstatus(q)"></app-estatus-chip>
+            <span *ngIf="q.casoIngenieriaId" data-testid="chip-ingenieria-ligada"
+                  class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-100 text-indigo-700 border border-indigo-200 uppercase">
+              Ingeniería #{{ q.casoIngenieriaId }}
+            </span>
           </div>
-          <h4 class="font-semibold text-sm leading-tight">{{ q.nombreCliente || 'Sin cliente' }}</h4>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <h4 class="font-semibold text-sm leading-tight truncate" data-testid="titulo-tarjeta">{{ tituloCliente(q) }}</h4>
+            <span *ngIf="tieneLead(q)" data-testid="chip-lead"
+                  class="flex-none px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-100 text-purple-700 border border-purple-200 uppercase">
+              Lead
+            </span>
+          </div>
           <p *ngIf="q.unidadDeNegocio?.nombre" class="text-xs text-gray-400 mt-0.5 truncate">{{ q.unidadDeNegocio?.nombre }}</p>
           <div class="flex items-center justify-between mt-3">
             <span class="text-sm font-black tabular-nums">{{ (q.totalSgc ?? q.total) | currency:(q.moneda || 'MXN'):'symbol':'1.2-2' }}</span>
@@ -59,7 +125,7 @@
           </div>
         </button>
 
-        <div class="absolute top-2 right-2 flex items-center gap-0.5 z-10">
+        <div class="absolute top-2 right-2 flex items-center gap-0.5 z-10" data-testid="botones-accion-tarjeta">
           <button mat-icon-button type="button"
                   [attr.data-testid]="'ver-tarjeta-' + q.cotizacionProductosId"
                   matTooltip="Ver detalle"

@@ -21,9 +21,11 @@ import Swal from 'sweetalert2';
 import { HistorialComponent } from '../historial/historial.component';
 import { SendSurveyComponent } from '../send-survey/send-survey.component';
 import { EtapaChipComponent } from '../sgc/etapa-chip/etapa-chip.component';
+import { EstatusChipComponent } from '../sgc/estatus-chip/estatus-chip.component';
 import { QuotesBoardComponent } from './quotes-board/quotes-board.component';
 import { CotizacionDetalleDialogComponent } from '../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
-import { aplicarResumenSgc, tieneCapaSgc, puedeEliminarCotizacion } from './quotes-sgc-merge';
+import { CotizacionListadoKpis } from '../quotes-products.types';
+import { aplicarResumenSgc, tieneCapaSgc, puedeEliminarCotizacion, obtenerTituloCliente, tieneLead, obtenerEstatusCotizacion } from './quotes-sgc-merge';
 import moment from 'moment';
 
 export type VistaCotizaciones = 'tablero' | 'lista';
@@ -49,6 +51,7 @@ const CLAVE_VISTA = 'cotizaciones.vista';
     MatTooltipModule,
     MatButtonToggleModule,
     EtapaChipComponent,
+    EstatusChipComponent,
     QuotesBoardComponent
   ]
 })
@@ -83,18 +86,28 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   todasLasQuotesDePagina: any[] = [];
   filtroEtapa: string = 'todas';
   filtroMarcas: string = 'todas';
-  etapasFiltro: { codigo: string; nombre: string }[] = [
-    { codigo: 'Borrador', nombre: 'Borrador' },
-    { codigo: 'EnRevision', nombre: 'En revisión' },
-    { codigo: 'Aprobada', nombre: 'Aprobada' },
-    { codigo: 'Emitida', nombre: 'Emitida' },
-    { codigo: 'EnSeguimiento', nombre: 'En seguimiento' },
-    { codigo: 'Ganada', nombre: 'Ganada' },
-    { codigo: 'Perdida', nombre: 'Perdida' },
-    { codigo: 'Cancelada', nombre: 'Cancelada' },
-    { codigo: 'Vencida', nombre: 'Vencida' },
-    { codigo: 'CerradaSinRespuesta', nombre: 'Cerrada sin respuesta' }
+  estatusFiltro: { codigo: string; nombre: string }[] = [
+    { codigo: 'informativa', nombre: 'Informativas' },
+    { codigo: 'EnProceso', nombre: 'En proceso' },
+    { codigo: 'EnviadaACliente', nombre: 'Enviada a cliente' },
+    { codigo: 'AprobadaPorCliente', nombre: 'Aprobada por cliente' },
+    { codigo: 'Rechazada', nombre: 'Rechazada' }
   ];
+  get etapasFiltro() {
+    return this.estatusFiltro;
+  }
+
+  tituloCliente(quote: any): string {
+    return obtenerTituloCliente(quote);
+  }
+
+  tieneLead(quote: any): boolean {
+    return tieneLead(quote);
+  }
+
+  obtenerEstatus(quote: any): string | null {
+    return obtenerEstatusCotizacion(quote);
+  }
 
   // Paginación y Filtro de Fecha
   pageSize: number = 10;
@@ -105,6 +118,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   fechaDesde: string = moment().startOf('month').format('YYYY-MM-DD');
   fechaHasta: string = moment().format('YYYY-MM-DD');
   errorFechas: string | null = null;
+
+  readonly CLAVE_SUCURSAL = 'cotizaciones.unidadId';
+  unidadesDeNegocio: any[] = [];
+  unidadIdSeleccionada: number | null = null;
+  kpis: CotizacionListadoKpis | null = null;
 
   // Vista: tablero por tipo (Comercial / Técnico-comercial / Estratégica) o la lista de siempre. Se recuerda por navegador.
   vista: VistaCotizaciones = this.leerVistaGuardada();
@@ -142,12 +160,57 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.vistaActual = this.router.url;
+    const guardadaSucursal = localStorage.getItem(this.CLAVE_SUCURSAL);
+    this.unidadIdSeleccionada = guardadaSucursal ? Number(guardadaSucursal) : null;
+    this.cargarUnidades();
+    this.cargarKpis();
     // El tablero pide sus propias páginas; la lista solo se carga cuando se está viendo.
     if (this.vista === 'lista') {
       this.getQuotes();
     }
     this.getEstatus();
     this.obtenerPermisos();
+  }
+
+  cargarUnidades(): void {
+    this.quotesService.getUnidadesDeNegocio().subscribe({
+      next: (res: any) => {
+        this.unidadesDeNegocio = Array.isArray(res) ? res : (res?.data || []);
+        this._changeDetectorRef.markForCheck();
+      },
+      error: () => {
+        this.unidadesDeNegocio = [];
+      }
+    });
+  }
+
+  cargarKpis(): void {
+    this.quotesService.getKpis(this.fechaDesde || null, this.fechaHasta || null, this.unidadIdSeleccionada || null).subscribe({
+      next: (res: any) => {
+        this.kpis = res?.data ?? res;
+        this._changeDetectorRef.markForCheck();
+      },
+      error: () => {
+        this.kpis = null;
+        this._changeDetectorRef.markForCheck();
+      }
+    });
+  }
+
+  onSucursalChange(val: number | null): void {
+    this.unidadIdSeleccionada = val;
+    if (val !== null && val !== undefined) {
+      localStorage.setItem(this.CLAVE_SUCURSAL, val.toString());
+    } else {
+      localStorage.removeItem(this.CLAVE_SUCURSAL);
+    }
+    this.pageIndex = 0;
+    if (this.vista === 'lista') {
+      this.getQuotes();
+    }
+    this.cargarKpis();
+    this.tableroRefresco++;
+    this._changeDetectorRef.markForCheck();
   }
 
   ngAfterViewInit() {
@@ -166,9 +229,11 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Si llegan respuestas fuera de orden (se cambió la fecha mientras la anterior aún cargaba), solo vale la última
     const solicitud = ++this.solicitudListado;
-    this.quotesService
-      .getQuotesPorRango(this.pageIndex + 1, this.pageSize, this.fechaDesde || null, this.fechaHasta || null)
-      .subscribe({
+    const req$ = this.unidadIdSeleccionada != null
+      ? this.quotesService.getQuotesPorRango(this.pageIndex + 1, this.pageSize, this.fechaDesde || null, this.fechaHasta || null, null, this.unidadIdSeleccionada)
+      : this.quotesService.getQuotesPorRango(this.pageIndex + 1, this.pageSize, this.fechaDesde || null, this.fechaHasta || null);
+
+    req$.subscribe({
         next: (res: any) => {
           if (solicitud !== this.solicitudListado) {
             return;
@@ -278,6 +343,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
         // El tablero se recarga solo al cambiar estas fechas (ya validadas).
         this.boardDesde = this.fechaDesde;
         this.boardHasta = this.fechaHasta;
+        this.cargarKpis();
       }
       if (this.vista === 'lista') {
         this.getQuotes();
@@ -466,7 +532,14 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     let filtradas = [...this.todasLasQuotesDePagina];
 
     if (this.filtroEtapa && this.filtroEtapa !== 'todas') {
-      filtradas = filtradas.filter((q) => q.etapa === this.filtroEtapa);
+      if (this.filtroEtapa === 'informativa') {
+        filtradas = filtradas.filter((q) => !!q.informativa);
+      } else {
+        filtradas = filtradas.filter((q) => {
+          const est = this.obtenerEstatus(q);
+          return est === this.filtroEtapa || q.etapa === this.filtroEtapa;
+        });
+      }
     }
 
     if (this.filtroMarcas === 'vencidas') {
@@ -653,7 +726,7 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   verDetalle(quote: any): void {
-    this.dialog.open(CotizacionDetalleDialogComponent, {
+    const dialogRef = this.dialog.open(CotizacionDetalleDialogComponent, {
       width: '900px',
       maxWidth: '95vw',
       maxHeight: '90vh',
@@ -661,6 +734,13 @@ export class QuoteListComponent implements OnInit, AfterViewInit, OnDestroy {
         cotizacionProductosId: quote.cotizacionProductosId,
         informativa: quote.informativa ?? !this.tieneRegistroSgc(quote),
         unidadNombre: quote.unidadDeNegocio?.nombre || quote.unidadDeNegocioNombre || null
+      }
+    });
+    dialogRef?.afterClosed?.().subscribe((res) => {
+      if (res?.recargar) {
+        this.getQuotes();
+        this.cargarKpis();
+        this.tableroRefresco++;
       }
     });
   }

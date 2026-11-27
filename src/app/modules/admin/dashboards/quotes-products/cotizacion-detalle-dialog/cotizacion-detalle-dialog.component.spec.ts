@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
+import Swal from 'sweetalert2';
+import { ProcesoComercialService } from 'app/shared/proceso-comercial/proceso-comercial.service';
 import { QuotesService } from '../quotes-products.service';
 import { CotizacionOrigen, RespuestaObtenerSgc } from '../quotes-products.types';
 import { CotizacionDetalleDialogComponent } from './cotizacion-detalle-dialog.component';
@@ -13,6 +15,7 @@ describe('CotizacionDetalleDialogComponent', () => {
   let quotesService: jasmine.SpyObj<QuotesService>;
   let dialogRef: jasmine.SpyObj<MatDialogRef<CotizacionDetalleDialogComponent>>;
   let router: jasmine.SpyObj<Router>;
+  let mockProcesoService: { obtener: jasmine.Spy };
 
   const mockCabecera = {
     code: 200,
@@ -135,14 +138,23 @@ describe('CotizacionDetalleDialogComponent', () => {
     }
   };
 
+  beforeEach(() => {
+    mockProcesoService = {
+      obtener: jasmine.createSpy('obtener').and.returnValue(of(null))
+    };
+  });
+
   function crearComponente(data: any = { cotizacionProductosId: 311, unidadNombre: 'Querétaro' }): void {
-    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen', 'iniciarProceso', 'getIngenieriaTecnicoComercial', 'descargarArchivoIngenieria']);
     dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
     router = jasmine.createSpyObj('Router', ['navigate']);
 
     quotesService.getQuoteById.and.returnValue(of(mockCabecera));
     quotesService.obtenerSgc.and.returnValue(of(mockSgc));
     quotesService.origen.and.returnValue(of(mockOrigen));
+    quotesService.iniciarProceso.and.returnValue(of({ leadId: 1, requerimientoId: 1, requerimientoFolio: 'REQ-1', cotizacion: {} }));
+    quotesService.getIngenieriaTecnicoComercial.and.returnValue(of([]));
+    quotesService.descargarArchivoIngenieria.and.returnValue(of(new Blob(['test'], { type: 'application/pdf' })));
 
     TestBed.configureTestingModule({
       imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
@@ -150,7 +162,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: data },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -184,7 +197,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -212,7 +226,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -276,7 +291,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -307,7 +323,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -357,7 +374,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -415,7 +433,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 400, informativa: true } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -461,7 +480,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -502,7 +522,8 @@ describe('CotizacionDetalleDialogComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: QuotesService, useValue: quotesService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
       ]
     });
 
@@ -512,5 +533,205 @@ describe('CotizacionDetalleDialogComponent', () => {
 
     expect(q('folio-cotizacion')?.textContent?.trim()).toBe('Sin folio');
     expect(q('btn-agregar-folio')).toBeNull();
+  });
+
+  it('Detalle_muestra_Prospecto_del_lead', () => {
+    const sgcConProspecto: RespuestaObtenerSgc = {
+      ...mockSgc,
+      prospecto: {
+        leadId: 77,
+        empresa: 'Industrias Alfa',
+        nombreContacto: 'Carlos Perez',
+        telefono: '4421112233',
+        email: 'cperez@alfa.test'
+      }
+    };
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
+    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    router = jasmine.createSpyObj('Router', ['navigate']);
+    quotesService.getQuoteById.and.returnValue(of(mockCabecera));
+    quotesService.obtenerSgc.and.returnValue(of(sgcConProspecto));
+    quotesService.origen.and.returnValue(of(mockOrigen));
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: QuotesService, useValue: quotesService },
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
+      ]
+    });
+
+    fixture = TestBed.createComponent(CotizacionDetalleDialogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Prospecto');
+    expect(q('prospecto-empresa')?.textContent?.trim()).toBe('Industrias Alfa');
+    expect(q('prospecto-contacto')?.textContent?.trim()).toBe('Carlos Perez');
+    expect(q('prospecto-telefono')?.textContent?.trim()).toBe('4421112233');
+    expect(q('prospecto-correo')?.textContent?.trim()).toBe('cperez@alfa.test');
+    expect(q('aviso-sin-lead')).toBeNull();
+  });
+
+  it('Sin_lead_muestra_Cliente_CONTPAQ', () => {
+    const sgcSinLead: RespuestaObtenerSgc = {
+      ...mockSgc,
+      prospecto: null
+    };
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
+    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    router = jasmine.createSpyObj('Router', ['navigate']);
+    quotesService.getQuoteById.and.returnValue(of(mockCabecera));
+    quotesService.obtenerSgc.and.returnValue(of(sgcSinLead));
+    quotesService.origen.and.returnValue(of({ cotizacionProductosId: 311, requerimiento: null, lead: null }));
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: QuotesService, useValue: quotesService },
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
+      ]
+    });
+
+    fixture = TestBed.createComponent(CotizacionDetalleDialogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Cliente (CONTPAQ)');
+    expect(q('aviso-sin-lead')).not.toBeNull();
+    expect(q('aviso-sin-lead')?.textContent?.trim()).toBe('Sin lead');
+    expect(fixture.nativeElement.textContent).toContain('Cliente Ficticio');
+  });
+
+  it('Detalle_muestra_estatus_y_motivo_de_rechazo', () => {
+    const sgcRechazada: RespuestaObtenerSgc = {
+      ...mockSgc,
+      estatusCotizacion: 'Rechazada',
+      motivoRechazo: 'Precio',
+      comentarioRechazo: 'El cliente consideró el costo fuera de su presupuesto'
+    };
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen']);
+    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    router = jasmine.createSpyObj('Router', ['navigate']);
+    quotesService.getQuoteById.and.returnValue(of(mockCabecera));
+    quotesService.obtenerSgc.and.returnValue(of(sgcRechazada));
+    quotesService.origen.and.returnValue(of(mockOrigen));
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
+      providers: [
+        { provide: MAT_DIALOG_DATA, useValue: { cotizacionProductosId: 311 } },
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: QuotesService, useValue: quotesService },
+        { provide: Router, useValue: router },
+        { provide: ProcesoComercialService, useValue: mockProcesoService }
+      ]
+    });
+
+    fixture = TestBed.createComponent(CotizacionDetalleDialogComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Rechazada');
+    expect(q('detalle-motivo-rechazo')).not.toBeNull();
+    expect(q('motivo-rechazo')?.textContent?.trim()).toBe('Precio');
+    expect(q('comentario-rechazo')?.textContent?.trim()).toBe('El cliente consideró el costo fuera de su presupuesto');
+  });
+
+  it('Boton_iniciar_proceso_solo_en_informativas', () => {
+    // Caso 1: Con capa SGC (no informativa) -> botón NO existe
+    crearComponente({ cotizacionProductosId: 311, informativa: false });
+    expect(q('btn-iniciar-proceso')).toBeNull();
+
+    // Caso 2: Informativa -> botón SÍ existe
+    TestBed.resetTestingModule();
+    crearComponente({ cotizacionProductosId: 311, informativa: true });
+    expect(q('btn-iniciar-proceso')).not.toBeNull();
+  });
+
+  it('Iniciar_proceso_confirma_llama_y_recarga', async () => {
+    crearComponente({ cotizacionProductosId: 311, informativa: true });
+    expect(q('btn-iniciar-proceso')).not.toBeNull();
+
+    const swalSpy = spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
+    quotesService.iniciarProceso.and.returnValue(of({
+      leadId: 10,
+      requerimientoId: 20,
+      requerimientoFolio: 'REQ-2026-0042',
+      cotizacion: {}
+    }));
+
+    (q('btn-iniciar-proceso') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(swalSpy).toHaveBeenCalled();
+    expect(quotesService.iniciarProceso).toHaveBeenCalledWith(311);
+    expect(quotesService.getQuoteById).toHaveBeenCalled();
+    expect(component.procesoIniciado).toBeTrue();
+    expect(component.esInformativa).toBeFalse();
+  });
+
+  it('Error_409_muestra_el_mensaje_del_API', async () => {
+    crearComponente({ cotizacionProductosId: 311, informativa: true });
+
+    const swalSpy = spyOn(Swal, 'fire').and.callFake((opts: any) => {
+      if (opts.title === '¿Iniciar proceso desde lead?') {
+        return Promise.resolve({ isConfirmed: true } as any);
+      }
+      return Promise.resolve({ isConfirmed: false } as any);
+    });
+
+    quotesService.iniciarProceso.and.returnValue(throwError(() => ({
+      status: 409,
+      error: { mensaje: 'La cotización ya cuenta con un proceso iniciado.' }
+    })));
+
+    (q('btn-iniciar-proceso') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(quotesService.iniciarProceso).toHaveBeenCalledWith(311);
+    expect(swalSpy).toHaveBeenCalledWith(jasmine.objectContaining({
+      icon: 'error',
+      text: 'La cotización ya cuenta con un proceso iniciado.'
+    }));
+  });
+
+  it('Cotizacion_ligada_muestra_seccion_Ingenieria_con_sus_archivos', () => {
+    crearComponente();
+    quotesService.getIngenieriaTecnicoComercial.and.returnValue(of([
+      {
+        idSeguimiento: 46,
+        cotizacionProductosId: 311,
+        titulo: 'Proyecto Automatización',
+        montoTotalEstimado: 250000,
+        archivos: [
+          { id: 1, nombreArchivo: 'Cotizacion_Ingenieria.xlsx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' }
+        ]
+      }
+    ]));
+    component.cargarDatos();
+    fixture.detectChanges();
+
+    const seccion = fixture.nativeElement.querySelector('[data-testid="seccion-ingenieria-tecnico-comercial"]');
+    expect(seccion).not.toBeNull();
+    expect(seccion.textContent).toContain('Ingeniería (cotización técnico-comercial) #46');
+    expect(seccion.textContent).toContain('Cotizacion_Ingenieria.xlsx');
+    expect(seccion.textContent).toContain('Sin autorizar');
+
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:fake');
+    spyOn(window.URL, 'revokeObjectURL');
+    const btnDescarga = seccion.querySelector('.btn-descargar-archivo-ingenieria') as HTMLButtonElement;
+    expect(btnDescarga).not.toBeNull();
+    btnDescarga.click();
+    expect(quotesService.descargarArchivoIngenieria).toHaveBeenCalledWith(46, 1);
   });
 });

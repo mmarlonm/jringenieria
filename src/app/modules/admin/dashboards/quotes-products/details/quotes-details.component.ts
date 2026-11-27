@@ -41,12 +41,11 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { CondicionesSgcComponent } from "../sgc/condiciones-sgc/condiciones-sgc.component";
 import { PartidasSgcComponent } from "../sgc/partidas-sgc/partidas-sgc.component";
 import { AlcanceSgcComponent } from "../sgc/alcance-sgc/alcance-sgc.component";
-import { EtapaChipComponent, nombreEtapa } from "../sgc/etapa-chip/etapa-chip.component";
-import { RequerimientoSgcComponent } from "../sgc/requerimiento-sgc/requerimiento-sgc.component";
-import { RevisionSgcComponent } from "../sgc/revision-sgc/revision-sgc.component";
+import { EtapaChipComponent } from "../sgc/etapa-chip/etapa-chip.component";
+import { EstatusChipComponent } from "../sgc/estatus-chip/estatus-chip.component";
 import { VersionesSgcComponent } from "../sgc/versiones-sgc/versiones-sgc.component";
 import { SeguimientoSgcComponent } from "../sgc/seguimiento-sgc/seguimiento-sgc.component";
-import { EmisionDialogComponent } from "../sgc/emision-dialog/emision-dialog.component";
+import { RechazoDialogComponent, RechazoDialogResultado } from "../sgc/rechazo-dialog/rechazo-dialog.component";
 import { CierreDialogComponent, CierreDialogResultado, MOTIVOS_CIERRE_DEFECTO, TIPOS_EVIDENCIA_DEFECTO } from "../sgc/cierre-dialog/cierre-dialog.component";
 import Swal from 'sweetalert2';
 import {
@@ -61,9 +60,12 @@ import {
   RequerimientoResumen,
   ResumenSeguimiento,
   RevisionSgc,
-  TotalesSgc
+  TotalesSgc,
+  ProspectoCotizacion,
+  EstatusCotizacionSimple
 } from "../quotes-products.types";
 import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
+import { mapearEtapaAEstatus } from "../list/quotes-sgc-merge";
 
 @Component({
   selector: "app-quotes-details",
@@ -90,8 +92,7 @@ import { totalesSgc } from "../sgc/cotizacion-sgc.utils";
     PartidasSgcComponent,
     AlcanceSgcComponent,
     EtapaChipComponent,
-    RequerimientoSgcComponent,
-    RevisionSgcComponent,
+    EstatusChipComponent,
     VersionesSgcComponent,
     SeguimientoSgcComponent,
     ProcesoComercialComponent,
@@ -150,6 +151,8 @@ export class QuoteDetailsComponent implements OnInit {
   revisionesVigentes: RevisionSgc[] = [];
   revisionesRequeridas: string[] = [];
   soloLectura: boolean = false;
+  /** Evita dobles clics mientras el API responde un cambio de estatus. */
+  cambiandoEstatus: boolean = false;
   /** Cotización que solo viene de CONTPAQ (sin capa SGC): solo consulta, sin flujo. Lo dice el API (contrato v1.2). */
   esInformativa: boolean = false;
   requerimientoVinculado: RequerimientoResumen | null = null;
@@ -172,6 +175,30 @@ export class QuoteDetailsComponent implements OnInit {
   sgcVista: CotizacionSgcVista | null = null;
   seguimiento: ResumenSeguimiento | null = null;
 
+  prospecto: ProspectoCotizacion | null = null;
+  estatusCotizacion: EstatusCotizacionSimple | null = null;
+  motivoRechazo: string | null = null;
+  comentarioRechazo: string | null = null;
+
+  get estatusSimple(): EstatusCotizacionSimple | null {
+    if (this.esInformativa) {
+      return null;
+    }
+    return this.estatusCotizacion || (mapearEtapaAEstatus(this.etapa) as EstatusCotizacionSimple) || 'EnProceso';
+  }
+
+  get nombreEstatusActual(): string {
+    const est = this.estatusSimple;
+    if (!est) return 'Informativa';
+    const mapa: Record<string, string> = {
+      EnProceso: 'En proceso',
+      EnviadaACliente: 'Enviada a cliente',
+      AprobadaPorCliente: 'Aprobada por cliente',
+      Rechazada: 'Rechazada'
+    };
+    return mapa[est] || est;
+  }
+
   get etapaEsEmitidaOCerrada(): boolean {
     return ['Emitida', 'EnSeguimiento', 'Ganada', 'Perdida', 'Cancelada', 'Vencida', 'CerradaSinRespuesta'].includes(this.etapa);
   }
@@ -181,7 +208,7 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   get mensajeFranjaSoloLectura(): string {
-    return `Esta cotización está «${nombreEtapa(this.etapa)}» (v${this.version || 1}) y no se puede editar.`;
+    return `Esta cotización está «${this.nombreEstatusActual}» (v${this.version || 1}) y no se puede editar.`;
   }
 
   constructor(
@@ -342,6 +369,7 @@ export class QuoteDetailsComponent implements OnInit {
   }
 
   loadQuotes(id: number): void {
+    this.quotesId = id;
     this.quotesService.obtenerSgc(id).subscribe({
       next: (sgcRes) => {
         if (!sgcRes) {
@@ -388,6 +416,11 @@ export class QuoteDetailsComponent implements OnInit {
         this.folioContpaq = sgcRes.cotizacion?.folioContpaq || null;
         this.seguimiento = sgcRes.seguimiento || null;
 
+        this.prospecto = sgcRes.prospecto || null;
+        this.estatusCotizacion = sgcRes.estatusCotizacion || null;
+        this.motivoRechazo = sgcRes.motivoRechazo || null;
+        this.comentarioRechazo = sgcRes.comentarioRechazo || null;
+
         this.acciones = sgcRes.acciones || {
           editar: true,
           enviarRevision: false,
@@ -421,9 +454,42 @@ export class QuoteDetailsComponent implements OnInit {
           });
         }
 
+        if (this.prospecto) {
+          this.quotesForm.get('clienteId')?.clearValidators();
+          this.quotesForm.get('clienteId')?.updateValueAndValidity({ emitEvent: false });
+
+          const p = this.prospecto;
+          if (!this.sgcForm.get('contactoNombre')?.value && p.nombreContacto) {
+            this.sgcForm.get('contactoNombre')?.setValue(p.nombreContacto);
+          }
+          if (!this.sgcForm.get('contactoCorreo')?.value && p.email) {
+            this.sgcForm.get('contactoCorreo')?.setValue(p.email);
+          }
+          if (!this.sgcForm.get('contactoTelefono')?.value && p.telefono) {
+            this.sgcForm.get('contactoTelefono')?.setValue(p.telefono);
+          }
+
+          if (!this.quotesForm.get('nombreCliente')?.value && p.nombreContacto) {
+            this.quotesForm.get('nombreCliente')?.setValue(p.nombreContacto);
+          }
+          if (!this.quotesForm.get('nombreEmpresa')?.value && p.empresa) {
+            this.quotesForm.get('nombreEmpresa')?.setValue(p.empresa);
+          }
+          if (!this.quotesForm.get('telefono')?.value && p.telefono) {
+            this.quotesForm.get('telefono')?.setValue(p.telefono);
+          }
+          if (!this.quotesForm.get('correo')?.value && p.email) {
+            this.quotesForm.get('correo')?.setValue(p.email);
+          }
+        } else {
+          this.quotesForm.get('clienteId')?.setValidators(Validators.required);
+          this.quotesForm.get('clienteId')?.updateValueAndValidity({ emitEvent: false });
+        }
+
         this.esInformativa = sgcRes.informativa === true;
 
-        if (!this.acciones.editar || this.esInformativa) {
+        const editablePorEstatus = this.estatusSimple === 'EnProceso' || (!this.quotesId && !this.esInformativa);
+        if (!this.acciones.editar || this.esInformativa || !editablePorEstatus) {
           this.soloLectura = true;
           this.quotesForm.disable({ emitEvent: false });
           this.sgcForm.disable({ emitEvent: false });
@@ -543,94 +609,107 @@ export class QuoteDetailsComponent implements OnInit {
     });
   }
 
-  async enviarARevision(): Promise<void> {
-    if (this.enviandoRevision) {
-      return;
-    }
-
-    this.enviandoRevision = true;
-
-    const confirmacion = await Swal.fire({
-      title: '¿Enviar a revisión?',
-      text: 'Esta cotización pasará al equipo de revisión y no se podrá modificar.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, enviar',
-      cancelButtonText: 'Cancelar',
-    });
-
-    if (!confirmacion?.isConfirmed) {
-      this.enviandoRevision = false;
-      return;
-    }
-
-    this.erroresGuardado = [];
-
-    const hayCambios = this.quotesForm.dirty || this.sgcForm.dirty || (this.partidasFormArray && this.partidasFormArray.dirty);
-
-    const llamarEnviar = () => {
-      const id = this.quotesId || this.quotesForm.get('cotizacionProductosId')?.value || 0;
-      this.quotesService.enviarRevision(id).subscribe({
-        next: () => {
-          this.enviandoRevision = false;
-          this._chatNotificationService.showSuccess('Éxito', 'Cotización enviada a revisión.', 3000);
-          this.loadQuotes(id);
-        },
-        error: (err) => {
-          this.enviandoRevision = false;
-          if (err.status === 400 && err.error?.errores?.length > 0) {
-            this.erroresGuardado = err.error.errores;
-          } else {
-            const msg = err.error?.mensaje || 'No se pudo enviar la cotización a revisión.';
-            this.erroresGuardado = [msg];
-            this._chatNotificationService.showError('Opps', msg, 5000);
-          }
-        },
-      });
-    };
-
-    if (hayCambios) {
-      const dto = this.armarDtoGuardar();
-      this.quotesService.guardarSgc(dto).subscribe({
-        next: (res) => {
-          const id = this.quotesId || res?.data?.cotizacionProductosId || 0;
-          this.quotesId = id;
-          this.quotesForm.markAsPristine();
-          this.sgcForm.markAsPristine();
-          if (this.partidasFormArray) this.partidasFormArray.markAsPristine();
-          llamarEnviar();
-        },
-        error: (err) => {
-          this.enviandoRevision = false;
-          if (err.status === 400 && err.error?.errores?.length > 0) {
-            this.erroresGuardado = err.error.errores;
-          } else {
-            const msg = err.error?.mensaje || 'No se pudo guardar la cotización antes de enviar a revisión.';
-            this.erroresGuardado = [msg];
-            this._chatNotificationService.showError('Opps', msg, 5000);
-          }
-        },
-      });
-    } else {
-      llamarEnviar();
-    }
+  /** Cambios del usuario desde que se cargó (guardar regresa a la lista, así que no hay «guardado pero sucio»). */
+  get hayCambiosSinGuardar(): boolean {
+    return !!(this.quotesForm?.dirty || this.sgcForm?.dirty || this.partidasFormArray?.dirty);
   }
 
-  abrirEmisionDialog(): void {
-    const dialogRef = this.dialog.open(EmisionDialogComponent, {
-      width: '36rem',
+  enviarACliente(): void {
+    if (!this.quotesId || this.cambiandoEstatus) return;
+    if (this.hayCambiosSinGuardar) {
+      // La instantánea de la versión se toma de lo guardado: enviar ahora perdería lo editado.
+      this._chatNotificationService.showError('Opps', 'Guarda los cambios antes de enviar la cotización al cliente.', 5000);
+      return;
+    }
+    this.cambiandoEstatus = true;
+    this.quotesService.cambiarEstatusSgc(this.quotesId, { estatus: 'EnviadaACliente' }).subscribe({
+      next: () => {
+        this.cambiandoEstatus = false;
+        this._chatNotificationService.showSuccess('Éxito', 'La cotización fue marcada como enviada a cliente.', 3000);
+        this.loadQuotes(this.quotesId!);
+      },
+      error: (err) => {
+        this.cambiandoEstatus = false;
+        const msg = err?.error?.mensaje || 'No se pudo enviar la cotización a cliente.';
+        this._chatNotificationService.showError('Opps', msg, 5000);
+      }
+    });
+  }
+
+  async aprobarPorCliente(): Promise<void> {
+    if (!this.quotesId || this.cambiandoEstatus) return;
+    // «Aprobada por cliente» no tiene vuelta atrás: se confirma.
+    const confirmacion = await Swal.fire({
+      title: '¿El cliente aprobó la cotización?',
+      text: 'Quedará como «Aprobada por cliente» y ya no se podrá cambiar su estatus.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, aprobada',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!confirmacion.isConfirmed) return;
+    this.cambiandoEstatus = true;
+    this.quotesService.cambiarEstatusSgc(this.quotesId, { estatus: 'AprobadaPorCliente' }).subscribe({
+      next: () => {
+        this.cambiandoEstatus = false;
+        this._chatNotificationService.showSuccess('Éxito', 'La cotización fue marcada como aprobada por cliente.', 3000);
+        this.loadQuotes(this.quotesId!);
+      },
+      error: (err) => {
+        this.cambiandoEstatus = false;
+        const msg = err?.error?.mensaje || 'No se pudo aprobar la cotización.';
+        this._chatNotificationService.showError('Opps', msg, 5000);
+      }
+    });
+  }
+
+  regresarAEnProceso(): void {
+    if (!this.quotesId || this.cambiandoEstatus) return;
+    this.cambiandoEstatus = true;
+    this.quotesService.cambiarEstatusSgc(this.quotesId, { estatus: 'EnProceso' }).subscribe({
+      next: () => {
+        this.cambiandoEstatus = false;
+        this._chatNotificationService.showSuccess('Éxito', 'La cotización regresó a En proceso.', 3000);
+        this.loadQuotes(this.quotesId!);
+      },
+      error: (err) => {
+        this.cambiandoEstatus = false;
+        const msg = err?.error?.mensaje || 'No se pudo cambiar el estatus.';
+        this._chatNotificationService.showError('Opps', msg, 5000);
+      }
+    });
+  }
+
+  abrirRechazoDialog(): void {
+    if (!this.quotesId || this.cambiandoEstatus) return;
+    const dialogRef = this.dialog.open(RechazoDialogComponent, {
+      width: '480px',
       maxWidth: '95vw',
       data: {
         cotizacionId: this.quotesId,
-        clienteReceptorPorDefecto: this.quotesForm.get('contacto')?.value || this.quotesForm.get('nombreCliente')?.value || '',
-        correoPorDefecto: this.quotesForm.get('correo')?.value || '',
-        catalogos: this.catalogos,
-      },
+        catalogos: this.catalogos
+      }
     });
 
-    dialogRef.afterClosed().subscribe((res) => {
-      if (res && res.guardado) {
-        this.loadQuotes(this.quotesId);
+    dialogRef.afterClosed().subscribe((res: RechazoDialogResultado | undefined) => {
+      if (res?.motivo) {
+        this.cambiandoEstatus = true;
+        this.quotesService.cambiarEstatusSgc(this.quotesId!, {
+          estatus: 'Rechazada',
+          motivo: res.motivo,
+          comentario: res.comentario
+        }).subscribe({
+          next: () => {
+            this.cambiandoEstatus = false;
+            this._chatNotificationService.showSuccess('Éxito', 'La cotización fue marcada como rechazada.', 3000);
+            this.loadQuotes(this.quotesId!);
+          },
+          error: (err) => {
+            this.cambiandoEstatus = false;
+            const msg = err?.error?.mensaje || 'No se pudo rechazar la cotización.';
+            this._chatNotificationService.showError('Opps', msg, 5000);
+          }
+        });
       }
     });
   }

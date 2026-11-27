@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { QuotesService } from '../../quotes-products.service';
 import { TipoCotizacionSgc } from '../../quotes-products.types';
 import { CotizacionDetalleDialogComponent } from '../../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
+import { IngenieriaCasoDialogComponent } from '../../dialogs/ingenieria-caso-dialog/ingenieria-caso-dialog.component';
 import { QuotesBoardComponent } from './quotes-board.component';
 
 function cot(id: number, over: any = {}): any {
@@ -24,6 +26,8 @@ describe('QuotesBoardComponent', () => {
   let component: QuotesBoardComponent;
   let listado: jasmine.Spy;
   let resumen: jasmine.Spy;
+  let ingenieria: jasmine.Spy;
+  let descargarIng: jasmine.Spy;
   let mockDialog: any;
   let respuestas: Partial<Record<TipoCotizacionSgc, (page: number) => Observable<any>>>;
 
@@ -40,11 +44,21 @@ describe('QuotesBoardComponent', () => {
       (page: number, _size: number, _d: any, _h: any, tipo: TipoCotizacionSgc) => respuestas[tipo]!(page)
     );
     resumen = jasmine.createSpy('resumenSgc').and.returnValue(of([]));
+    ingenieria = jasmine.createSpy('getIngenieriaTecnicoComercial').and.returnValue(of([]));
+    descargarIng = jasmine.createSpy('descargarArchivoIngenieria').and.returnValue(of(new Blob(['test'], { type: 'application/pdf' })));
 
     TestBed.configureTestingModule({
-      imports: [QuotesBoardComponent, NoopAnimationsModule, MatIconTestingModule],
+      imports: [QuotesBoardComponent, NoopAnimationsModule, MatIconTestingModule, HttpClientTestingModule],
       providers: [
-        { provide: QuotesService, useValue: { getQuotesPorRango: listado, resumenSgc: resumen } },
+        {
+          provide: QuotesService,
+          useValue: {
+            getQuotesPorRango: listado,
+            resumenSgc: resumen,
+            getIngenieriaTecnicoComercial: ingenieria,
+            descargarArchivoIngenieria: descargarIng
+          }
+        },
         { provide: MatDialog, useValue: mockDialog }
       ]
     });
@@ -99,7 +113,7 @@ describe('QuotesBoardComponent', () => {
     expect(t.textContent).toContain('COT-2026-0002');
     expect(t.textContent).toContain('Cliente 2');
     expect(t.textContent).toContain('$500.00');
-    expect(t.textContent).toContain('En seguimiento');
+    expect(t.textContent).toContain('Enviada a cliente');
     expect(t.textContent).toContain('REQ-2026-0057');
     expect(t.textContent).toContain('Seguimiento atrasado');
   });
@@ -387,5 +401,240 @@ describe('QuotesBoardComponent', () => {
 
     expect(q('[data-testid="tarjeta-2"]')).not.toBeNull();
     expect(q('[data-testid="tarjeta-3"]')).toBeNull();
+  });
+
+  it('Botones_de_la_tarjeta_no_se_enciman_con_el_chip', () => {
+    component.permisoEliminar = true;
+    respuestas.CS = () => pagina([cot(2, { etapa: 'Borrador', version: 1 })]);
+    iniciar();
+
+    const tarjeta = q('[data-testid="tarjeta-2"]');
+    const encabezado = q('[data-testid="encabezado-tarjeta"]');
+    const botones = q('[data-testid="botones-accion-tarjeta"]');
+
+    expect(tarjeta).not.toBeNull();
+    expect(encabezado).not.toBeNull();
+    expect(botones).not.toBeNull();
+    expect(tarjeta?.className).toContain('pr-20');
+    expect(encabezado?.className).toContain('pr-16');
+  });
+
+  it('Titulo_de_la_tarjeta_es_el_prospecto_del_lead', () => {
+    respuestas.CS = () => pagina([cot(2, { nombreCliente: 'MOSTRADOR' })]);
+    resumen.and.returnValue(of([{
+      cotizacionProductosId: 2,
+      folio: 'COT-2026-0002',
+      tipo: 'CS',
+      version: 1,
+      total: 1000,
+      estatusCotizacion: 'EnProceso',
+      prospecto: {
+        leadId: 55,
+        empresa: 'Industrias Alfa',
+        nombreContacto: 'Ing. Perez'
+      }
+    }]));
+    iniciar();
+
+    const tarjeta = q('[data-testid="tarjeta-2"]');
+    const titulo = q('[data-testid="titulo-tarjeta"]');
+    const chipLead = q('[data-testid="chip-lead"]');
+
+    expect(titulo?.textContent?.trim()).toBe('Industrias Alfa');
+    expect(chipLead).not.toBeNull();
+    expect(chipLead?.textContent?.trim()).toBe('Lead');
+  });
+
+  it('Sin_lead_muestra_el_cliente_de_CONTPAQ', () => {
+    respuestas.CS = () => pagina([cot(2, { nombreCliente: 'CLIENTE CONTPAQ S.A.' })]);
+    resumen.and.returnValue(of([{
+      cotizacionProductosId: 2,
+      folio: 'COT-2026-0002',
+      tipo: 'CS',
+      version: 1,
+      total: 1000,
+      estatusCotizacion: 'EnProceso',
+      prospecto: null
+    }]));
+    iniciar();
+
+    const titulo = q('[data-testid="titulo-tarjeta"]');
+    const chipLead = q('[data-testid="chip-lead"]');
+
+    expect(titulo?.textContent?.trim()).toBe('CLIENTE CONTPAQ S.A.');
+    expect(chipLead).toBeNull();
+  });
+
+  it('Chip_de_estatus_con_los_cuatro_nombres', () => {
+    respuestas.CS = () => pagina([
+      cot(1, { estatusCotizacion: 'EnProceso' }),
+      cot(2, { estatusCotizacion: 'EnviadaACliente' }),
+      cot(3, { estatusCotizacion: 'AprobadaPorCliente' }),
+      cot(4, { estatusCotizacion: 'Rechazada' })
+    ]);
+    iniciar();
+
+    const chip1 = q('[data-testid="chip-estatus-EnProceso"]');
+    const chip2 = q('[data-testid="chip-estatus-EnviadaACliente"]');
+    const chip3 = q('[data-testid="chip-estatus-AprobadaPorCliente"]');
+    const chip4 = q('[data-testid="chip-estatus-Rechazada"]');
+
+    expect(chip1?.textContent?.trim()).toBe('En proceso');
+    expect(chip2?.textContent?.trim()).toBe('Enviada a cliente');
+    expect(chip3?.textContent?.trim()).toBe('Aprobada por cliente');
+    expect(chip4?.textContent?.trim()).toBe('Rechazada');
+  });
+
+  it('Filtro_por_estatus', () => {
+    respuestas.CS = () => pagina([
+      cot(1, { estatusCotizacion: 'EnProceso' }),
+      cot(2, { estatusCotizacion: 'EnviadaACliente' }),
+      cot(3, { informativa: true })
+    ]);
+    iniciar();
+
+    expect(q('[data-testid="tarjeta-1"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-2"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).not.toBeNull();
+
+    component.etapa = 'EnProceso';
+    component.ngOnChanges({ etapa: { currentValue: 'EnProceso', previousValue: 'todas', firstChange: false, isFirstChange: () => false } });
+    fixture.detectChanges();
+
+    expect(q('[data-testid="tarjeta-1"]')).not.toBeNull();
+    expect(q('[data-testid="tarjeta-2"]')).toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).toBeNull();
+
+    component.etapa = 'informativa';
+    component.ngOnChanges({ etapa: { currentValue: 'informativa', previousValue: 'EnProceso', firstChange: false, isFirstChange: () => false } });
+    fixture.detectChanges();
+
+    expect(q('[data-testid="tarjeta-1"]')).toBeNull();
+    expect(q('[data-testid="tarjeta-2"]')).toBeNull();
+    expect(q('[data-testid="tarjeta-3"]')).not.toBeNull();
+  });
+
+  it('Columna_tecnico_comercial_muestra_casos_de_Ingenieria', () => {
+    ingenieria.and.returnValue(of([
+      {
+        idSeguimiento: 46,
+        titulo: 'Automatización Línea 3',
+        empresa: 'Nissan Mexicana',
+        montoTotalEstimado: 250000,
+        estatusEtapa5: 2,
+        revision: 1,
+        archivos: [
+          { id: 1, nombreArchivo: 'Cotizacion_R1_v1.xlsx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' }
+        ]
+      }
+    ]));
+    iniciar();
+
+    const grupoIng = q('[data-testid="grupo-ingenieria-tecnico-comercial"]');
+    expect(grupoIng).not.toBeNull();
+    expect(grupoIng?.textContent).toContain('De Ingeniería (1)');
+    expect(grupoIng?.textContent).toContain('Ingeniería #46');
+    expect(grupoIng?.textContent).toContain('Automatización Línea 3');
+    expect(grupoIng?.textContent).toContain('Nissan Mexicana');
+    expect(grupoIng?.textContent).toContain('$250,000.00');
+  });
+
+  it('No_duplica_si_la_cotizacion_ligada_ya_esta', () => {
+    respuestas.CT = () => pagina([
+      cot(101, { tipoSgc: 'CT', nombreCliente: 'Nissan Mexicana' })
+    ]);
+    ingenieria.and.returnValue(of([
+      {
+        idSeguimiento: 46,
+        cotizacionProductosId: 101,
+        titulo: 'Automatización Línea 3',
+        empresa: 'Nissan Mexicana',
+        montoTotalEstimado: 250000,
+        estatusEtapa5: 2,
+        archivos: []
+      }
+    ]));
+    iniciar();
+
+    // No debe aparecer como tarjeta independiente en el grupo de ingeniería
+    const grupoIng = q('[data-testid="grupo-ingenieria-tecnico-comercial"]');
+    expect(grupoIng).toBeNull();
+
+    // La tarjeta de cotización 101 debe recibir el chip "Ingeniería #46"
+    const tarjeta = q('[data-testid="tarjeta-101"]');
+    expect(tarjeta).not.toBeNull();
+    const chipIng = tarjeta?.querySelector('[data-testid="chip-ingenieria-ligada"]');
+    expect(chipIng).not.toBeNull();
+    expect(chipIng?.textContent).toContain('Ingeniería #46');
+  });
+
+  it('Detalle_del_caso_lista_archivos_de_la_etapa_5', () => {
+    const caso = {
+      idSeguimiento: 46,
+      titulo: 'Automatización Línea 3',
+      empresa: 'Nissan Mexicana',
+      montoTotalEstimado: 250000,
+      estatusEtapa5: 2,
+      revision: 1,
+      archivos: [
+        { id: 10, nombreArchivo: 'Alcance_v1.docx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' },
+        { id: 11, nombreArchivo: 'Cotizacion_v2.xlsx', revision: 2, version: 1, revisionAutorizada: true, fechaSubida: '2026-11-21T10:00:00Z' }
+      ]
+    };
+    ingenieria.and.returnValue(of([caso]));
+    iniciar();
+
+    const btnVer = q('[data-testid="ver-caso-ingenieria-46"]') as HTMLButtonElement;
+    expect(btnVer).not.toBeNull();
+    btnVer.click();
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      jasmine.any(Function),
+      jasmine.objectContaining({
+        data: jasmine.objectContaining({ caso })
+      })
+    );
+  });
+
+  it('Descarga_por_blob', () => {
+    const caso = {
+      idSeguimiento: 46,
+      titulo: 'Automatización Línea 3',
+      empresa: 'Nissan Mexicana',
+      montoTotalEstimado: 250000,
+      estatusEtapa5: 2,
+      revision: 1,
+      archivos: [
+        { id: 10, nombreArchivo: 'Alcance_v1.docx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' }
+      ]
+    };
+
+    const dialogFixture = TestBed.createComponent(IngenieriaCasoDialogComponent);
+    dialogFixture.componentInstance.caso = caso as any;
+    dialogFixture.detectChanges();
+
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:fake');
+    spyOn(window.URL, 'revokeObjectURL');
+
+    const btnDescarga = dialogFixture.nativeElement.querySelector('.btn-descargar-archivo-ingenieria') as HTMLButtonElement;
+    expect(btnDescarga).not.toBeNull();
+    btnDescarga.click();
+
+    expect(descargarIng).toHaveBeenCalledWith(46, 10);
+  });
+
+  it('Respeta_filtros_de_fecha_y_sucursal', () => {
+    ingenieria.calls.reset();
+    fixture.componentRef.setInput('desde', '2026-11-01');
+    fixture.componentRef.setInput('hasta', '2026-11-30');
+    fixture.componentRef.setInput('unidadId', 3);
+    component.ngOnChanges({
+      desde: { currentValue: '2026-11-01', previousValue: null, firstChange: false, isFirstChange: () => false },
+      hasta: { currentValue: '2026-11-30', previousValue: null, firstChange: false, isFirstChange: () => false },
+      unidadId: { currentValue: 3, previousValue: null, firstChange: false, isFirstChange: () => false }
+    });
+    fixture.detectChanges();
+
+    expect(ingenieria).toHaveBeenCalledWith('2026-11-01', '2026-11-30', 3);
   });
 });

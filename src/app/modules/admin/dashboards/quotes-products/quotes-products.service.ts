@@ -23,6 +23,7 @@ import {
   RegistrarSeguimientoDto,
   CierreSgcDto,
   CierreResultado,
+  CotizacionArchivoDto,
   FiltroIndicadoresSgc,
   IndicadoresSgc,
   CotizacionOrigen
@@ -56,7 +57,7 @@ export class QuotesService {
   // Listado por rango de fechas de creación (inclusivas): GET listado. El API devuelve { code, message, data, totalCount }.
   // Una fecha vacía deja ese extremo abierto.
   // `tipo` (CS/CT/CE) filtra por tipo SGC; CS incluye además las cotizaciones de CONTPAQ sin capa SGC (informativas). Sin `tipo` trae todo.
-  getQuotesPorRango(page: number, size: number, desde?: string | null, hasta?: string | null, tipo?: TipoCotizacionSgc | null): Observable<any> {
+  getQuotesPorRango(page: number, size: number, desde?: string | null, hasta?: string | null, tipo?: TipoCotizacionSgc | null, unidadId?: number | null): Observable<any> {
     let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
     if (tipo) {
       params = params.set('tipo', tipo);
@@ -67,7 +68,36 @@ export class QuotesService {
     if (hasta) {
       params = params.set('hasta', hasta);
     }
+    if (unidadId !== undefined && unidadId !== null && unidadId !== 0) {
+      params = params.set('unidadId', unidadId.toString());
+    }
     return this.http.get<any>(`${this.apiUrl}/listado`, { params });
+  }
+
+  getKpis(desde?: string | null, hasta?: string | null, unidadId?: number | null): Observable<any> {
+    let params = new HttpParams();
+    if (desde) {
+      params = params.set('desde', desde);
+    }
+    if (hasta) {
+      params = params.set('hasta', hasta);
+    }
+    if (unidadId !== undefined && unidadId !== null && unidadId !== 0) {
+      params = params.set('unidadId', unidadId.toString());
+    }
+    return this.http.get<any>(`${this.apiUrl}/listado/kpis`, { params });
+  }
+
+  getUnidadesDeNegocio(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/Proyecto/unidades-negocio`);
+  }
+
+  iniciarProceso(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/iniciar-proceso`, {});
+  }
+
+  cambiarEstatusSgc(id: number, dto: { estatus: string; motivo?: string | null; comentario?: string | null }): Observable<RespuestaObtenerSgc> {
+    return this.http.post<RespuestaObtenerSgc>(`${this.apiUrl}/${id}/sgc/estatus`, dto);
   }
 
   // Obtener una cotización por ID
@@ -207,5 +237,38 @@ export class QuotesService {
 
   origen(id: number): Observable<CotizacionOrigen> {
     return this.http.get<CotizacionOrigen>(`${this.apiUrl}/${id}/origen`);
+  }
+
+  getArchivos(id: number): Observable<CotizacionArchivoDto[]> {
+    return this.http.get<CotizacionArchivoDto[]>(`${this.apiUrl}/${id}/archivos`);
+  }
+
+  subirArchivo(id: number, archivo: File, comentario: string): Observable<CotizacionArchivoDto> {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('comentario', comentario);
+    return this.http.post<CotizacionArchivoDto>(`${this.apiUrl}/${id}/archivos`, formData);
+  }
+
+  descargarArchivo(id: number, archivoId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/archivos/${archivoId}/descargar`, {
+      responseType: 'blob',
+    });
+  }
+
+  getIngenieriaTecnicoComercial(desde?: string, hasta?: string, unidadId?: number): Observable<any[]> {
+    let params = new HttpParams();
+    if (desde) params = params.set('desde', desde);
+    if (hasta) params = params.set('hasta', hasta);
+    if (unidadId !== undefined && unidadId !== null && unidadId !== 0) {
+      params = params.set('unidadId', unidadId.toString());
+    }
+    return this.http.get<any[]>(`${this.apiUrl}/ingenieria-tecnico-comercial`, { params });
+  }
+
+  descargarArchivoIngenieria(idSeguimiento: number, archivoId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/ingenieria-tecnico-comercial/${idSeguimiento}/archivos/${archivoId}/descargar`, {
+      responseType: 'blob',
+    });
   }
 }

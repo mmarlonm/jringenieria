@@ -13,6 +13,10 @@ export function aplicarResumenSgc(q: any, r: any): void {
   q.totalSgc = r.total;
   q.moneda = r.moneda;
   q.etapa = r.etapa;
+  q.estatusCotizacion = r.estatusCotizacion;
+  q.motivoRechazo = r.motivoRechazo;
+  q.comentarioRechazo = r.comentarioRechazo;
+  q.prospecto = r.prospecto;
   q.fechaEmision = r.fechaEmision;
   q.fechaVencimiento = r.fechaVencimiento;
   q.creadoPorNombre = r.creadoPorNombre;
@@ -21,6 +25,43 @@ export function aplicarResumenSgc(q: any, r: any): void {
   q.vencida = r.vencida;
   q.probabilidadPorcentaje = r.probabilidadPorcentaje;
   q.proximaAccionFecha = r.proximaAccionFecha;
+}
+
+export function mapearEtapaAEstatus(etapa: string | null | undefined): string | null {
+  if (!etapa) return null;
+  switch (etapa) {
+    case 'Borrador':
+    case 'EnRevision':
+    case 'Aprobada':
+      return 'EnProceso';
+    case 'Emitida':
+    case 'EnSeguimiento':
+      return 'EnviadaACliente';
+    case 'Ganada':
+      return 'AprobadaPorCliente';
+    case 'Perdida':
+    case 'Cancelada':
+    case 'Vencida':
+    case 'CerradaSinRespuesta':
+      return 'Rechazada';
+    default:
+      return null;
+  }
+}
+
+export function obtenerEstatusCotizacion(q: any): string | null {
+  if (q?.informativa) {
+    return null;
+  }
+  return q?.estatusCotizacion || mapearEtapaAEstatus(q?.etapa) || null;
+}
+
+export function obtenerTituloCliente(q: any): string {
+  return q?.prospecto?.empresa || q?.prospecto?.nombreContacto || q?.nombreCliente || 'Sin cliente';
+}
+
+export function tieneLead(q: any): boolean {
+  return !!(q?.prospecto && (q.prospecto.leadId || q.prospecto.empresa || q.prospecto.nombreContacto));
 }
 
 export function tieneCapaSgc(q: any): boolean {

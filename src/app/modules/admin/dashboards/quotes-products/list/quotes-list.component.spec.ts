@@ -73,6 +73,22 @@ describe('QuoteListComponent', () => {
       resumenSgc: jasmine.createSpy('resumenSgc').and.returnValue(of(mockResumenes)),
       cambiarEstatus: jasmine.createSpy('cambiarEstatus').and.returnValue(of({ code: 200 })),
       deleteQuote: jasmine.createSpy('deleteQuote').and.returnValue(of({ code: 200 })),
+      getKpis: jasmine.createSpy('getKpis').and.returnValue(
+        of({
+          total: 10,
+          informativas: 1,
+          enProceso: 4,
+          enviadas: 2,
+          aprobadas: 2,
+          rechazadas: 1,
+          tasaConversionPorcentaje: null,
+          seguimientoAtrasado: 1,
+          montos: [{ moneda: 'MXN', cotizado: 100000, aprobado: 50000 }]
+        })
+      ),
+      getUnidadesDeNegocio: jasmine.createSpy('getUnidadesDeNegocio').and.returnValue(
+        of([{ unidadId: 1, nombre: 'Matriz' }, { unidadId: 2, nombre: 'Sucursal Norte' }])
+      ),
     };
 
     mockChatService = {
@@ -103,6 +119,7 @@ describe('QuoteListComponent', () => {
 
     // La vista por omisión es el tablero por tipo; estas pruebas son de la lista de siempre.
     localStorage.removeItem('cotizaciones.vista');
+    localStorage.removeItem('cotizaciones.unidadId');
     fixture = TestBed.createComponent(QuoteListComponent);
     component = fixture.componentInstance;
     component.vista = 'lista';
@@ -110,7 +127,10 @@ describe('QuoteListComponent', () => {
     fixture.detectChanges();
   });
 
-  afterEach(() => localStorage.removeItem('cotizaciones.vista'));
+  afterEach(() => {
+    localStorage.removeItem('cotizaciones.vista');
+    localStorage.removeItem('cotizaciones.unidadId');
+  });
 
   describe('Vista tablero y lista', () => {
     const llamadasConTipo = (): any[][] => mockQuotesService.getQuotesPorRango.calls.allArgs();
@@ -300,7 +320,7 @@ describe('QuoteListComponent', () => {
     expect(component.displayedColumns).toContain('responsable');
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Borrador');
+    expect(compiled.textContent).toContain('En proceso');
     expect(compiled.textContent).toContain('Juan Perez');
     expect(compiled.textContent).toContain('2026-11-14');
     expect(compiled.textContent).toContain('2026-11-29');
@@ -311,8 +331,8 @@ describe('QuoteListComponent', () => {
     expect(component.tieneRegistroSgc(item1)).toBeTrue();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    // Row 101 has SGC: should render etapa chip
-    const chips = compiled.querySelectorAll('app-etapa-chip');
+    // Row 101 has SGC: should render estatus chip
+    const chips = compiled.querySelectorAll('app-estatus-chip, app-etapa-chip');
     expect(chips.length).toBeGreaterThan(0);
   });
 
@@ -802,6 +822,60 @@ describe('QuoteListComponent', () => {
 
       const celda = fixture.nativeElement.querySelector('td.mat-column-folioContpaq')?.textContent?.trim();
       expect(celda).toBe('—');
+    });
+
+    it('Sucursal_viaja_en_listado_y_kpis', () => {
+      component.vista = 'lista';
+      component.onSucursalChange(2);
+      fixture.detectChanges();
+
+      expect(mockQuotesService.getQuotesPorRango).toHaveBeenCalledWith(
+        jasmine.any(Number),
+        jasmine.any(Number),
+        jasmine.any(String),
+        jasmine.any(String),
+        null,
+        2
+      );
+      expect(mockQuotesService.getKpis).toHaveBeenCalledWith(
+        jasmine.any(String),
+        jasmine.any(String),
+        2
+      );
+    });
+
+    it('Sucursal_se_recuerda', () => {
+      spyOn(localStorage, 'setItem');
+      spyOn(localStorage, 'removeItem');
+
+      component.onSucursalChange(3);
+      expect(localStorage.setItem).toHaveBeenCalledWith('cotizaciones.unidadId', '3');
+
+      component.onSucursalChange(null);
+      expect(localStorage.removeItem).toHaveBeenCalledWith('cotizaciones.unidadId');
+    });
+
+    it('Kpis_muestran_conversion_guion_si_null', () => {
+      component.kpis = {
+        total: 10,
+        informativas: 1,
+        enProceso: 4,
+        enviadas: 2,
+        aprobadas: 2,
+        rechazadas: 1,
+        tasaConversionPorcentaje: null,
+        seguimientoAtrasado: 1,
+        montos: []
+      };
+      fixture.detectChanges();
+
+      const convEl = fixture.nativeElement.querySelector('[data-testid="kpi-conversion"]');
+      expect(convEl).not.toBeNull();
+      expect(convEl.textContent.trim()).toBe('—');
+
+      component.kpis = { ...component.kpis, tasaConversionPorcentaje: 50 };
+      fixture.detectChanges();
+      expect(convEl.textContent.trim()).toBe('50%');
     });
   });
 });
