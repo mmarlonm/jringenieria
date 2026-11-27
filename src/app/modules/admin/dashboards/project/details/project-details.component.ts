@@ -1402,25 +1402,33 @@ export class ProjectDetailsComponent implements OnInit, AfterViewInit {
     var userID = JSON.parse(localStorage.getItem('userInformation')).usuario.id;
     this.projectService.getToken(id, categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
       if (tokenResponse && tokenResponse.token) {
+        let editorConfig: any;
+        if (tokenResponse.config) {
+          editorConfig = tokenResponse.config;
+          editorConfig.token = tokenResponse.token;
+        } else {
+          editorConfig = {
+            document: {
+              fileType: fileExtension,
+              key: `${archivo.id}_${userID}_${id}_${categoria}_${safeFileName}`, // Clave única para el documento
+              title: archivo.nombreArchivo,
+              // ✅ Sí codificar aquí (solo en URL del backend)
+              url: `${this.onlyOfficeApiUrl}/editfile?proyectoId=${id}&categoria=${categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
+            },
+            documentType: documentType,
+            editorConfig: {
+              callbackUrl: `${this.onlyOfficeApiUrl}/callback`
+            }
+          };
+        }
+
         // 3. Abrir el modal del editor
         this.dialog.open(OnlyOfficeEditorComponent, {
           width: '90vw',
           height: '90vh',
           data: {
             documentServerUrl: this.onlyOfficeDocsUrl,
-            editorConfig: {
-              document: {
-                fileType: fileExtension,
-                key: `${archivo.id}_${userID}_${id}_${categoria}_${safeFileName}`, // Clave única para el documento
-                title: archivo.nombreArchivo,
-                // ✅ Sí codificar aquí (solo en URL del backend)
-                url: `${this.onlyOfficeApiUrl}/editfile?proyectoId=${id}&categoria=${categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
-              },
-              documentType: documentType,
-              editorConfig: {
-                callbackUrl: `${this.onlyOfficeApiUrl}/callback`
-              }
-            }
+            editorConfig: editorConfig
           }
         });
 

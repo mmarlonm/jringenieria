@@ -140,6 +140,7 @@ export const appRoutes: Route[] = [
                 path: 'security', children: [
                     { path: 'users', loadChildren: () => import('app/modules/admin/security/users/users.routes') },
                     { path: 'roles', loadChildren: () => import('app/modules/admin/security/roles/roles.routes') },
+                    { path: 'reportes', loadChildren: () => import('app/modules/admin/security/reportes/reportes.routes') },
                     { path: 'activity-monitor', loadChildren: () => import('app/modules/admin/security/activity-monitor/activity-monitor.routes') },
                     { path: 'permisos-especiales', loadChildren: () => import('app/modules/admin/security/permisos-especiales/permisos-especiales.routes') }
                 ]

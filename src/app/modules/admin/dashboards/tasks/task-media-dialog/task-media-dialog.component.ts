@@ -325,6 +325,29 @@ export class TaskMediaDialogComponent implements OnInit {
         // 1. Solicitar token usando el servicio de Tareas
         this._taskService.getToken(this.tareaId, archivo.categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
             if (tokenResponse && tokenResponse.token) {
+                let editorConfig: any;
+                if (tokenResponse.config) {
+                    editorConfig = tokenResponse.config;
+                    editorConfig.token = tokenResponse.token;
+                } else {
+                    editorConfig = {
+                        document: {
+                            fileType: fileExtension,
+
+                            // ✅ Clave única adaptada para la tarea
+                            key: `${archivo.tareaArchivoId || this.tareaId}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
+                            title: archivo.nombreArchivo,
+
+                            // ✅ URL de descarga apuntando al endpoint de TAREAS en tu backend
+                            url: `${this.onlyOfficeApiUrl}/editfileTarea?tareaId=${this.tareaId}&categoria=${archivo.categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
+                        },
+                        documentType: documentType,
+                        editorConfig: {
+                            // ✅ URL de callback apuntando al endpoint de TAREAS en tu backend
+                            callbackUrl: `${this.onlyOfficeApiUrl}/callbackTarea`
+                        }
+                    };
+                }
 
                 // 2. Abrir el modal del editor
                 this.dialog.open(OnlyOfficeEditorComponent, {
@@ -332,23 +355,7 @@ export class TaskMediaDialogComponent implements OnInit {
                     height: '90vh',
                     data: {
                         documentServerUrl: this.onlyOfficeDocsUrl, // ⚠️ Asegúrate de declarar esto en tu componente
-                        editorConfig: {
-                            document: {
-                                fileType: fileExtension,
-
-                                // ✅ Clave única adaptada para la tarea
-                                key: `${archivo.tareaArchivoId || this.tareaId}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
-                                title: archivo.nombreArchivo,
-
-                                // ✅ URL de descarga apuntando al endpoint de TAREAS en tu backend
-                                url: `${this.onlyOfficeApiUrl}/editfileTarea?tareaId=${this.tareaId}&categoria=${archivo.categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
-                            },
-                            documentType: documentType,
-                            editorConfig: {
-                                // ✅ URL de callback apuntando al endpoint de TAREAS en tu backend
-                                callbackUrl: `${this.onlyOfficeApiUrl}/callbackTarea`
-                            }
-                        }
+                        editorConfig: editorConfig
                     }
                 });
 

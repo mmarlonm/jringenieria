@@ -564,23 +564,31 @@ export class TaskFormDialogComponent implements OnInit, AfterViewInit {
 
         this.taskService.getToken(this.tareaId, archivo.categoria, archivo.nombreArchivo).subscribe((tokenResponse) => {
             if (tokenResponse && tokenResponse.token) {
+                let editorConfig: any;
+                if (tokenResponse.config) {
+                    editorConfig = tokenResponse.config;
+                    editorConfig.token = tokenResponse.token;
+                } else {
+                    editorConfig = {
+                        document: {
+                            fileType: fileExtension,
+                            key: `${archivo.tareaArchivoId || this.tareaId}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
+                            title: archivo.nombreArchivo,
+                            url: `${this.onlyOfficeApiUrl}/editfileTarea?tareaId=${this.tareaId}&categoria=${archivo.categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
+                        },
+                        documentType: documentType,
+                        editorConfig: {
+                            callbackUrl: `${this.onlyOfficeApiUrl}/callbackTarea`
+                        }
+                    };
+                }
+
                 this.dialog.open(OnlyOfficeEditorComponent, {
                     width: '90vw',
                     height: '90vh',
                     data: {
                         documentServerUrl: this.onlyOfficeDocsUrl,
-                        editorConfig: {
-                            document: {
-                                fileType: fileExtension,
-                                key: `${archivo.tareaArchivoId || this.tareaId}_${userID}_${this.tareaId}_${archivo.categoria}_${safeFileName}`,
-                                title: archivo.nombreArchivo,
-                                url: `${this.onlyOfficeApiUrl}/editfileTarea?tareaId=${this.tareaId}&categoria=${archivo.categoria}&nombreArchivo=${encodeURIComponent(archivo.nombreArchivo)}`
-                            },
-                            documentType: documentType,
-                            editorConfig: {
-                                callbackUrl: `${this.onlyOfficeApiUrl}/callbackTarea`
-                            }
-                        }
+                        editorConfig: editorConfig
                     }
                 });
             }
