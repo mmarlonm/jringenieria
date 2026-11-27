@@ -382,6 +382,304 @@
                 </div>
             </div>
         </mat-tab>
+
+        <!-- PESTAÑA 4: EXPEDIENTE DOCUMENTAL -->
+        <mat-tab label="Expediente documental (7.5)">
+            <div class="mt-6 flex flex-col gap-6" data-testid="panel-expediente">
+                <!-- 3 Campos Opcionales Destacados (OC, Comprobante de pago, Contrato) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="panel-campos-destacados">
+                    <!-- OC -->
+                    <div class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/60">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase font-bold text-gray-500">Orden de Compra</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">Opcional</span>
+                        </div>
+                        <div class="font-bold text-base" data-testid="campo-oc-destacado">
+                            {{ pedido.numeroOC || 'Sin número de OC' }}
+                        </div>
+                        <div class="text-xs text-secondary mt-1">
+                            Fecha: {{ pedido.fechaOC ? (pedido.fechaOC | date:'dd/MM/yyyy':'UTC') : 'Sin fecha' }}
+                        </div>
+                    </div>
+
+                    <!-- Comprobante de pago / anticipo -->
+                    <div class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/60">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase font-bold text-gray-500">Comprobante de Pago</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                  [ngClass]="pedido.requiereAnticipo ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'">
+                                {{ pedido.requiereAnticipo ? 'Requerido por anticipo' : 'Opcional' }}
+                            </span>
+                        </div>
+                        <div class="font-bold text-base" data-testid="campo-anticipo-destacado">
+                            {{ pedido.requiereAnticipo ? ('Requiere anticipo: $' + (pedido.anticipoMonto | number:'1.2-2')) : 'No requiere anticipo' }}
+                        </div>
+                        <div class="text-xs text-secondary mt-1">
+                            Estado: {{ cumpleAnticipo ? 'Comprobante cargado' : 'Pendiente' }}
+                        </div>
+                    </div>
+
+                    <!-- Contrato -->
+                    <div class="p-4 rounded-xl border bg-gray-50 dark:bg-gray-800/60">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase font-bold text-gray-500">Contrato</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                                  [ngClass]="pedido.tieneContrato ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'">
+                                {{ pedido.tieneContrato ? 'Requerido por contrato' : 'Opcional' }}
+                            </span>
+                        </div>
+                        <div class="font-bold text-base" data-testid="campo-contrato-destacado">
+                            {{ pedido.tieneContrato ? 'Tiene contrato formal' : 'Sin contrato' }}
+                        </div>
+                        <div class="text-xs text-secondary mt-1">
+                            Estado: {{ cumpleContrato ? 'Documento cargado' : 'Sin adjunto' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de Subida de Archivos -->
+                <div class="p-5 rounded-xl border bg-white dark:bg-gray-800/40 shadow-sm" data-testid="form-subida-archivo">
+                    <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+                        <mat-icon class="text-primary">cloud_upload</mat-icon>
+                        Adjuntar documento al expediente
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Tipo de Archivo</mat-label>
+                            <mat-select [(ngModel)]="tipoArchivoSeleccionado" data-testid="select-tipo-archivo">
+                                <mat-option *ngFor="let t of catalogos?.tiposArchivo" [value]="t.codigo">{{ t.nombre }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Seleccionar archivo</label>
+                            <input type="file"
+                                   (change)="onArchivoSeleccionado($event)"
+                                   class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:opacity-90 cursor-pointer"
+                                   data-testid="input-archivo" />
+                        </div>
+
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Comentario (opcional)</mat-label>
+                            <input matInput [(ngModel)]="comentarioArchivo" placeholder="Notas sobre el documento..." data-testid="input-comentario-archivo" />
+                        </mat-form-field>
+
+                        <div class="pb-5">
+                            <button mat-flat-button
+                                    color="primary"
+                                    class="w-full h-11"
+                                    (click)="subirArchivo()"
+                                    [disabled]="!archivoSeleccionado || subiendoArchivo"
+                                    data-testid="btn-subir-archivo">
+                                <mat-icon class="mr-1">upload</mat-icon>
+                                Subir archivo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Archivos del Pedido -->
+                <div class="rounded-xl border overflow-hidden">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-800 font-bold border-b flex items-center justify-between">
+                        <span>Documentos del Pedido ({{ pedido.archivos?.length || 0 }})</span>
+                    </div>
+                    <table mat-table [dataSource]="pedido.archivos || []" class="w-full" data-testid="tabla-archivos-pedido">
+                        <ng-container matColumnDef="tipo">
+                            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                            <td mat-cell *matCellDef="let a">
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                    {{ a.tipoNombre || a.tipo }}
+                                </span>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="nombre">
+                            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                            <td mat-cell *matCellDef="let a" [class.line-through]="a.activo === false" [class.text-gray-400]="a.activo === false">
+                                {{ a.nombreOriginal }}
+                                <span *ngIf="a.activo === false" class="text-xs text-red-500 ml-1 font-semibold">(Baja)</span>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="tamano">
+                            <th mat-header-cell *matHeaderCellDef>Tamaño</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs text-secondary font-mono">
+                                {{ (a.tamanoBytes / 1024) | number:'1.1-1' }} KB
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="subidoPor">
+                            <th mat-header-cell *matHeaderCellDef>Subido por</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs">{{ a.subidoPorNombre }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fecha">
+                            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs text-secondary">
+                                {{ a.fechaSubida | date:'dd/MM/yyyy HH:mm':'-0600' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="comentario">
+                            <th mat-header-cell *matHeaderCellDef>Comentario</th>
+                            <td mat-cell *matCellDef="let a" class="text-xs italic">{{ a.comentario || '—' }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="acciones">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+                            <td mat-cell *matCellDef="let a" class="text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button mat-icon-button
+                                            color="primary"
+                                            matTooltip="Descargar"
+                                            (click)="descargarArchivo(a)"
+                                            data-testid="btn-descargar-archivo">
+                                        <mat-icon class="icon-size-4">download</mat-icon>
+                                    </button>
+                                    <button *ngIf="a.activo !== false"
+                                            mat-icon-button
+                                            color="warn"
+                                            matTooltip="Dar de baja"
+                                            (click)="darDeBajaArchivo(a)"
+                                            data-testid="btn-baja-archivo">
+                                        <mat-icon class="icon-size-4">delete_outline</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="columnasArchivos"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasArchivos"></tr>
+                    </table>
+                </div>
+
+                <!-- Sección: Archivos de la Cotización de Origen (Solo lectura) -->
+                <div class="rounded-xl border overflow-hidden mt-2" data-testid="seccion-cotizacion-archivos">
+                    <div class="p-4 bg-gray-100 dark:bg-gray-800 font-bold border-b flex items-center justify-between">
+                        <span>De la cotización de origen (Solo lectura)</span>
+                        <span class="text-xs text-secondary font-normal">{{ pedido.cotizacionArchivos?.length || 0 }} archivos</span>
+                    </div>
+                    <table mat-table [dataSource]="pedido.cotizacionArchivos || []" class="w-full" data-testid="tabla-cotizacion-archivos">
+                        <ng-container matColumnDef="version">
+                            <th mat-header-cell *matHeaderCellDef class="w-20">Versión</th>
+                            <td mat-cell *matCellDef="let ca" class="font-mono text-xs">v{{ ca.version }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="nombre">
+                            <th mat-header-cell *matHeaderCellDef>Nombre del archivo</th>
+                            <td mat-cell *matCellDef="let ca">{{ ca.nombreOriginal }}</td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="fecha">
+                            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                            <td mat-cell *matCellDef="let ca" class="text-xs text-secondary">
+                                {{ ca.fechaSubida | date:'dd/MM/yyyy HH:mm':'-0600' }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="acciones">
+                            <th mat-header-cell *matHeaderCellDef class="text-right">Acciones</th>
+                            <td mat-cell *matCellDef="let ca" class="text-right">
+                                <button mat-icon-button
+                                        color="primary"
+                                        matTooltip="Descargar"
+                                        (click)="descargarCotizacionArchivo(ca)"
+                                        data-testid="btn-descargar-cotizacion-archivo">
+                                    <mat-icon class="icon-size-4">download</mat-icon>
+                                </button>
+                            </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="columnasCotizacionArchivos"></tr>
+                        <tr mat-row *matRowDef="let row; columns: columnasCotizacionArchivos"></tr>
+                    </table>
+                </div>
+
+                <!-- Panel de Respaldo Documental (Reglas D7 y Liberación) -->
+                <div class="p-6 rounded-xl border bg-gray-50 dark:bg-gray-800/40" data-testid="panel-respaldo-documental">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg m-0 flex items-center gap-2">
+                                <mat-icon [color]="reglasRespaldoCumplidas ? 'primary' : 'warn'">
+                                    {{ reglasRespaldoCumplidas ? 'verified' : 'rule' }}
+                                </mat-icon>
+                                Respaldo Documental y Puerta de Liberación (D7)
+                            </h3>
+                            <div class="text-xs text-secondary mt-1">
+                                Reglas que deben cumplirse antes de liberar el pedido a operación.
+                            </div>
+                        </div>
+
+                        <!-- Botón Liberar a operación -->
+                        <button *ngIf="pedido.estatus === 'Validado' && pedido.permisos?.puedeLiberar"
+                                mat-flat-button
+                                class="bg-teal-600 text-white font-bold px-6 py-2"
+                                (click)="liberarOperacion()"
+                                [disabled]="liberandoOperacion"
+                                data-testid="btn-liberar-operacion">
+                            <mat-icon class="mr-2">rocket_launch</mat-icon>
+                            Liberar a operación
+                        </button>
+                    </div>
+
+                    <!-- Lista de Chequeo de Reglas D7 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div class="flex items-center gap-2" data-testid="regla-aceptacion">
+                            <mat-icon class="icon-size-4" [ngClass]="tieneArchivoAceptacion ? 'text-green-600' : 'text-red-500'">
+                                {{ tieneArchivoAceptacion ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Al menos un archivo activo de aceptación (OC, Contrato, Aceptación o Comprobante).</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-anticipo">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleAnticipo ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleAnticipo ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Comprobante de pago si requiere anticipo.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-contrato">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleContrato ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleContrato ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Contrato adjunto si tiene contrato.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-condiciones">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleCondicionesPago ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleCondicionesPago ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Condiciones de pago capturadas.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-servicio">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleTipoServicio ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleTipoServicio ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Tipo de servicio definido.</span>
+                        </div>
+
+                        <div class="flex items-center gap-2" data-testid="regla-estatus">
+                            <mat-icon class="icon-size-4" [ngClass]="cumpleEstatusValidado ? 'text-green-600' : 'text-red-500'">
+                                {{ cumpleEstatusValidado ? 'check_circle' : 'cancel' }}
+                            </mat-icon>
+                            <span>Estatus del pedido en «Validado».</span>
+                        </div>
+                    </div>
+
+                    <!-- Alertas de faltantes de liberación si hubo error 409 -->
+                    <div *ngIf="faltantesLiberacion.length > 0" class="mt-4 p-4 rounded-lg bg-red-50 border border-red-300 text-red-900" data-testid="alerta-faltantes-liberacion">
+                        <div class="font-bold mb-1 flex items-center gap-1.5">
+                            <mat-icon class="text-red-600">error</mat-icon>
+                            No se puede liberar el pedido. Faltantes reportados por el sistema:
+                        </div>
+                        <ul class="list-disc pl-6 text-sm">
+                            <li *ngFor="let f of faltantesLiberacion">{{ f }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
     </mat-tab-group>
 </div>
 

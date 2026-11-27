@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { saveAs } from 'file-saver';
 import Swal from 'sweetalert2';
 import { PedidosService } from '../pedidos.service';
 import {
@@ -19,6 +20,8 @@ import {
     PedidoCatalogos,
     PedidoVerificacionItem,
     PedidoValidacionItem,
+    PedidoArchivoItem,
+    CotizacionArchivoItem,
     ActualizarPedidoDto
 } from '../pedidos.types';
 
@@ -64,6 +67,18 @@ export class PedidoDetalleComponent implements OnInit {
 
     // Validación
     validandoArea: Record<string, boolean> = {};
+
+    // Expediente y archivos (F4)
+    archivoSeleccionado: File | null = null;
+    tipoArchivoSeleccionado = 'OrdenCompra';
+    comentarioArchivo = '';
+    subiendoArchivo = false;
+    columnasArchivos: string[] = ['tipo', 'nombre', 'tamano', 'subidoPor', 'fecha', 'comentario', 'acciones'];
+    columnasCotizacionArchivos: string[] = ['version', 'nombre', 'fecha', 'acciones'];
+
+    // Liberación a operación (F4)
+    liberandoOperacion = false;
+    faltantesLiberacion: string[] = [];
 
     columnasPartidas: string[] = [
         'partida',
@@ -400,6 +415,250 @@ export class PedidoDetalleComponent implements OnInit {
     puedeValidarArea(area: string): boolean {
         if (!this.pedido || this.pedido.estatus !== 'EnValidacion') return false;
         return (this.pedido.permisos?.puedeValidar || []).includes(area);
+    }
+
+    // Métodos de Expediente y Archivos (F4)
+    onArchivoSeleccionado(event: any): void {
+        const file = event?.target?.files?.[0];
+        if (file) {
+            this.archivoSeleccionado = file;
+        }
+    }
+
+    subirArchivo(): void {
+        if (!this.archivoSeleccionado || this.subiendoArchivo) return;
+
+        this.subiendoArchivo = true;
+        this._pedidosService
+            .subirArchivo(
+                this.pedidoId,
+                this.archivoSeleccionado,
+                this.tipoArchivoSeleccionado,
+                this.comentarioArchivo
+            )
+            .subscribe({
+                next: (nuevoArchivo) => {
+                    this.subiendoArchivo = false;
+                    this.archivoSeleccionado = null;
+                    this.comentarioArchivo = '';
+                    if (this.pedido) {
+                        this.pedido.archivos = [...(this.pedido.archivos || []), nuevoArchivo];
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Archivo subido',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    this._cdr.markForCheck();
+                },
+                error: (err) => {
+                    this.subiendoArchivo = false;
+                    const msg = err?.error?.mensaje || 'No se pudo subir el archivo.';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al subir archivo',
+                        text: msg
+                    });
+                    this._cdr.markForCheck();
+                }
+            });
+    }
+
+    descargarArchivo(archivo: PedidoArchivoItem): void {
+        this._pedidosService.descargarArchivo(this.pedidoId, archivo.id).subscribe({
+            next: (blob) => {
+                saveAs(blob, archivo.nombreOriginal);
+            },
+            error: (err) => {
+                const msg = err?.error?.mensaje || 'No se pudo descargar el archivo.';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de descarga',
+                    text: msg
+                });
+            }
+        });
+    }
+
+    descargarCotizacionArchivo(archivo: CotizacionArchivoItem): void {
+        this._pedidosService.descargarCotizacionArchivo(this.pedidoId, archivo.id).subscribe({
+            next: (blob) => {
+                saveAs(blob, archivo.nombreOriginal);
+            },
+            error: (err) => {
+                const msg = err?.error?.mensaje || 'No se pudo descargar el archivo de cotización.';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de descarga',
+                    text: msg
+                });
+            }
+        });
+    }
+
+    async darDeBajaArchivo(archivo: PedidoArchivoItem): Promise<void> {
+        const { value: motivo } = await Swal.fire({
+            title: `Dar de baja «${archivo.nombreOriginal}»`,
+            input: 'textarea',
+            inputLabel: 'Motivo de la baja (obligatorio, mínimo 10 caracteres)',
+            inputPlaceholder: 'Ingresa el motivo de la baja documental...',
+            inputValidator: (val) => {
+                if (!val || val.trim().length < 10) {
+                    return 'Debes ingresar un motivo de al menos 10 caracteres.';
+                }
+                return null;
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Dar de baja',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc2626'
+        });
+
+        if (!motivo) return;
+
+        this._pedidosService.eliminarArchivo(this.pedidoId, archivo.id, motivo).subscribe({
+            next: () => {
+                archivo.activo = false;
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Archivo dado de baja',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this._cdr.markForCheck();
+            },
+            error: (err) => {
+                const msg = err?.error?.mensaje || 'No se pudo dar de baja el archivo.';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al dar de baja',
+                    text: msg
+                });
+            }
+        });
+    }
+
+    // Reglas de respaldo documental (D7)
+    get tieneArchivoAceptacion(): boolean {
+        return (this.pedido?.archivos || []).some(
+            (a) => a.activo !== false && ['OrdenCompra', 'Contrato', 'CorreoAceptacion', 'ComprobantePago'].includes(a.tipo)
+        );
+    }
+
+    get cumpleAnticipo(): boolean {
+        if (!this.pedido?.requiereAnticipo) return true;
+        return (this.pedido?.archivos || []).some((a) => a.activo !== false && a.tipo === 'ComprobantePago');
+    }
+
+    get cumpleContrato(): boolean {
+        if (!this.pedido?.tieneContrato) return true;
+        return (this.pedido?.archivos || []).some((a) => a.activo !== false && a.tipo === 'Contrato');
+    }
+
+    get cumpleCondicionesPago(): boolean {
+        return !!this.pedido?.condicionesPago && this.pedido.condicionesPago.trim().length > 0;
+    }
+
+    get cumpleTipoServicio(): boolean {
+        return !!this.pedido?.tipoServicio && this.pedido.tipoServicio.trim().length > 0;
+    }
+
+    get cumpleEstatusValidado(): boolean {
+        return this.pedido?.estatus === 'Validado';
+    }
+
+    get reglasRespaldoCumplidas(): boolean {
+        return (
+            this.tieneArchivoAceptacion &&
+            this.cumpleAnticipo &&
+            this.cumpleContrato &&
+            this.cumpleCondicionesPago &&
+            this.cumpleTipoServicio &&
+            this.cumpleEstatusValidado
+        );
+    }
+
+    get listaFaltantesRespaldo(): string[] {
+        const faltantes: string[] = [];
+        if (!this.tieneArchivoAceptacion) {
+            faltantes.push('Falta al menos un archivo activo de aceptación (OrdenCompra, Contrato, CorreoAceptacion o ComprobantePago).');
+        }
+        if (!this.cumpleAnticipo) {
+            faltantes.push('El pedido requiere anticipo y no tiene adjunto comprobante de pago.');
+        }
+        if (!this.cumpleContrato) {
+            faltantes.push('El pedido tiene contrato marcado y no tiene adjunto el documento de contrato.');
+        }
+        if (!this.cumpleCondicionesPago) {
+            faltantes.push('Las condiciones de pago no han sido capturadas.');
+        }
+        if (!this.cumpleTipoServicio) {
+            faltantes.push('El tipo de servicio no ha sido definido.');
+        }
+        if (!this.cumpleEstatusValidado) {
+            faltantes.push(`El pedido debe estar en estatus «Validado» (actualmente «${this.pedido?.estatus}»).`);
+        }
+        return faltantes;
+    }
+
+    // Liberación a operación (D7)
+    async liberarOperacion(instruccionDirecta?: string): Promise<void> {
+        if (this.liberandoOperacion) return;
+
+        let instruccion = instruccionDirecta;
+        if (!instruccion) {
+            const { value } = await Swal.fire({
+                title: 'Liberar pedido a operación',
+                input: 'textarea',
+                inputLabel: 'Instrucción de inicio para operación (obligatoria, mín. 10 caracteres)',
+                inputPlaceholder: 'Indica los alcances, prioridades o instrucciones de arranque...',
+                inputValidator: (val) => {
+                    if (!val || val.trim().length < 10) {
+                        return 'Debes ingresar una instrucción de inicio de al menos 10 caracteres.';
+                    }
+                    return null;
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Liberar a operación',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#0d9488'
+            });
+            if (!value) return;
+            instruccion = value;
+        }
+
+        this.liberandoOperacion = true;
+        this.faltantesLiberacion = [];
+
+        this._pedidosService
+            .liberar(this.pedidoId, {
+                instruccionInicio: instruccion
+            })
+            .subscribe({
+                next: () => {
+                    this.liberandoOperacion = false;
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Pedido liberado a operación',
+                        text: 'El pedido ha pasado a estatus Liberado.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    this.cargarPedido();
+                },
+                error: (err) => {
+                    this.liberandoOperacion = false;
+                    const msg = err?.error?.mensaje || 'No se pudo liberar el pedido a operación.';
+                    this.faltantesLiberacion = err?.error?.faltantes || [msg];
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No se pudo liberar el pedido',
+                        text: msg
+                    });
+                    this._cdr.markForCheck();
+                }
+            });
     }
 
     obtenerClaseEstatus(estatus: string): string {

@@ -40,6 +40,7 @@ describe('PedidoDetalleComponent (F3)', () => {
         creadoPorUsuarioId: 5,
         numeroOC: 'OC-9988',
         fechaOC: '2026-11-20',
+        condicionesPago: '50% anticipo, 50% contra entrega',
         requiereAnticipo: true,
         anticipoMonto: 175000,
         tieneContrato: false,
@@ -107,7 +108,12 @@ describe('PedidoDetalleComponent (F3)', () => {
             'actualizar',
             'actualizarVerificacion',
             'enviarValidacion',
-            'validarArea'
+            'validarArea',
+            'subirArchivo',
+            'descargarArchivo',
+            'descargarCotizacionArchivo',
+            'eliminarArchivo',
+            'liberar'
         ]);
 
         pedidosServiceSpy.obtenerCatalogos.and.returnValue(
@@ -123,7 +129,7 @@ describe('PedidoDetalleComponent (F3)', () => {
                 tiposBitacora: []
             })
         );
-        pedidosServiceSpy.obtenerPorId.and.returnValue(of(mockPedido));
+        pedidosServiceSpy.obtenerPorId.and.callFake(() => of(JSON.parse(JSON.stringify(mockPedido))));
 
         await TestBed.configureTestingModule({
             imports: [PedidoDetalleComponent, NoopAnimationsModule, RouterTestingModule],
@@ -361,5 +367,280 @@ describe('PedidoDetalleComponent (F3)', () => {
         component.enviarAValidacion();
         tick();
         expect(pedidosServiceSpy.enviarValidacion).not.toHaveBeenCalled();
+    }));
+
+    // ==================== TAREA F4: EXPEDIENTE Y LIBERACIÓN ====================
+
+    it('Sube_con_tipo_y_comentario', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+
+        const dummyFile = new File(['contenido de prueba'], 'orden-123.pdf', { type: 'application/pdf' });
+        component.archivoSeleccionado = dummyFile;
+        component.tipoArchivoSeleccionado = 'OrdenCompra';
+        component.comentarioArchivo = 'OC sellada por cliente';
+
+        const mockArchivoResp = {
+            id: 88,
+            tipo: 'OrdenCompra',
+            tipoNombre: 'Orden de Compra',
+            nombreOriginal: 'orden-123.pdf',
+            tamanoBytes: 2048,
+            contentType: 'application/pdf',
+            subidoPorNombre: 'Juan Carlos',
+            fechaSubida: '2026-11-27T10:00:00Z',
+            activo: true,
+            comentario: 'OC sellada por cliente'
+        };
+
+        pedidosServiceSpy.subirArchivo.and.returnValue(of(mockArchivoResp));
+
+        component.subirArchivo();
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.subirArchivo).toHaveBeenCalledWith(
+            10,
+            dummyFile,
+            'OrdenCompra',
+            'OC sellada por cliente'
+        );
+        expect(component.subiendoArchivo).toBeFalse();
+        expect(component.archivoSeleccionado).toBeNull();
+        expect(component.comentarioArchivo).toBe('');
+        expect(component.pedido?.archivos?.length).toBe(1);
+        expect(component.pedido?.archivos?.[0].id).toBe(88);
+    }));
+
+    it('Descarga_por_blob', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+
+        const mockBlob = new Blob(['datos binarios'], { type: 'application/pdf' });
+        pedidosServiceSpy.descargarArchivo.and.returnValue(of(mockBlob));
+
+        const archivoItem = {
+            id: 88,
+            tipo: 'OrdenCompra',
+            tipoNombre: 'Orden de Compra',
+            nombreOriginal: 'orden-123.pdf',
+            tamanoBytes: 2048,
+            contentType: 'application/pdf',
+            subidoPorNombre: 'Juan',
+            fechaSubida: '2026-11-27T10:00:00Z',
+            activo: true
+        };
+
+        component.descargarArchivo(archivoItem);
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.descargarArchivo).toHaveBeenCalledWith(10, 88);
+    }));
+
+    it('Baja_exige_motivo', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+
+        const archivoItem = {
+            id: 88,
+            tipo: 'OrdenCompra',
+            tipoNombre: 'Orden de Compra',
+            nombreOriginal: 'orden-123.pdf',
+            tamanoBytes: 2048,
+            contentType: 'application/pdf',
+            subidoPorNombre: 'Juan',
+            fechaSubida: '2026-11-27T10:00:00Z',
+            activo: true
+        };
+
+        // Caso 1: El usuario cancela o no introduce motivo válido
+        spyOn(Swal, 'fire').and.returnValue(Promise.resolve({ value: '' } as any));
+        component.darDeBajaArchivo(archivoItem);
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.eliminarArchivo).not.toHaveBeenCalled();
+        expect(archivoItem.activo).toBeTrue();
+
+        // Caso 2: El usuario introduce motivo de al menos 10 caracteres
+        (Swal.fire as jasmine.Spy).and.returnValue(
+            Promise.resolve({ value: 'Archivo reemplazado por error en fecha' } as any)
+        );
+        pedidosServiceSpy.eliminarArchivo.and.returnValue(of({}));
+
+        component.darDeBajaArchivo(archivoItem);
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.eliminarArchivo).toHaveBeenCalledWith(
+            10,
+            88,
+            'Archivo reemplazado por error en fecha'
+        );
+        expect(archivoItem.activo).toBeFalse();
+    }));
+
+    it('Panel_de_respaldo_refleja_las_reglas', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        flush();
+
+        // Inicial: mockPedido tiene archivos = [], requiereAnticipo = true, tieneContrato = false, estatus = 'Recibido'
+        expect(component.tieneArchivoAceptacion).toBeFalse();
+        expect(component.cumpleAnticipo).toBeFalse(); // requiere anticipo pero no hay comprobante
+        expect(component.cumpleContrato).toBeTrue(); // tieneContrato es false
+        expect(component.cumpleCondicionesPago).toBeTrue();
+        expect(component.cumpleTipoServicio).toBeTrue();
+        expect(component.cumpleEstatusValidado).toBeFalse(); // está en Recibido
+        expect(component.reglasRespaldoCumplidas).toBeFalse();
+        expect(component.listaFaltantesRespaldo.length).toBeGreaterThan(0);
+
+        // Agregamos archivo OrdenCompra
+        component.pedido!.archivos = [
+            {
+                id: 1,
+                tipo: 'OrdenCompra',
+                tipoNombre: 'Orden de Compra',
+                nombreOriginal: 'oc.pdf',
+                tamanoBytes: 100,
+                contentType: 'application/pdf',
+                subidoPorNombre: 'Admin',
+                fechaSubida: '2026-11-27T09:00:00Z',
+                activo: true
+            }
+        ];
+        expect(component.tieneArchivoAceptacion).toBeTrue();
+        expect(component.cumpleAnticipo).toBeFalse();
+
+        // Agregamos archivo ComprobantePago
+        component.pedido!.archivos.push({
+            id: 2,
+            tipo: 'ComprobantePago',
+            tipoNombre: 'Comprobante de Pago',
+            nombreOriginal: 'pago.pdf',
+            tamanoBytes: 100,
+            contentType: 'application/pdf',
+            subidoPorNombre: 'Admin',
+            fechaSubida: '2026-11-27T09:00:00Z',
+            activo: true
+        });
+        expect(component.cumpleAnticipo).toBeTrue();
+
+        // Si marcamos tieneContrato = true
+        component.pedido!.tieneContrato = true;
+        expect(component.cumpleContrato).toBeFalse();
+
+        // Agregamos Contrato
+        component.pedido!.archivos.push({
+            id: 3,
+            tipo: 'Contrato',
+            tipoNombre: 'Contrato',
+            nombreOriginal: 'contrato.pdf',
+            tamanoBytes: 100,
+            contentType: 'application/pdf',
+            subidoPorNombre: 'Admin',
+            fechaSubida: '2026-11-27T09:00:00Z',
+            activo: true
+        });
+        expect(component.cumpleContrato).toBeTrue();
+
+        // Pasamos estatus a Validado
+        component.pedido!.estatus = 'Validado';
+        expect(component.cumpleEstatusValidado).toBeTrue();
+        expect(component.reglasRespaldoCumplidas).toBeTrue();
+        expect(component.listaFaltantesRespaldo.length).toBe(0);
+    }));
+
+    it('Liberar_muestra_todos_los_faltantes', fakeAsync(() => {
+        pedidosServiceSpy.obtenerPorId.and.returnValue(
+            of({
+                ...mockPedido,
+                estatus: 'Validado',
+                permisos: {
+                    ...mockPedido.permisos,
+                    puedeLiberar: true
+                }
+            })
+        );
+        component.ngOnInit();
+        tick();
+        component.selectedTabIndex = 3; // Tab Expediente
+        fixture.detectChanges();
+        flush();
+
+        pedidosServiceSpy.liberar.and.returnValue(
+            throwError(() => ({
+                status: 409,
+                error: {
+                    mensaje: 'No se puede liberar el pedido a operación.',
+                    faltantes: [
+                        'Falta al menos un archivo activo de aceptación.',
+                        'El pedido requiere anticipo y no tiene comprobante adjunto.'
+                    ]
+                }
+            }))
+        );
+
+        component.liberarOperacion('Iniciar fabricación de tableros de inmediato');
+        tick();
+        fixture.detectChanges();
+        flush();
+
+        expect(component.liberandoOperacion).toBeFalse();
+        expect(component.faltantesLiberacion.length).toBe(2);
+        expect(component.faltantesLiberacion[0]).toContain('archivo activo de aceptación');
+
+        const el = fixture.nativeElement as HTMLElement;
+        const alertaFaltantes = el.querySelector('[data-testid="alerta-faltantes-liberacion"]');
+        expect(alertaFaltantes).not.toBeNull();
+        expect(alertaFaltantes?.textContent).toContain('archivo activo de aceptación');
+        expect(alertaFaltantes?.textContent).toContain('comprobante adjunto');
+    }));
+
+    it('Archivos_de_la_cotizacion_son_solo_lectura', fakeAsync(() => {
+        pedidosServiceSpy.obtenerPorId.and.returnValue(
+            of({
+                ...mockPedido,
+                cotizacionArchivos: [
+                    {
+                        id: 501,
+                        version: 1,
+                        nombreOriginal: 'cotizacion-firmada.pdf',
+                        fechaSubida: '2026-11-25T12:00:00Z'
+                    }
+                ]
+            })
+        );
+        pedidosServiceSpy.descargarCotizacionArchivo.and.returnValue(
+            of(new Blob(['cotizacion'], { type: 'application/pdf' }))
+        );
+
+        component.ngOnInit();
+        tick();
+        component.selectedTabIndex = 3; // Tab Expediente
+        fixture.detectChanges();
+        flush();
+
+        const el = fixture.nativeElement as HTMLElement;
+        const seccionCot = el.querySelector('[data-testid="seccion-cotizacion-archivos"]');
+        expect(seccionCot).not.toBeNull();
+
+        const btnDescargarCot = el.querySelector('[data-testid="btn-descargar-cotizacion-archivo"]');
+        expect(btnDescargarCot).not.toBeNull();
+
+        // En la sección de cotización NO debe existir ningún botón de dar de baja
+        const btnBajaEnCot = seccionCot?.querySelector('[data-testid="btn-baja-archivo"]');
+        expect(btnBajaEnCot).toBeNull();
+
+        // Probamos la descarga
+        component.descargarCotizacionArchivo(component.pedido!.cotizacionArchivos[0]);
+        tick();
+        flush();
+
+        expect(pedidosServiceSpy.descargarCotizacionArchivo).toHaveBeenCalledWith(10, 501);
     }));
 });
