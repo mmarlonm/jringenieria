@@ -223,6 +223,72 @@
       </div>
     </div>
 
+    <!-- SECCIÓN: INGENIERÍA (COTIZACIÓN TÉCNICO-COMERCIAL) (F6) -->
+    <div *ngIf="casoIngenieria" data-testid="seccion-ingenieria-tecnico-comercial"
+      class="rounded-2xl border border-indigo-200 dark:border-indigo-900 p-5 bg-indigo-50/30 dark:bg-indigo-950/20 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-indigo-200 dark:border-indigo-900 pb-2">
+        <h3 class="text-xs font-black uppercase tracking-wider text-indigo-900 dark:text-indigo-200 flex items-center gap-2">
+          <mat-icon class="icon-size-4 text-indigo-600">engineering</mat-icon>
+          Ingeniería (cotización técnico-comercial) #{{ casoIngenieria.idSeguimiento }}
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+        <div>
+          <span class="text-slate-400 block mb-0.5">Título del caso:</span>
+          <span class="font-semibold text-slate-800 dark:text-slate-100">{{ casoIngenieria.titulo }}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Monto estimado:</span>
+          <span class="font-bold text-emerald-600 dark:text-emerald-400">
+            {{ casoIngenieria.montoTotalEstimado ? (casoIngenieria.montoTotalEstimado | currency:'MXN':'symbol':'1.2-2') : '—' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Lista de archivos de la etapa 5 -->
+      <div *ngIf="casoIngenieria.archivos && casoIngenieria.archivos.length > 0" class="mt-2 space-y-2">
+        <span class="text-xs font-bold text-slate-600 dark:text-slate-400 block">Archivos de la etapa 5:</span>
+        <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase font-medium">
+              <tr>
+                <th class="px-3 py-2">Archivo</th>
+                <th class="px-3 py-2">Revisión</th>
+                <th class="px-3 py-2">Versión</th>
+                <th class="px-3 py-2">Estado</th>
+                <th class="px-3 py-2 text-center">Acción</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr *ngFor="let a of casoIngenieria.archivos" class="fila-archivo-ingenieria">
+                <td class="px-3 py-2 font-medium">{{ a.nombreArchivo }}</td>
+                <td class="px-3 py-2">R{{ a.revision }}</td>
+                <td class="px-3 py-2">v{{ a.version }}</td>
+                <td class="px-3 py-2">
+                  <span *ngIf="!a.revisionAutorizada"
+                        class="chip-sin-autorizar px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-800">
+                    Sin autorizar
+                  </span>
+                  <span *ngIf="a.revisionAutorizada"
+                        class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">
+                    Autorizada
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-center">
+                  <button mat-stroked-button type="button" class="btn-descargar-archivo-ingenieria !px-2 !py-0.5 text-xs"
+                          (click)="descargarArchivoIngenieria(a)">
+                    <mat-icon class="mr-1 text-sm text-primary">download</mat-icon>
+                    Descargar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- SECCION 4: ORIGEN -->
     <div
       class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-4">

@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import Swal from 'sweetalert2';
 import { QuotesService } from '../quotes-products.service';
-import { CotizacionOrigen, RespuestaObtenerSgc, ProspectoCotizacion, EstatusCotizacionSimple } from '../quotes-products.types';
+import { CotizacionOrigen, RespuestaObtenerSgc, ProspectoCotizacion, EstatusCotizacionSimple, CotizacionIngenieriaCasoDto, CotizacionIngenieriaArchivoDto } from '../quotes-products.types';
 import { EstatusChipComponent } from '../sgc/estatus-chip/estatus-chip.component';
 import { ProcesoComercialComponent } from 'app/shared/proceso-comercial/proceso-comercial.component';
 import { importeLinea } from '../sgc/cotizacion-sgc.utils';
@@ -45,6 +45,8 @@ export class CotizacionDetalleDialogComponent implements OnInit {
   cargandoOrigen = true;
   errorOrigen = false;
   origen: CotizacionOrigen | null = null;
+
+  casoIngenieria: CotizacionIngenieriaCasoDto | null = null;
 
   esInformativa = false;
   procesoRefresco = 0;
@@ -110,6 +112,40 @@ export class CotizacionDetalleDialogComponent implements OnInit {
       error: () => {
         this.cargandoOrigen = false;
         this.errorOrigen = true;
+      }
+    });
+
+    if (typeof this.quotesService?.getIngenieriaTecnicoComercial === 'function') {
+      this.quotesService.getIngenieriaTecnicoComercial().subscribe({
+        next: (casos) => {
+          if (casos && casos.length > 0) {
+            this.casoIngenieria = casos.find((c: any) => c.cotizacionProductosId === id) || null;
+          }
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  descargarArchivoIngenieria(archivo: CotizacionIngenieriaArchivoDto): void {
+    if (!this.casoIngenieria) return;
+    this.quotesService.descargarArchivoIngenieria(this.casoIngenieria.idSeguimiento, archivo.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = archivo.nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo descargar el archivo de ingeniería.',
+        });
       }
     });
   }

@@ -145,7 +145,7 @@ describe('CotizacionDetalleDialogComponent', () => {
   });
 
   function crearComponente(data: any = { cotizacionProductosId: 311, unidadNombre: 'Querétaro' }): void {
-    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen', 'iniciarProceso']);
+    quotesService = jasmine.createSpyObj('QuotesService', ['getQuoteById', 'obtenerSgc', 'origen', 'iniciarProceso', 'getIngenieriaTecnicoComercial', 'descargarArchivoIngenieria']);
     dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
     router = jasmine.createSpyObj('Router', ['navigate']);
 
@@ -153,6 +153,8 @@ describe('CotizacionDetalleDialogComponent', () => {
     quotesService.obtenerSgc.and.returnValue(of(mockSgc));
     quotesService.origen.and.returnValue(of(mockOrigen));
     quotesService.iniciarProceso.and.returnValue(of({ leadId: 1, requerimientoId: 1, requerimientoFolio: 'REQ-1', cotizacion: {} }));
+    quotesService.getIngenieriaTecnicoComercial.and.returnValue(of([]));
+    quotesService.descargarArchivoIngenieria.and.returnValue(of(new Blob(['test'], { type: 'application/pdf' })));
 
     TestBed.configureTestingModule({
       imports: [CotizacionDetalleDialogComponent, NoopAnimationsModule],
@@ -701,5 +703,35 @@ describe('CotizacionDetalleDialogComponent', () => {
       icon: 'error',
       text: 'La cotización ya cuenta con un proceso iniciado.'
     }));
+  });
+
+  it('Cotizacion_ligada_muestra_seccion_Ingenieria_con_sus_archivos', () => {
+    crearComponente();
+    quotesService.getIngenieriaTecnicoComercial.and.returnValue(of([
+      {
+        idSeguimiento: 46,
+        cotizacionProductosId: 311,
+        titulo: 'Proyecto Automatización',
+        montoTotalEstimado: 250000,
+        archivos: [
+          { id: 1, nombreArchivo: 'Cotizacion_Ingenieria.xlsx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' }
+        ]
+      }
+    ]));
+    component.cargarDatos();
+    fixture.detectChanges();
+
+    const seccion = fixture.nativeElement.querySelector('[data-testid="seccion-ingenieria-tecnico-comercial"]');
+    expect(seccion).not.toBeNull();
+    expect(seccion.textContent).toContain('Ingeniería (cotización técnico-comercial) #46');
+    expect(seccion.textContent).toContain('Cotizacion_Ingenieria.xlsx');
+    expect(seccion.textContent).toContain('Sin autorizar');
+
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:fake');
+    spyOn(window.URL, 'revokeObjectURL');
+    const btnDescarga = seccion.querySelector('.btn-descargar-archivo-ingenieria') as HTMLButtonElement;
+    expect(btnDescarga).not.toBeNull();
+    btnDescarga.click();
+    expect(quotesService.descargarArchivoIngenieria).toHaveBeenCalledWith(46, 1);
   });
 });

@@ -505,3 +505,27 @@ export interface CotizacionArchivoDto {
     fechaSubida: string;
     esVigente: boolean;
 }
+
+export interface CotizacionIngenieriaArchivoDto {
+    id: number;
+    nombreArchivo: string;
+    revision: number;
+    version: number;
+    revisionAutorizada: boolean;
+    fechaSubida: string;
+}
+
+export interface CotizacionIngenieriaCasoDto {
+    idSeguimiento: number;
+    titulo: string;
+    empresa: string;
+    sucursalId?: number | null;
+    sucursalNombre?: string | null;
+    montoTotalEstimado?: number | null;
+    estatusEtapa5: number;
+    revision: number;
+    requerimientoFolio?: string | null;
+    cotizacionProductosId?: number | null;
+    primeraSubida?: string;
+    archivos: CotizacionIngenieriaArchivoDto[];
+}

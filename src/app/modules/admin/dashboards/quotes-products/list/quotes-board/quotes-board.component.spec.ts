@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatIconTestingModule } from '@angular/material/icon/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { QuotesService } from '../../quotes-products.service';
 import { TipoCotizacionSgc } from '../../quotes-products.types';
 import { CotizacionDetalleDialogComponent } from '../../cotizacion-detalle-dialog/cotizacion-detalle-dialog.component';
+import { IngenieriaCasoDialogComponent } from '../../dialogs/ingenieria-caso-dialog/ingenieria-caso-dialog.component';
 import { QuotesBoardComponent } from './quotes-board.component';
 
 function cot(id: number, over: any = {}): any {
@@ -24,6 +26,8 @@ describe('QuotesBoardComponent', () => {
   let component: QuotesBoardComponent;
   let listado: jasmine.Spy;
   let resumen: jasmine.Spy;
+  let ingenieria: jasmine.Spy;
+  let descargarIng: jasmine.Spy;
   let mockDialog: any;
   let respuestas: Partial<Record<TipoCotizacionSgc, (page: number) => Observable<any>>>;
 
@@ -40,11 +44,21 @@ describe('QuotesBoardComponent', () => {
       (page: number, _size: number, _d: any, _h: any, tipo: TipoCotizacionSgc) => respuestas[tipo]!(page)
     );
     resumen = jasmine.createSpy('resumenSgc').and.returnValue(of([]));
+    ingenieria = jasmine.createSpy('getIngenieriaTecnicoComercial').and.returnValue(of([]));
+    descargarIng = jasmine.createSpy('descargarArchivoIngenieria').and.returnValue(of(new Blob(['test'], { type: 'application/pdf' })));
 
     TestBed.configureTestingModule({
-      imports: [QuotesBoardComponent, NoopAnimationsModule, MatIconTestingModule],
+      imports: [QuotesBoardComponent, NoopAnimationsModule, MatIconTestingModule, HttpClientTestingModule],
       providers: [
-        { provide: QuotesService, useValue: { getQuotesPorRango: listado, resumenSgc: resumen } },
+        {
+          provide: QuotesService,
+          useValue: {
+            getQuotesPorRango: listado,
+            resumenSgc: resumen,
+            getIngenieriaTecnicoComercial: ingenieria,
+            descargarArchivoIngenieria: descargarIng
+          }
+        },
         { provide: MatDialog, useValue: mockDialog }
       ]
     });
@@ -498,5 +512,129 @@ describe('QuotesBoardComponent', () => {
     expect(q('[data-testid="tarjeta-1"]')).toBeNull();
     expect(q('[data-testid="tarjeta-2"]')).toBeNull();
     expect(q('[data-testid="tarjeta-3"]')).not.toBeNull();
+  });
+
+  it('Columna_tecnico_comercial_muestra_casos_de_Ingenieria', () => {
+    ingenieria.and.returnValue(of([
+      {
+        idSeguimiento: 46,
+        titulo: 'Automatización Línea 3',
+        empresa: 'Nissan Mexicana',
+        montoTotalEstimado: 250000,
+        estatusEtapa5: 2,
+        revision: 1,
+        archivos: [
+          { id: 1, nombreArchivo: 'Cotizacion_R1_v1.xlsx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' }
+        ]
+      }
+    ]));
+    iniciar();
+
+    const grupoIng = q('[data-testid="grupo-ingenieria-tecnico-comercial"]');
+    expect(grupoIng).not.toBeNull();
+    expect(grupoIng?.textContent).toContain('De Ingeniería (1)');
+    expect(grupoIng?.textContent).toContain('Ingeniería #46');
+    expect(grupoIng?.textContent).toContain('Automatización Línea 3');
+    expect(grupoIng?.textContent).toContain('Nissan Mexicana');
+    expect(grupoIng?.textContent).toContain('$250,000.00');
+  });
+
+  it('No_duplica_si_la_cotizacion_ligada_ya_esta', () => {
+    respuestas.CT = () => pagina([
+      cot(101, { tipoSgc: 'CT', nombreCliente: 'Nissan Mexicana' })
+    ]);
+    ingenieria.and.returnValue(of([
+      {
+        idSeguimiento: 46,
+        cotizacionProductosId: 101,
+        titulo: 'Automatización Línea 3',
+        empresa: 'Nissan Mexicana',
+        montoTotalEstimado: 250000,
+        estatusEtapa5: 2,
+        archivos: []
+      }
+    ]));
+    iniciar();
+
+    // No debe aparecer como tarjeta independiente en el grupo de ingeniería
+    const grupoIng = q('[data-testid="grupo-ingenieria-tecnico-comercial"]');
+    expect(grupoIng).toBeNull();
+
+    // La tarjeta de cotización 101 debe recibir el chip "Ingeniería #46"
+    const tarjeta = q('[data-testid="tarjeta-101"]');
+    expect(tarjeta).not.toBeNull();
+    const chipIng = tarjeta?.querySelector('[data-testid="chip-ingenieria-ligada"]');
+    expect(chipIng).not.toBeNull();
+    expect(chipIng?.textContent).toContain('Ingeniería #46');
+  });
+
+  it('Detalle_del_caso_lista_archivos_de_la_etapa_5', () => {
+    const caso = {
+      idSeguimiento: 46,
+      titulo: 'Automatización Línea 3',
+      empresa: 'Nissan Mexicana',
+      montoTotalEstimado: 250000,
+      estatusEtapa5: 2,
+      revision: 1,
+      archivos: [
+        { id: 10, nombreArchivo: 'Alcance_v1.docx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' },
+        { id: 11, nombreArchivo: 'Cotizacion_v2.xlsx', revision: 2, version: 1, revisionAutorizada: true, fechaSubida: '2026-11-21T10:00:00Z' }
+      ]
+    };
+    ingenieria.and.returnValue(of([caso]));
+    iniciar();
+
+    const btnVer = q('[data-testid="ver-caso-ingenieria-46"]') as HTMLButtonElement;
+    expect(btnVer).not.toBeNull();
+    btnVer.click();
+
+    expect(mockDialog.open).toHaveBeenCalledWith(
+      jasmine.any(Function),
+      jasmine.objectContaining({
+        data: jasmine.objectContaining({ caso })
+      })
+    );
+  });
+
+  it('Descarga_por_blob', () => {
+    const caso = {
+      idSeguimiento: 46,
+      titulo: 'Automatización Línea 3',
+      empresa: 'Nissan Mexicana',
+      montoTotalEstimado: 250000,
+      estatusEtapa5: 2,
+      revision: 1,
+      archivos: [
+        { id: 10, nombreArchivo: 'Alcance_v1.docx', revision: 1, version: 1, revisionAutorizada: false, fechaSubida: '2026-11-20T10:00:00Z' }
+      ]
+    };
+
+    const dialogFixture = TestBed.createComponent(IngenieriaCasoDialogComponent);
+    dialogFixture.componentInstance.caso = caso as any;
+    dialogFixture.detectChanges();
+
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:fake');
+    spyOn(window.URL, 'revokeObjectURL');
+
+    const btnDescarga = dialogFixture.nativeElement.querySelector('.btn-descargar-archivo-ingenieria') as HTMLButtonElement;
+    expect(btnDescarga).not.toBeNull();
+    btnDescarga.click();
+
+    expect(descargarIng).toHaveBeenCalledWith(46, 10);
+  });
+
+  it('Respeta_filtros_de_fecha_y_sucursal', () => {
+    ingenieria.calls.reset();
+    fixture.componentRef.setInput('desde', '2026-11-01');
+    fixture.componentRef.setInput('hasta', '2026-11-30');
+    fixture.componentRef.setInput('unidadId', 3);
+    component.ngOnChanges({
+      desde: { currentValue: '2026-11-01', previousValue: null, firstChange: false, isFirstChange: () => false },
+      hasta: { currentValue: '2026-11-30', previousValue: null, firstChange: false, isFirstChange: () => false },
+      unidadId: { currentValue: 3, previousValue: null, firstChange: false, isFirstChange: () => false }
+    });
+    fixture.detectChanges();
+
+    expect(ingenieria).toHaveBeenCalledWith('2026-11-01', '2026-11-30', 3);
   });
 });
