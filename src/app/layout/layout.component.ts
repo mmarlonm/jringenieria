@@ -666,6 +666,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
             '/eventos/configurador-registro': 'gestion',
             '/security/users': 'users',
             '/security/roles': 'roles',
+            '/security/reportes': 'reportes',
             '/security/activity-monitor': 'activity-monitor',
             '/reports/login-logs': 'login-logs'
         };
