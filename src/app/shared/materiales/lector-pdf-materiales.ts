@@ -52,6 +52,14 @@ export class LectorPdfMateriales {
             }
         }
 
+        return LectorPdfMateriales.interpretarElementos(allItems);
+    }
+
+    /**
+     * Convierte los textos del PDF (ya agrupados, con su posición) en materiales. Separado de la lectura con pdf.js
+     * para poder probarlo con la posición de los textos de un PDF real sin cargar pdf.js.
+     */
+    static interpretarElementos(allItems: any[]): ContpaqiMaterialDto[] {
         if (allItems.length === 0) return [];
 
         const rows: any[][] = [];
@@ -81,6 +89,7 @@ export class LectorPdfMateriales {
             total: ['TOTAL', 'IMPORTE', 'EXTENSIÓN', 'EXTENSION', 'SUBTOTAL', 'SUB TOTAL', 'MONTO', 'NETO', 'TOTAL LINEA']
         };
 
+        const FIN_TABLA_PEGADO = ['IMPORTE CON LETRA', 'DATOS BANCARIOS'];
         const FOOTER_KEYWORDS = ['SUBTOTAL', 'I.V.A', 'IVA', 'TOTAL', 'NETO', 'CONDICIONES', 'ESTIMADO CLIENTE', 'VIGENCIA', 'EXISTENCIA GRUPAL', 'COMPRA MINIMA', 'SUJETOS A CAMBIOS'];
 
         let foundHeaderRowIndex = -1;
@@ -112,12 +121,31 @@ export class LectorPdfMateriales {
             }
         }
 
+        // Formato de cotización de CONTPAQi (Cantidad | Unidad | Código | Descripción | T.E. | Valor unit. | Importe):
+        // la pdf.js junta los títulos pegados en un solo texto («Cantidad Unidad Código») y la detección normal no
+        // los acepta. Este modo SOLO entra cuando la detección normal no halló encabezado: lo que ya se leía
+        // bien (compras) sigue exactamente igual.
+        let encabezadoPegado = false;
+        if (foundHeaderRowIndex === -1) {
+            const pegado = LectorPdfMateriales.buscarEncabezadoPegado(rows, KEYWORDS);
+            if (pegado) {
+                Object.assign(columnMapping, pegado.mapping);
+                foundHeaderRowIndex = pegado.indice;
+                encabezadoPegado = true;
+            }
+        }
+
         const detectedMateriales: ContpaqiMaterialDto[] = [];
         const hasMapping = columnMapping.nombre !== -1 && (columnMapping.cantidad !== -1 || columnMapping.total !== -1);
 
         for (let i = foundHeaderRowIndex + 1; i < rows.length; i++) {
             const row = rows[i];
             const rowTextStr = row.map(it => it.text.toUpperCase()).join(' ');
+
+            // En el formato de CONTPAQi, «Importe con letra» y «Datos bancarios» ya no son de la tabla.
+            if (encabezadoPegado && FIN_TABLA_PEGADO.some(key => rowTextStr.includes(key))) {
+                break;
+            }
 
             if (FOOTER_KEYWORDS.some(key => rowTextStr.includes(key))) {
                 continue;
@@ -184,6 +212,74 @@ export class LectorPdfMateriales {
         }
 
         return detectedMateriales;
+    }
+
+    /** Palabras que solo reconoce el modo de encabezado pegado (no cambian la detección normal). */
+    private static readonly EXTRA_PRECIO_PEGADO = ['VALOR UNIT', 'V. UNIT', 'IMPORTE UNITARIO'];
+    /** Columnas que existen en el formato pero no son material (tiempo de entrega): lo que caiga ahí se ignora. */
+    private static readonly IGNORAR_PEGADO = ['T.E.', 'TIEMPO DE ENTREGA', 'T. ENTREGA'];
+
+    private static esAlfanumerico(c: string | undefined): boolean {
+        return !!c && /[A-Z0-9ÁÉÍÓÚÜÑ]/i.test(c);
+    }
+
+    /**
+     * Busca una fila de encabezado cuyos títulos vengan pegados en un solo texto. Reconoce cada título por separado
+     * (palabra completa, de la más larga a la más corta) y reparte su posición dentro del texto pegado.
+     * Exige al menos 4 títulos distintos en posiciones distintas, la descripción y la cantidad o el importe, y que
+     * los importes queden a la derecha de la descripción; así no confunde filas de datos con el encabezado.
+     */
+    static buscarEncabezadoPegado(rows: any[][], keywords: any): { indice: number; mapping: any } | null {
+        const etiquetas: { texto: string; clave: string }[] = [];
+        for (const clave of Object.keys(keywords)) {
+            const lista: string[] = clave === 'precio' ? [...keywords[clave], ...LectorPdfMateriales.EXTRA_PRECIO_PEGADO] : keywords[clave];
+            lista.forEach(texto => etiquetas.push({ texto, clave }));
+        }
+        LectorPdfMateriales.IGNORAR_PEGADO.forEach(texto => etiquetas.push({ texto, clave: 'ignorar' }));
+        etiquetas.sort((a, b) => b.texto.length - a.texto.length);
+
+        for (let i = 0; i < Math.min(rows.length, 40); i++) {
+            const celdas: { clave: string; x: number }[] = [];
+            for (const item of rows[i]) {
+                const texto = String(item.text || '').toUpperCase();
+                const ocupado: boolean[] = new Array(texto.length).fill(false);
+                for (const et of etiquetas) {
+                    let desde = 0;
+                    let pos: number;
+                    while ((pos = texto.indexOf(et.texto, desde)) !== -1) {
+                        const fin = pos + et.texto.length;
+                        const inicioOk = pos === 0 || !LectorPdfMateriales.esAlfanumerico(texto[pos - 1]) || !LectorPdfMateriales.esAlfanumerico(et.texto[0]);
+                        const finOk = fin === texto.length || !LectorPdfMateriales.esAlfanumerico(texto[fin]) || !LectorPdfMateriales.esAlfanumerico(et.texto[et.texto.length - 1]);
+                        const libre = !ocupado.slice(pos, fin).some(o => o);
+                        if (inicioOk && finOk && libre) {
+                            for (let k = pos; k < fin; k++) ocupado[k] = true;
+                            celdas.push({ clave: et.clave, x: item.x + (pos / texto.length) * (item.width || 0) });
+                        }
+                        desde = pos + 1;
+                    }
+                }
+            }
+            celdas.sort((a, b) => a.x - b.x);
+
+            const mapping: any = { articulo: -1, nombre: -1, unidad: -1, cantidad: -1, precio: -1, total: -1 };
+            for (const c of celdas) {
+                if (mapping[c.clave] === undefined) mapping[c.clave] = -1;
+                if (mapping[c.clave] === -1) mapping[c.clave] = c.x;
+            }
+
+            const claves = Object.keys(mapping).filter(k => mapping[k] !== -1);
+            if (mapping.nombre === -1 || (mapping.cantidad === -1 && mapping.total === -1) || claves.length < 4) continue;
+
+            const xs = claves.map(k => mapping[k]).sort((a, b) => a - b);
+            const distintas = xs.every((x, j) => j === 0 || x - xs[j - 1] >= 10);
+            const importesALaDerecha = (mapping.precio === -1 || mapping.precio > mapping.nombre) &&
+                (mapping.total === -1 || mapping.total > mapping.nombre) &&
+                (mapping.precio === -1 || mapping.total === -1 || mapping.precio < mapping.total);
+            if (distintas && importesALaDerecha) {
+                return { indice: i, mapping };
+            }
+        }
+        return null;
     }
 
     static getClosestColumn(x: number, mapping: any): string {
